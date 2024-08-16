@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<!-- Empty except for Stack Tags. This wpaProfile should be loaded last to give top priority to these ETW Overhead tags. -->
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences>
+<!--
+  DISCLAIMER: Stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+-->
+          <FileReference FileName="ETW-Overhead-for-CPU.stacktags" ServiceMoniker="StackFrameTag.{67F56EBD-2E82-493B-BF4F-712A1D0F018B}" />
+        </FileReferences>
+      </Session>
+    </Sessions>
+    <Views>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

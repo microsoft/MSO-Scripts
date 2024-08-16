@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<!--
+  DISCLAIMER: These stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+-->
+<Tag Name=""><!--Root-->
+<!--
+  This entry must appear at the top of WPA's Trace Properties > Stack Tags Definitions list.
+
+  ANNOTATIONS from STACK TAGS
+  The WPA annotation language does not work with the Stack columns.
+  But it does work with the Stack Tags columns.
+  Annotate the main thread this way (in *.wpaProfile):
+  <AnnotationQueryEntry Annotation="Managed Heap" AnnotationQuery="[Stack Tag]:~<=Managed Heap" />
+-->
+
+  <Tag Name="CLR JIT Compile" Priority="255">
+    <Entrypoint Module="clrjit.dll" />
+  </Tag>
+
+  <Tag Name="Managed Heap" Priority="250">
+    <Entrypoint Module="*clr.dll" Method="*ClrVirtualAlloc" />
+    <Entrypoint Module="*clr.dll" Method="EEVirtualAlloc" />
+    <Entrypoint Module="mscor*.dll" Method="*ClrVirtualAlloc" />
+    <Entrypoint Module="mscor*.dll" Method="EEVirtualAlloc" />
+  </Tag>
+
+  <Tag Name="Thread Stack" Priority="230">
+    <Entrypoint Module="nt*.exe" Method="*CreateUserStack" />
+    <Entrypoint Module="nt*.exe" Method="MiCheckForUserStackOverflow" />
+    <Entrypoint Module="ntdll.dll" Method="RtlCreateUserStack" />
+    <Entrypoint Module="*clr.dll" Method="Thread::CommitThreadStack" />
+    <Entrypoint Module="mscor*.dll" Method="Thread::CommitThreadStack" />
+  </Tag>
+
+  <Tag Name="V8 JS Heap" Priority="220">
+    <!-- v8jsi.dll, Teams.exe, etc. -->
+    <Entrypoint Module="*" Method="v8::internal::MemoryAllocator*" />
+    <Entrypoint Module="*" Method="v8::internal::Heap::*" />
+    <Entrypoint Module="*" Method="v8::internal::ReadOnlyHeap::*" />
+  </Tag>
+
+  <Tag Name="JScript Heap" Priority="218">
+    <Entrypoint Module="jscript*.dll" Method="PageAllocator::*" />
+    <Entrypoint Module="chakra.dll" Method="Memory::*" />
+  </Tag>
+
+  <Tag Name="MSHTML Heap" Priority="216">
+    <Entrypoint Module="mshtml.dll" Method="Memory::*" />
+  </Tag>
+
+  <Tag Name="Video Memory" Priority="214">
+    <Entrypoint Module="dxgmm*.sys" Method="VidMmAllocateVirtualMemory" />
+  </Tag>
+
+  <Tag Name="DX Warp" Priority="212">
+    <Entrypoint Module="d*warp.dll" />
+  </Tag>
+
+  <Tag Name="GDI" Priority="210">
+    <Entrypoint Module="gdi*.dll" Method="Create*" />
+    <Entrypoint Module="gdiplus.dll" />
+  </Tag>
+
+  <Tag Name="Windows Heap" Priority="205">
+    <Entrypoint Module="ntdll.dll" Method="Rtl*Heap" />
+    <Entrypoint Module="ntdll.dll" Method="Rtl*HeapInternal" />
+    <Entrypoint Module="ntdll.dll" Method="*HeapManagerStart" />
+  </Tag>
+
+  <Tag Name="VirtualAlloc" Priority="200">
+    <Entrypoint Module="KernelBase.dll" Method="VirtualAlloc" />
+    <Entrypoint Module="NT*.exe" Method="*AllocateVirtualMemory" />
+    <Entrypoint Module="NT*.exe" Method="*AllocateVirtualMemoryEx" />
+  </Tag>
+
+</Tag>

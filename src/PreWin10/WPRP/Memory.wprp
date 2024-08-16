@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <SystemCollector Id="SC_Base" Name="NT Kernel Logger">
+      <BufferSize Value="1024" />
+      <Buffers Value="8" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_256-MB" Base="SC_Base">
+      <Buffers Value="256" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_384-MB" Base="SC_Base">
+      <Buffers Value="384" />
+    </SystemCollector>
+
+    <EventCollector Id="EC_Base" Name="MSO Event Logger">
+      <BufferSize Value="1024" />
+      <Buffers Value="4" />
+    </EventCollector>
+
+    <EventCollector Id="EC_16-MB" Name="MSO Event Logger" Base="EC_Base">
+      <Buffers Value="16" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wprcontrolprofiles-schema
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+-->
+
+    <!-- Base requirement for process/thread/module info and symbol resolution. -->
+
+    <SystemProvider Id="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="ThreadCreate" />
+        <Stack Value="ImageLoad" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Memory / Reference Set (RAM) tracing with call stacks -->
+
+    <SystemProvider Id="SP_ReferenceSet" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ReferenceSet" />
+        <Keyword Value="VirtualAllocation" />
+        <Keyword Value="Memory" />
+        <Keyword Value="MemoryInfo" />
+        <Keyword Value="MemoryInfoWS" />
+        <Keyword Value="HardFaults" />
+        <Keyword Value="FootPrint" />
+        <Keyword Value="VAMap" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="VirtualAllocation" />
+        <Stack Value="PageAccess" />
+        <Stack Value="PageAccessEx" />
+        <Stack Value="PageRangeAccess" />
+        <Stack Value="PagefileMappedSectionCreate" />
+        <Stack Value="MapFile" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Memory snapshots per process every 1/2 second. Super lean! -->
+
+    <SystemProvider Id="SP_MemorySnapshot">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="MemoryInfo" />
+        <Keyword Value="MemoryInfoWS" />
+      </Keywords>
+    </SystemProvider>
+
+    <!-- Additional Module/Load info -->
+
+    <EventProvider Id="EP_Microsoft-Windows-ImageLoad" Name="2cb15d1d-5fc1-11d2-abe1-00a0c911f518">
+      <Keywords Operation="Add">
+        <Keyword Value="0x10" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- The 'Win32 Heap Ranges' provider allows WPA to separate HeapAlloc from VirtualAlloc in the memory trace. -->
+
+    <EventProvider Id="EP_HeapRanges" Name="d781ca11-61c0-4387-b83d-af52d3d2dd6a" Level="15">
+      <Keywords Operation="Add">
+        <Keyword Value="0x000000000000000f" />
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="EP_FakeProvider" Name="{8899F15E-0A43-457E-9BA3-19B38E50F33E}" />
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <Profile Name="Memory" Description="Memory Snapshots Per Process Every 1/2 Second"
+     DetailLevel="Light" LoggingMode="File" Id="Memory.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_256-MB">
+          <SystemProviderId Value="SP_MemorySnapshot" />
+        </SystemCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="Memory" Description="Memory Snapshots Per Process Every 1/2 Second"
+     DetailLevel="Light" LoggingMode="Memory" Base="Memory.Light.File" Id="Memory.Light.Memory" />
+
+
+    <Profile Name="Memory" Description="Reference Set (RAM) / VirtualAlloc / Memory Snapshots"
+     DetailLevel="Verbose" LoggingMode="File" Id="Memory.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_384-MB">
+          <SystemProviderId Value="SP_ReferenceSet" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_HeapRanges" />
+            <!-- Why does WPR require this with ImageLoad/HeapRanges!? Else the trace fails with error 0xC5580612! -->
+            <EventProviderId Value="EP_FakeProvider" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="Memory" Description="Reference Set (RAM) / VirtualAlloc / Memory Snapshots"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="Memory.Verbose.File" Id="Memory.Verbose.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <!-- FileCompression Value="true" /-->
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

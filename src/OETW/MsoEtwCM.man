@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<instrumentationManifest xmlns="http://schemas.microsoft.com/win/2004/08/events">
+<!-- https://learn.microsoft.com/en-us/previous-versions/aa385619(v=vs.85)
+     To register, run: wevtutil im [path]\[name].man /rf:[path]\[name].res /mf:[path]\[name].res
+     To unregister, run: wevtutil um [path]\[name].man
+-->
+  <instrumentation>
+    <events>
+      <provider
+        name="OfficeLoggingLiblet"
+        guid="{F50D9315-E17E-43C1-8370-3EDF6CC057BE}"
+        resourceFileName="MsoEtwCM.res"
+        messageFileName="MsoEtwCM.res" />
+      <!-- Office CodeMarkers and Idle Tasks -->
+      <provider
+        name="Microsoft-Office-Events"
+        guid="{8736922d-E8B2-47eb-8564-23E77E728CF3}"
+        resourceFileName="MsoEtwCM.res"
+        messageFileName="MsoEtwCM.res" />
+    </events>
+  </instrumentation>
+</instrumentationManifest>

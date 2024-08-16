@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences />
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="91711b35-0be2-4af4-81d5-f510a4d5a34e" IsVisible="true" Title="Mem Stats ½ sec.">
+        <Graphs>
+          <Graph Guid="3dd69094-4675-4607-9fb4-0042b9e1a610" LayoutStyle="All" Color="#FF0000FF" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Commit-Charge - 500 ms Intervals" GraphChartType="StackedLine" BarGraphIntervalCount="50" AggregationOverTime="OutstandingPeak" IsThreadActivityTable="false" GraphColumnCount="13" KeyColumnCount="3" LeftFrozenColumnCount="4" RightFrozenColumnCount="7" InitialFilterQuery="[Process]:&lt;&gt;&quot;Unknown&quot;" InitialFilterShouldKeep="true" GraphFilterColumnGuid="c7022d26-68dc-474b-83ce-2a24b9534612" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="7f8e5887-fef5-4f40-9c15-138a03cef7c6" Name="Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="b71a93c1-90cf-4e7c-be52-d6757f04ca65" Name="EndTime(internal use)" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="4" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="7d259814-3b78-4f86-bf3c-95c079eabce8" Name="Process Name" SortPriority="9" Width="100" IsVisible="true" />
+                <Column Guid="f011fe6d-e0a7-4123-9019-bd02e848192b" Name="Process" AggregationMode="UniqueCount" SortPriority="5" Width="126" IsVisible="true" />
+                <Column Guid="3e760f63-19dd-4193-b0f0-181391818027" Name="Count" AggregationMode="Peak" SortPriority="6" TextAlignment="Right" Width="64" IsVisible="false" />
+                <Column Guid="7f8e5887-fef5-4f40-9c15-138a03cef7c6" Name="Time" SortOrder="Ascending" SortPriority="0" TextAlignment="Right" Width="86" CellFormat="sN" IsVisible="true" HelpText="Time of snapshot relative to trace start">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="c7022d26-68dc-474b-83ce-2a24b9534612" Name="Private Working Set" AggregationMode="Peak" SortPriority="8" TextAlignment="Right" Width="188" CellFormat="MB" IsVisible="false" HelpText="RAM used by the process: Not shareable" />
+                <Column Guid="88ed32fc-2790-4491-9445-9437142c0bb5" Name="Working Set" AggregationMode="Peak" SortPriority="2" TextAlignment="Right" Width="166" CellFormat="MB" IsVisible="false" HelpText="RAM used by the process: Private + Shareable" />
+                <Column Guid="9069e66b-271d-478f-9604-661980cfaa18" Name="Virtual Size" AggregationMode="Max" SortPriority="7" TextAlignment="Right" Width="112" CellFormat="MB" IsVisible="true" HelpText="In-proc Address Space Used: Reserved/Committed" />
+                <Column Guid="8f3f770f-9245-430c-b4d4-5bba1f02017a" Name="Commit" AggregationMode="Peak" SortPriority="10" TextAlignment="Right" Width="142" CellFormat="MB" IsVisible="true" HelpText="Private Commit-Charge: Heap, VirtualAlloc, etc." />
+                <Column Guid="c0fa5e19-c709-48ff-bfcd-b7d1de03394c" Name="Shared Commit" AggregationMode="Peak" SortPriority="3" TextAlignment="Right" Width="159" CellFormat="N0" IsVisible="true" HelpText="Shareable Commit-Charge (Bytes): Pagefile-backed Memory Map
+NOTE: Subject to double-counting when summed across processes!" />
+                <Column Guid="7a63e768-d54c-4cad-b713-c593718ae1f3" Name="Total Commit" AggregationMode="Peak" SortOrder="Descending" SortPriority="1" Width="172" IsVisible="true" HelpText="Total Commit-Charge: Private + Shareable" />
+              </Columns>
+            </Preset>
+          </Graph>
+          <Graph Guid="3dd69094-4675-4607-9fb4-0042b9e1a610" LayoutStyle="All" Color="#FF0000FF" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Working Set - 500 ms Intervals" GraphChartType="StackedLine" BarGraphIntervalCount="50" AggregationOverTime="OutstandingPeak" IsThreadActivityTable="false" GraphColumnCount="13" KeyColumnCount="3" LeftFrozenColumnCount="4" RightFrozenColumnCount="7" InitialFilterQuery="[Process]:&lt;&gt;&quot;Unknown&quot;" InitialFilterShouldKeep="true" GraphFilterColumnGuid="c7022d26-68dc-474b-83ce-2a24b9534612" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="7f8e5887-fef5-4f40-9c15-138a03cef7c6" Name="Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="b71a93c1-90cf-4e7c-be52-d6757f04ca65" Name="EndTime(internal use)" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="4" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="7d259814-3b78-4f86-bf3c-95c079eabce8" Name="Process Name" SortPriority="9" Width="100" IsVisible="true" />
+                <Column Guid="f011fe6d-e0a7-4123-9019-bd02e848192b" Name="Process" AggregationMode="UniqueCount" SortPriority="5" Width="126" IsVisible="true" />
+                <Column Guid="3e760f63-19dd-4193-b0f0-181391818027" Name="Count" AggregationMode="Peak" SortPriority="6" TextAlignment="Right" Width="64" IsVisible="false" />
+                <Column Guid="7f8e5887-fef5-4f40-9c15-138a03cef7c6" Name="Time" SortOrder="Ascending" SortPriority="0" TextAlignment="Right" Width="86" CellFormat="sN" IsVisible="true" HelpText="Time of snapshot relative to trace start">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="9069e66b-271d-478f-9604-661980cfaa18" Name="Virtual Size" AggregationMode="Max" SortPriority="7" TextAlignment="Right" Width="112" CellFormat="MB" IsVisible="false" HelpText="In-proc Address Space Used: Reserved/Committed" />
+                <Column Guid="8f3f770f-9245-430c-b4d4-5bba1f02017a" Name="Commit" AggregationMode="Peak" SortPriority="10" TextAlignment="Right" Width="142" CellFormat="MB" IsVisible="false" HelpText="Private Commit-Charge: Heap, VirtualAlloc, etc." />
+                <Column Guid="c0fa5e19-c709-48ff-bfcd-b7d1de03394c" Name="Shared Commit" AggregationMode="Max" SortPriority="3" TextAlignment="Right" Width="108" CellFormat="N0" IsVisible="false" HelpText="Shareable Commit-Charge (Bytes): Pagefile-backed Memory Map
+NOTE: Subject to double-counting when summed across processes!" />
+                <Column Guid="7a63e768-d54c-4cad-b713-c593718ae1f3" Name="Total Commit" AggregationMode="Peak" SortPriority="2" Width="172" IsVisible="false" HelpText="Total Commit-Charge: Private + Shareable" />
+                <Column Guid="c7022d26-68dc-474b-83ce-2a24b9534612" Name="Private Working Set" AggregationMode="Peak" SortPriority="8" TextAlignment="Right" Width="204" CellFormat="MB" IsVisible="true" HelpText="RAM used by the process: Not shareable" />
+                <Column Guid="88ed32fc-2790-4491-9445-9437142c0bb5" Name="Working Set" AggregationMode="Peak" SortOrder="Descending" SortPriority="1" TextAlignment="Right" Width="166" CellFormat="MB" IsVisible="true" HelpText="RAM used by the process: Private + Shareable" />
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

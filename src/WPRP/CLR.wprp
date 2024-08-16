@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <EventCollector Id="EC_128-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="128" />
+    </EventCollector>
+
+    <!-- Provider Declarations -->
+
+    <!--
+      WPR uses pseudo-provider "DotNetProvider" {e3652e49-ec27-4952-b1f6-f4cff62b33dc} to capture managed traces.
+      That resolves to actual .NET providers:
+        "Microsoft-Windows-DotNETRuntime"        {e13c0d23-ccbc-4e12-931b-d9cc2eee27e4}
+        "Microsoft-Windows-DotNETRuntimeRundown" {a669021c-c450-4609-a035-5af59af4df18}
+
+      Here for completeness we replicate the built-in: EventProvider_DotNetProvider
+    -->
+
+    <EventProvider Id="EventProvider_DotNetProvider" Name="DotNetProvider" NonPagedMemory="true" Level="5">
+      <Keywords>
+        <Keyword Value="0x20098"/>
+      </Keywords>
+      <CaptureStateOnSave>
+        <Keyword Value="0x20118"/>
+      </CaptureStateOnSave>
+    </EventProvider>
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <Profile Name="CLR" Description=".NET Runtime"
+     DetailLevel="Light" LoggingMode="File" Id="CLR.Light.File">
+      <Collectors Operation="Add">
+
+        <!-- Built-in CLR event provider -->
+        <!-- https://learn.microsoft.com/en-us/windows-hardware/test/wpt/eventproviders#example -->
+
+        <EventCollectorId Value="EC_128-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EventProvider_DotNetProvider" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="CLR" Description=".NET Runtime"
+     DetailLevel="Light" LoggingMode="Memory" Base="CLR.Light.File" Id="CLR.Light.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

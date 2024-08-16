@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences>
+<!--
+  DISCLAIMER: Stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+-->
+          <FileReference FileName="VirtualAlloc.stacktags" ServiceMoniker="StackFrameTag.{67F56EBD-2E82-493B-BF4F-712A1D0F018B}" />
+        </FileReferences>
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="27a1212a-3e01-434d-bbc2-6629ee891ff6" IsVisible="true" Title="Commit Charge">
+        <Graphs>
+          <Graph Guid="260d346a-7457-4ccc-9931-c0c39ed685cd" LayoutStyle="All" Color="#FFBEBEBE" GraphHeight="132" IsMinimized="false" IsShown="true" IsExpanded="false" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\leveltemplateid5\'01\'b7}{\levelnumbers;}\fi-360\li720\lin720\jclisttab\tx720{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\leveltemplateid6\'02\'01.;}{\levelnumbers\'01;}\fi-360\li1440\lin1440\jclisttab\tx1440{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\leveltemplateid7\'02\'02.;}{\levelnumbers\'01;}\fi-360\li2160\lin2160\jclisttab\tx2160{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\leveltemplateid8\'02\'03.;}{\levelnumbers\'01;}\fi-360\li2880\lin2880\jclisttab\tx2880{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\leveltemplateid9\'02\'04.;}{\levelnumbers\'01;}\fi-360\li3600\lin3600\jclisttab\tx3600{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\leveltemplateid10\'02\'05.;}{\levelnumbers\'01;}\fi-360\li4320\lin4320\jclisttab\tx4320{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\leveltemplateid11\'02\'06.;}{\levelnumbers\'01;}\fi-360\li5040\lin5040\jclisttab\tx5040{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\leveltemplateid12\'02\'07.;}{\levelnumbers\'01;}\fi-360\li5760\lin5760\jclisttab\tx5760{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\leveltemplateid13\'02\'08.;}{\levelnumbers\'01;}\fi-360\li6480\lin6480\jclisttab\tx6480{\listname ;}\listid1}{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\ql{{\ltrch Each row in the Total Commit graph represents a block of memory that has been committed by the OS for a process. The Commit Type column shows the different sources of commit:}\li0\ri0\sa0\sb0\fi0\ql\par{\li0\ri0\sa0\sb0\fi0\ql\par{{\pntext \'B7\tab}{\*\pn\pnlvlblt\pnstart1{\pntxtb\'B7}}{\ltrch PFMappedSection - A pagefile backed section of shared memory created by a process. NOTE: the PLM counts pages mapped into a process from a PFMappedSection, not the section itself, so this may result in a difference with Shared Commit in the Memory Snapshots graph.}\li720\ri0\sa0\sb0\jclisttab\tx720\fi-360\ql\par{{\pntext \'B7\tab}{\*\pn\pnlvlblt\pnstart1{\pntxtb\'B7}}{\ltrch Unkown (Shared) - The delta between all the PFMappedSection memory and the Shared Commit value fromVirtual Memory Snapshots for a process. There is not enought instrumentation to get a perfect view of Shared Commit-charge.}\li720\ri0\sa0\sb0\jclisttab\tx720\fi-360\ql\par{{\pntext \'B7\tab}{\*\pn\pnlvlblt\pnstart1{\pntxtb\'B7}}{\ltrch Virtual Alloc - Memory committed by a call to VirtualAlloc.}\li720\ri0\sa0\sb0\jclisttab\tx720\fi-360\ql\par{{\pntext \'B7\tab}{\*\pn\pnlvlblt\pnstart1{\pntxtb\'B7}}{\ltrch Win32 Heap - Memory committed by a call to Virtual Alloc from the Win32 Heap. Allocation and free stacks are meaningless for this type of memory because the heap has a different allocation granularity and reuses memory. You need to enable heap extents tracing to see this categorization.}\li720\ri0\sa0\sb0\jclisttab\tx720\fi-360\ql\par{{\pntext \'B7\tab}{\*\pn\pnlvlblt\pnstart1{\pntxtb\'B7}}{\ltrch Copy on Write - A data section from an image that has been marked copy on write. All non-const data in an image has to be committed every time it is loaded by a new process because that process requires pages to copy to if the memory is written to.}\li720\ri0\sa0\sb0\jclisttab\tx720\fi-360\ql\par{{\pntext \'B7\tab}{\*\pn\pnlvlblt\pnstart1{\pntxtb\'B7}}{\ltrch Unknown (Private) - The delta between (Virtual Alloc + Win32 Heap + Copy on Write) and the Commit value in Virtual Memory Snapshots for a process. We don't have perfect instrumentation.}\li720\ri0\sa0\sb0\jclisttab\tx720\fi-360\ql\par{\li0\ri0\sa0\sb0\fi0\ql\par{{\ltrch NOTE: As with Win32 Heap, Virtual Alloc calls from within other heaps (C#, JavaScript, etc.) will have stacks for the allocation which grew (or shrunk) the heap, NOT the stacks for allocations in the heap. You need to take a heap trace to understand allocation behavior.}\li0\ri0\sa0\sb0\fi0\ql\par{\li0\ri0\sa0\sb0\fi0\ql\par{{\ltrch Each type of commit has a corresponding Description giving detailed information about the block of memory:}\li0\ri0\sa0\sb0\fi0\ql\par{\li0\ri0\sa0\sb0\fi0\ql\par{{\pntext \'B7\tab}{\*\pn\pnlvlblt\pnstart1{\pntxtb\'B7}}{\ltrch PFMappedSection - The address range of the Page Table Entries referencing the section.}\li720\ri0\sa0\sb0\jclisttab\tx720\fi-360\ql\par{{\pntext \'B7\tab}{\*\pn\pnlvlblt\pnstart1{\pntxtb\'B7}}{\ltrch Virtual Alloc/Win32 Heap - The Virtual Address range of the pages committed.}\li720\ri0\sa0\sb0\jclisttab\tx720\fi-360\ql\par{{\pntext \'B7\tab}{\*\pn\pnlvlblt\pnstart1{\pntxtb\'B7}}{\ltrch Copy on Write - The full path to the image containing the copy on write data section.}\li720\ri0\sa0\sb0\jclisttab\tx720\fi-360\ql\par{\f2 {\ltrch }\li0\ri0\sa0\sb0\fi0\ql\par}">
+            <Preset Name="Virtual Address Space Charged to System Pagefile" GraphChartType="StackedLine" BarGraphIntervalCount="50" AggregationOverTime="OutstandingPeak" IsThreadActivityTable="false" GraphColumnCount="18" KeyColumnCount="10" LeftFrozenColumnCount="11" RightFrozenColumnCount="16" InitialFilterQuery="NOT [Description]:~&lt;&quot;Correction&quot;" InitialFilterShouldKeep="true" GraphFilterColumnGuid="da3e1239-99fc-4f7c-bfd0-9ce52febe8d2" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="2547ffbc-9c0b-4bb8-b094-c06462a6b6bd" Name="Commit Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="8d538b82-45c6-41a5-80d6-8d35f338c123" Name="Decommit Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="234f59aa-18ce-4aca-9fb4-7f3100a820a3" Name="Process Name" SortPriority="3" Width="114" IsVisible="true" />
+                <Column Guid="80558ef9-5268-4614-aaa2-1fb8cb805f84" Name="Service Display Name" SortPriority="1" Width="200" IsVisible="false" />
+                <Column Guid="c590051a-420c-43d8-90c4-e0cd1213790b" Name="Process" SortPriority="4" Width="130" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="6ceb752b-2c05-4f44-bee4-c404f768162c" Name="Allocation Lifetime" SortPriority="8" Width="54" IsVisible="false" HelpText="AIFI = Allocated In / Freed Inside; AIFO = Allocated In / Freed Outside; etc." />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="6" Width="60" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="bb5bd28c-7801-4801-9bbb-7735bd4ddd32" Name="Impacting Type" SortPriority="7" Width="97" IsVisible="false" HelpText="Class of RAM impact" />
+                <Column Guid="9efd9922-49c5-4bf7-83db-07c3b0ff4dc5" Name="Impacting Stack" SortPriority="12" Width="160" IsVisible="false" HelpText="Call stack of RAM page-in">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="b5e67350-594c-494f-934d-01a6fa4027bf" Name="Commit Type" SortPriority="9" Width="120" IsVisible="true" HelpText="Class of Committed Address Space (charged to the system pagefile)" />
+                <Column Guid="6c8c602e-4d73-4b21-b84b-83a80eea6bd4" Name="Commit Stack" SortPriority="10" Width="111" IsVisible="false" HelpText="Stack-tag categorization of Committed Address Space">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="6c8c602e-4d73-4b21-b84b-83a80eea6bd4" Name="Commit Stack" SortPriority="11" Width="225" IsVisible="false" HelpText="Call stack of allocation/creation">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="f9addb37-9541-4acd-ba51-cdef199a1e42" Name="Description" SortPriority="2" Width="144" IsVisible="true" HelpText="Address, Index, or File Name" />
+                <Column Guid="da3e1239-99fc-4f7c-bfd0-9ce52febe8d2" Name="Count" AggregationMode="Sum" SortPriority="13" TextAlignment="Right" Width="62" IsVisible="true" />
+                <Column Guid="b2e229c2-54cc-40e0-9e7e-da1185d03b88" Name="Size" AggregationMode="Sum" SortPriority="5" TextAlignment="Right" Width="80" IsVisible="true" />
+                <Column Guid="94cd5680-b9a2-4491-99f5-a03db7fbec9c" Name="Impacting Size" AggregationMode="Sum" SortPriority="17" TextAlignment="Right" Width="132" IsVisible="true" HelpText="RAM Usage" />
+                <Column Guid="da3e1239-99fc-4f7c-bfd0-9ce52febe8d2" Name="Count" AggregationMode="Peak" SortPriority="14" TextAlignment="Right" Width="106" IsVisible="true" HelpText="Peak count of unfreed allocations/objects" />
+                <Column Guid="b2e229c2-54cc-40e0-9e7e-da1185d03b88" Name="Size" AggregationMode="Peak" SortOrder="Descending" SortPriority="0" TextAlignment="Right" Width="126" IsVisible="true" HelpText="Peak size of unfreed allocations/objects" />
+                <Column Guid="2547ffbc-9c0b-4bb8-b094-c06462a6b6bd" Name="Commit Time" SortPriority="15" TextAlignment="Right" Width="120" IsVisible="false" HelpText="Time of allocation / creation">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="8d538b82-45c6-41a5-80d6-8d35f338c123" Name="Decommit Time" SortPriority="16" TextAlignment="Right" Width="120" IsVisible="false" HelpText="Time of deallocation / destruction">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

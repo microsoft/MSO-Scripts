@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    **** This Recording Profile requires WPR v10.0.19559+ ****
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    Collectors with the same name get merged across Profiles and WPRP files.
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <SystemCollector Id="SC_Base" Name="NT Kernel Logger">
+      <BufferSize Value="1024" />
+      <Buffers Value="8" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_16-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="16" />
+      <StackCaching BucketCount="8" CacheSize="256" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_64-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="64" />
+      <StackCaching BucketCount="16" CacheSize="1024" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_256-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="256" />
+      <StackCaching BucketCount="64" CacheSize="1024" />
+    </SystemCollector>
+
+    <EventCollector Id="EC_Base" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="4" />
+    </EventCollector>
+
+    <EventCollector Id="EC_16-MB" Base="EC_Base" Name="MSO Event Collector">
+      <Buffers Value="16" />
+    </EventCollector>
+
+    <EventCollector Id="EC_64-MB" Base="EC_Base" Name="MSO Event Collector">
+      <Buffers Value="64" />
+    </EventCollector>
+
+    <HeapEventCollector Id="HEC_768-MB" Name="MSO Heap Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="768" />
+<!-- StackCaching in HeapEventCollector requires WPR v10.0.19559+ -->
+      <StackCaching BucketCount="1024" CacheSize="1024" />
+    </HeapEventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+-->
+
+    <!-- Base requirement for process/thread/module info and symbol resolution. -->
+
+    <SystemProvider Id="SP_Basic">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="ProcessCreate" />
+        <Stack Value="ImageLoad" />
+      </Stacks>
+    </SystemProvider>
+
+    <SystemProvider Id="SP_VirtualAlloc" Base="SP_Basic">
+      <Keywords Operation="Add">
+        <Keyword Value="VirtualAllocation" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="VirtualAllocation" />
+      </Stacks>
+    </SystemProvider>
+
+    <SystemProvider Id="SP_HeapMemory" Base="SP_VirtualAlloc">
+      <Stacks Operation="Add">
+        <Stack Value="HeapAllocation" />
+        <Stack Value="HeapReallocation" />
+        <Stack Value="HeapCreate" />
+      </Stacks>
+    </SystemProvider>
+
+    <SystemProvider Id="SP_AddressSpace" Base="SP_VirtualAlloc">
+      <Keywords Operation="Add">
+        <!-- Memory snapshots per process every 1/2 second -->
+        <Keyword Value="MemoryInfo" />
+        <Keyword Value="MemoryInfoWS" />
+        <Keyword Value="VAMap" /> <!-- MapViewOfFile - PROCESS_MAPFILE_INFO -->
+        <Keyword Value="Filename" /> <!-- File Object/Key -> File Path\Name -->
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="MapFile" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Additional Module/Load info -->
+
+    <EventProvider Id="EP_Microsoft-Windows-ImageLoad" Name="2cb15d1d-5fc1-11d2-abe1-00a0c911f518">
+      <Keywords Operation="Add">
+        <Keyword Value="0x10" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- Microsoft-Office-Events - Office Code Markers -->
+
+    <EventProvider Id="EP_OLog_CodeMarkers" Name="8736922D-E8B2-47eb-8564-23E77E728CF3">
+      <Keywords Operation="Add">
+        <Keyword Value="4" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- Capture Heap Snapshots -->
+    <!-- https://learn.microsoft.com/en-us/windows-hardware/test/wpt/record-heap-snapshot -->
+
+    <EventProvider Id="EP_Microsoft-Windows-Heap-Snapshot" Name="901d2afa-4ff6-46d7-8d0e-53645e1a47f5" />
+
+    <!-- Profile a Specific Process -->
+
+    <HeapEventProvider Id="HEP_Heap_PID">
+      <HeapProcessIds Operation="Add">
+        <HeapProcessId Value="12345678" /> <!-- REWRITE THIS DYNAMIC ProcessID VALUE IN THIS STATIC FILE! -->
+      </HeapProcessIds>
+    </HeapEventProvider>
+
+<!--
+    Profile Declarations
+
+    These are externally visible via: WPR -providers ThisFileName.wprp
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <!-- TraceHeap_ByPID (Verbose) -->
+
+    <Profile Name="TraceHeap_ByPID" Description="Heap Tracing by PID (rewrite) / Modules"
+     DetailLevel="Verbose" LoggingMode="File" Id="TraceHeap_ByPID.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_64-MB">
+          <SystemProviderId Value="SP_HeapMemory" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+          </EventProviders>
+        </EventCollectorId>
+
+        <HeapEventCollectorId Value="HEC_768-MB">
+          <HeapEventProviders Operation="Add">
+            <HeapEventProviderId Value="HEP_Heap_PID" />
+          </HeapEventProviders>
+        </HeapEventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="TraceHeap_ByPID" Description="Heap Tracing by PID (rewrite) / Modules"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="TraceHeap_ByPID.Verbose.File" Id="TraceHeap_ByPID.Verbose.Memory" />
+
+    <!-- TraceHeap_ByName (Verbose) -->
+
+    <Profile Name="TraceHeap_ByName" Description="Heap Tracing by Name / Modules"
+     DetailLevel="Verbose" LoggingMode="File" Id="TraceHeap_ByName.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_64-MB">
+          <SystemProviderId Value="SP_HeapMemory" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+          </EventProviders>
+        </EventCollectorId>
+
+        <HeapEventCollectorId Value="HEC_768-MB">
+          <!-- Heap tracing begins when the app launches, as determined by: WPR -HeapTracingConfig MyAppName.exe enable -->
+          <!-- https://learn.microsoft.com/en-us/windows-hardware/test/wpt/recording-for-heap-analysis -->
+        </HeapEventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="TraceHeap_ByName" Description="Heap Tracing by Name / Modules"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="TraceHeap_ByName.Verbose.File" Id="TraceHeap_ByName.Verbose.Memory" />
+
+    <!-- Heap_Snapshot (Light) -->
+
+    <Profile Name="Heap_Snapshot" Description="Enable Heap Tracing for Snapshots"
+     DetailLevel="Light" LoggingMode="File" Id="Heap_Snapshot.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_16-MB">
+          <SystemProviderId Value="SP_Basic" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_64-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+            <EventProviderId Value="EP_Microsoft-Windows-Heap-Snapshot" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="Heap_Snapshot" Description="Enable Heap Tracing for Snapshots"
+     DetailLevel="Light" LoggingMode="Memory" Base="Heap_Snapshot.Light.File" Id="Heap_Snapshot.Light.Memory" />
+
+    <!-- TraceVirtualAlloc (Light) -->
+
+    <Profile Name="TraceVirtualAlloc" Description="Trace Only Modules and VirtualAlloc"
+     DetailLevel="Light" LoggingMode="File" Id="TraceVirtualAlloc.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_256-MB"> <!-- Let it run a long time! -->
+          <SystemProviderId Value="SP_VirtualAlloc" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="TraceVirtualAlloc" Description="Trace Only Modules and VirtualAlloc"
+     DetailLevel="Light" LoggingMode="Memory" Base="TraceVirtualAlloc.Light.File" Id="TraceVirtualAlloc.Light.Memory" />
+
+    <!-- TraceAddressSpace (Light) -->
+
+    <Profile Name="TraceAddressSpace" Description="Modules, File Mappings, VirtualAlloc"
+     DetailLevel="Light" LoggingMode="File" Id="TraceAddressSpace.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_256-MB"> <!-- Let it run a long time! -->
+          <SystemProviderId Value="SP_AddressSpace" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="TraceAddressSpace" Description="Modules, File Mappings, VirtualAlloc"
+     DetailLevel="Light" LoggingMode="Memory" Base="TraceAddressSpace.Light.File" Id="TraceAddressSpace.Light.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

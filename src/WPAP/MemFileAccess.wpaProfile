@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences>
+<!--
+  DISCLAIMER: Stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+-->
+          <FileReference FileName="OfficeBasic.stacktags" ServiceMoniker="StackFrameTag.{67F56EBD-2E82-493B-BF4F-712A1D0F018B}" />
+        </FileReferences>
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="925a882d-8f4d-48f4-a39e-b19a2e9c5496" IsVisible="true" Title="File Access Patterns">
+        <Graphs>
+          <Graph Guid="7c60aeff-a47f-4ba8-942c-d2b154087ab9" LayoutStyle="All" Color="#FF0000FF" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Timeline" GraphChartType="StackedLine" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="19" KeyColumnCount="10" LeftFrozenColumnCount="0" RightFrozenColumnCount="17" InitialFilterShouldKeep="true" GraphFilterColumnGuid="ca30ce13-326f-51d3-2f0a-1767ef0c468b" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="001e6c8d-300a-54aa-cab4-617ad58dfc88" Name="Log Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="c1859dc2-9fc8-5609-41b6-c5eb4eb35206" Name="Process Name" SortPriority="2" Width="106" IsVisible="true" />
+                <Column Guid="3fd82a5a-fcbb-501e-4d61-c07025286ad1" Name="Process" SortPriority="3" Width="118" IsVisible="true" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="4" Width="80" IsVisible="false" />
+                <Column Guid="839f35ec-c1ce-5a16-e3b1-1aa8dfe9a10a" Name="Stack" SortPriority="-1" Width="160" IsVisible="false" HelpText="Stack">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="581ad6fe-f42a-57d9-a94b-ec2f4131c642" Name="Path Tree" SortPriority="5" Width="192" IsVisible="true" />
+                <Column Guid="e21731d3-b7a0-5201-76f1-a11a81e785b4" Name="File Name" SortPriority="6" Width="200" IsVisible="false" />
+                <Column Guid="86551eef-39bf-41b1-8444-184ed27baf37" Name="Section Name" SortPriority="7" Width="88" IsVisible="true" HelpText="Section Name" />
+                <Column Guid="cb4ec152-a004-46ad-b58a-9bc8fbe80aca" Name="COFF Group" SortPriority="8" Width="100" IsVisible="false" HelpText="COFF Group" />
+                <Column Guid="839f35ec-c1ce-5a16-e3b1-1aa8dfe9a10a" Name="Stack" SortPriority="9" Width="200" IsVisible="false">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="8392664b-3f80-5bd5-68e5-0d2ef7056f12" Name="Count" AggregationMode="Sum" SortPriority="10" TextAlignment="Right" Width="58" IsVisible="true" />
+                <Column Guid="bab750dc-6d2e-58f3-01b9-5eab38c83729" Name="Thread ID" AggregationMode="UniqueCount" SortPriority="11" TextAlignment="Right" Width="60" IsVisible="false" />
+                <Column Guid="1e5ad3ac-9a5c-5161-2c57-e77cc431cd8c" Name="Max IO Time" AggregationMode="Max" SortPriority="13" TextAlignment="Right" Width="108" CellFormat="mN" IsVisible="true">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="001e6c8d-300a-54aa-cab4-617ad58dfc88" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+                <Column Guid="62ce151f-2768-5cea-f45f-bd2a224d3a54" Name="Avg IO Time" AggregationMode="Average" SortPriority="14" TextAlignment="Right" Width="104" CellFormat="mN" IsVisible="true">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="001e6c8d-300a-54aa-cab4-617ad58dfc88" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+                <Column Guid="25ff0b0e-83b4-5a06-36d0-f727f4057280" Name="Virtual Address" SortPriority="15" Width="120" CellFormat="x" IsVisible="false" />
+                <Column Guid="3cede4ef-c63d-5968-9a85-778a967f2ded" Name="File Offset" SortPriority="16" Width="120" CellFormat="x" IsVisible="true" />
+                <Column Guid="42dcd928-7544-5f2b-169e-1cc5f6ce81dc" Name="ByteCount" AggregationMode="Sum" SortOrder="Descending" SortPriority="0" TextAlignment="Right" Width="80" IsVisible="true" />
+                <Column Guid="001e6c8d-300a-54aa-cab4-617ad58dfc88" Name="Log Time" AggregationMode="Min" SortOrder="Ascending" SortPriority="1" TextAlignment="Right" Width="89" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="ca30ce13-326f-51d3-2f0a-1767ef0c468b" Name="IO Time" AggregationMode="Sum" SortPriority="12" TextAlignment="Right" Width="92" CellFormat="mN" IsVisible="true">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="001e6c8d-300a-54aa-cab4-617ad58dfc88" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+          <Graph Guid="7c60aeff-a47f-4ba8-942c-d2b154087ab9" LayoutStyle="All" Color="#FF0000FF" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="by Size" GraphChartType="StackedLine" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="20" KeyColumnCount="10" LeftFrozenColumnCount="0" RightFrozenColumnCount="19" InitialFilterShouldKeep="true" GraphFilterColumnGuid="ca30ce13-326f-51d3-2f0a-1767ef0c468b" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="001e6c8d-300a-54aa-cab4-617ad58dfc88" Name="Log Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="c1859dc2-9fc8-5609-41b6-c5eb4eb35206" Name="Process Name" SortPriority="1" Width="120" IsVisible="true" />
+                <Column Guid="3fd82a5a-fcbb-501e-4d61-c07025286ad1" Name="Process" SortPriority="3" Width="140" IsVisible="true" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="4" Width="88" IsVisible="false" />
+                <Column Guid="839f35ec-c1ce-5a16-e3b1-1aa8dfe9a10a" Name="Stack" SortPriority="-1" Width="160" IsVisible="false" HelpText="Stack">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="581ad6fe-f42a-57d9-a94b-ec2f4131c642" Name="Path Tree" SortPriority="5" Width="192" IsVisible="true" />
+                <Column Guid="e21731d3-b7a0-5201-76f1-a11a81e785b4" Name="File Name" SortPriority="6" Width="200" IsVisible="false" />
+                <Column Guid="86551eef-39bf-41b1-8444-184ed27baf37" Name="Section Name" AggregationMode="UniqueCount" SortPriority="7" Width="88" IsVisible="true" HelpText="Section Name" />
+                <Column Guid="cb4ec152-a004-46ad-b58a-9bc8fbe80aca" Name="COFF Group" SortPriority="8" Width="100" IsVisible="false" HelpText="COFF Group" />
+                <Column Guid="839f35ec-c1ce-5a16-e3b1-1aa8dfe9a10a" Name="Stack" SortPriority="9" Width="200" IsVisible="false">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="8392664b-3f80-5bd5-68e5-0d2ef7056f12" Name="Count" AggregationMode="Sum" SortPriority="10" TextAlignment="Right" Width="58" IsVisible="true" />
+                <Column Guid="bab750dc-6d2e-58f3-01b9-5eab38c83729" Name="Thread ID" SortPriority="11" TextAlignment="Right" Width="60" IsVisible="false" />
+                <Column Guid="ca30ce13-326f-51d3-2f0a-1767ef0c468b" Name="IO Time" AggregationMode="Sum" SortPriority="12" TextAlignment="Right" Width="92" CellFormat="mN" IsVisible="true">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="001e6c8d-300a-54aa-cab4-617ad58dfc88" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+                <Column Guid="1e5ad3ac-9a5c-5161-2c57-e77cc431cd8c" Name="Max IO Time" AggregationMode="Max" SortPriority="13" TextAlignment="Right" Width="106" CellFormat="mN" IsVisible="true">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="001e6c8d-300a-54aa-cab4-617ad58dfc88" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+                <Column Guid="62ce151f-2768-5cea-f45f-bd2a224d3a54" Name="Avg IO Time" AggregationMode="Average" SortPriority="14" TextAlignment="Right" Width="106" CellFormat="mN" IsVisible="true">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="001e6c8d-300a-54aa-cab4-617ad58dfc88" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+                <Column Guid="25ff0b0e-83b4-5a06-36d0-f727f4057280" Name="Virtual Address" SortPriority="15" Width="120" CellFormat="x" IsVisible="false" />
+                <Column Guid="3cede4ef-c63d-5968-9a85-778a967f2ded" Name="File Offset" SortPriority="16" Width="120" CellFormat="x" IsVisible="true" />
+                <Column Guid="001e6c8d-300a-54aa-cab4-617ad58dfc88" Name="Log Time" AggregationMode="Min" SortPriority="2" TextAlignment="Right" Width="120" IsVisible="false">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="42dcd928-7544-5f2b-169e-1cc5f6ce81dc" Name="ByteCount" AggregationMode="Sum" SortOrder="Descending" SortPriority="0" TextAlignment="Right" Width="80" IsVisible="true" />
+              </Columns>
+            </Preset>
+          </Graph>
+          <Graph Guid="bc4f0890-4a76-4fe7-b014-6ae70677f8f5" LayoutStyle="All" Color="#FF0000FF" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="File Access Patterns" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="19" KeyColumnCount="12" LeftFrozenColumnCount="13" RightFrozenColumnCount="16" InitialFilterQuery="[Process]:&lt;&gt;&quot;Unknown&quot; [Category Class]:=&quot;File&quot;" InitialFilterShouldKeep="true" GraphFilterColumnGuid="cbbf9e85-fe8b-4fe2-b6c6-cb86d2c8b484" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="25731f8c-96b6-4dd4-b279-451bee5b38a2" Name="Access Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="6a67fd39-b79b-54c3-d192-12ded31c68b1" Name="Trace #" ColumnMetadata="ResourceId" />
+              </MetadataEntries>
+              <HighlightEntries>
+                <HighlightEntry StartTimeColumnGuid="953f3733-3f8e-469f-b6d7-6e37898d1a08" StartTimeColumnName="Mark End Time" HighlightColor="#FFFF0000" />
+              </HighlightEntries>
+              <Columns>
+                <Column Guid="a9a21162-25a5-4da7-ba03-f4f4f5f9f580" Name="Process Name" SortPriority="1" Width="100" IsVisible="true" />
+                <Column Guid="f0de418a-efcc-41fc-b193-44257fb9cc04" Name="Service Display Name" SortPriority="2" Width="200" IsVisible="false" />
+                <Column Guid="c80413d0-4bd8-4396-98d5-19e083cda74b" Name="Process" SortPriority="3" Width="132" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="accde649-ca35-462e-ac5d-fd751bcd3ff5" Name="Page Category" SortPriority="4" Width="92" IsVisible="true" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="5" Width="80" IsVisible="false" />
+                <Column Guid="16415fd3-fb10-407a-80e4-fad3232b998f" Name="Category Class" SortPriority="6" Width="80" IsVisible="false" />
+                <Column Guid="66f6bb0a-7c9c-4027-b818-88d4300d96c3" Name="Access Stack" SortPriority="-1" Width="160" IsVisible="false" HelpText="Access Stack">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="fa2db657-c240-4ab8-8e21-38d295678761" Name="Path Tree" SortPriority="7" Width="211" IsVisible="true" />
+                <Column Guid="6cae6dc0-c9e5-4ebc-a220-682ad95cd549" Name="Description" SortPriority="8" Width="493" IsVisible="false" />
+                <Column Guid="46f58d7a-91a9-4719-bd02-a509d8d576b3" Name="Section Name" SortPriority="9" Width="88" IsVisible="true" />
+                <Column Guid="72811011-7140-4763-8341-8efe90963ec8" Name="COFF Group" SortPriority="10" Width="100" IsVisible="false" />
+                <Column Guid="66f6bb0a-7c9c-4027-b818-88d4300d96c3" Name="Access Stack" SortPriority="11" Width="300" IsVisible="false" HelpText="Access Stack">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="8554acf2-d92b-40c0-9d1c-cb038776cc45" Name="Impact Size (System View)" AggregationMode="Sum" SortPriority="12" TextAlignment="Right" Width="192" CellFormat="KB" IsVisible="false" HelpText="Impact Size (System View)" />
+                <Column Guid="daea3e94-6a23-42cd-83fc-72fe695018b5" Name="Impact Size (Process View)" AggregationMode="Sum" SortOrder="Descending" SortPriority="0" TextAlignment="Right" Width="192" CellFormat="KB" IsVisible="true" />
+                <Column Guid="25731f8c-96b6-4dd4-b279-451bee5b38a2" Name="Access Time" SortPriority="13" TextAlignment="Right" Width="96" IsVisible="false">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="b3e10bb2-1108-4ae5-acbf-2263c9096398" Name="Mapped Address (Shareable Page)" SortPriority="14" TextAlignment="Right" Width="122" CellFormat="x" IsVisible="false" HelpText="Mapped Address (Shareable Page)" />
+                <Column Guid="78434f28-83f7-4515-99d1-ac9e0a1c316e" Name="Address/Offset/Pfn" SortPriority="15" TextAlignment="Right" Width="122" CellFormat="x" IsVisible="true" HelpText="Address/Offset/Pfn" />
+                <Column Guid="422f02e3-aeee-4471-9430-d4af0bf869f5" Name="Image RVA" SortPriority="16" TextAlignment="Right" Width="122" CellFormat="x" IsVisible="false" />
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

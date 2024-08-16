@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    Collectors with the same name get merged across Profiles and WPRP files.
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <SystemCollector Id="SC_Base" Name="NT Kernel Logger">
+      <BufferSize Value="1024" />
+      <Buffers Value="8" />
+      <StackCaching BucketCount="256" CacheSize="2048" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_256-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="256" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_384-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="384" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_512-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="512" />
+    </SystemCollector>
+
+    <EventCollector Id="EC_4-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="4" />
+    </EventCollector>
+
+    <EventCollector Id="EC_16-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="16" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wprcontrolprofiles-schema
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+-->
+
+    <!-- Base requirement for process/thread/module info and symbol resolution. -->
+
+    <SystemProvider Id="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="ProcessCreate" />
+        <Stack Value="ThreadCreate" />
+        <Stack Value="ImageLoad" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Memory / Reference Set (RAM) tracing with call stacks -->
+
+    <SystemProvider Id="SP_ReferenceSet" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ReferenceSet" />
+        <Keyword Value="VirtualAllocation" />
+        <Keyword Value="Memory" />
+        <Keyword Value="MemoryInfo" />
+        <Keyword Value="MemoryInfoWS" />
+        <Keyword Value="HardFaults" />
+        <Keyword Value="FootPrint" />
+        <Keyword Value="VAMap" />
+        <Keyword Value="Session" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="VirtualAllocation" />
+        <Stack Value="PageAccess" />
+        <Stack Value="PageAccessEx" />
+        <Stack Value="PageRangeAccess" />
+        <Stack Value="HardFault" />
+        <Stack Value="PagefileMappedSectionCreate" /> <!-- Section: Create - CreateFileMapping(INVALID_FILE_HANDLE) -->
+        <Stack Value="MapFile" /> <!-- File: Map / MapViewOfFile -->
+      </Stacks>
+    </SystemProvider>
+
+    <SystemProvider Id="SP_ResidentSet" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="HardFaults" /> 
+        <Keyword Value="Memory" />
+        <Keyword Value="MemoryInfo" />
+        <Keyword Value="VAMap" />
+        <Keyword Value="Session" />
+        <Keyword Value="VirtualAllocation" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="VirtualAllocation" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Minimal provider to diagnose memory issues for longer periods. -->
+
+    <SystemProvider Id="SP_MemoryLean">
+<!-- These are the bare-minimum Kernel providers required for Reference Set (RAM Impact) data. -->
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+        <Keyword Value="ReferenceSet" />
+        <Keyword Value="Memory" />
+      </Keywords>
+<!--  WARNING! Stack walking increase trace size by up to ~40%, especially PageAccess*! -->
+<!--  Stack walking also pages in sections of 64-bit modules, similar to exception handling.
+      <Stacks Operation="Add">
+        <Stack Value="ImageLoad" />
+        <Stack Value="PageAccess" />
+        <Stack Value="PageAccessEx" />
+        <Stack Value="PageRangeAccess" />
+      </Stacks>
+-->
+    </SystemProvider>
+
+    <!-- Private Commit-Charge (Non-shareable Committed Address Space Allocations Charged to the System Pagefile) -->
+
+    <SystemProvider Id="SP_PrivateCommitCharge" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="MemoryInfo" />
+        <Keyword Value="MemoryInfoWS" />      <!-- 0.5 second Memory Stats -->
+        <Keyword Value="VirtualAllocation" /> <!-- VirtualAlloc & Win32 Heap -->
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="VirtualAllocation" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Commit-Charge (All Committed Address Space Allocations Charged to the System Pagefile) -->
+
+    <SystemProvider Id="SP_CommitCharge" Base="SP_PrivateCommitCharge">
+      <Keywords Operation="Add">
+        <Keyword Value="Memory" /> <!-- PFMappedSection, etc. (Expensive!) -->
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="PagefileMappedSectionCreate" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Memory stats per process every 1/2 second. Super lean! -->
+
+    <SystemProvider Id="SP_MemoryStats">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="MemoryInfo" />
+        <Keyword Value="MemoryInfoWS" />
+      </Keywords>
+    </SystemProvider>
+
+    <!-- Additional Module/Load info -->
+
+    <EventProvider Id="EP_Microsoft-Windows-ImageLoad" Name="2cb15d1d-5fc1-11d2-abe1-00a0c911f518">
+      <Keywords Operation="Add">
+        <Keyword Value="0x10" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- The 'Win32 Heap Ranges' provider allows WPA to separate HeapAlloc from VirtualAlloc in the memory trace. -->
+
+    <EventProvider Id="EP_HeapRanges" Name="d781ca11-61c0-4387-b83d-af52d3d2dd6a" Level="15">
+      <Keywords Operation="Add">
+        <Keyword Value="0x000000000000000f" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- Microsoft-Office-Events - Office Code Markers -->
+
+    <EventProvider Id="EP_OLog_CodeMarkers" Name="8736922D-E8B2-47eb-8564-23E77E728CF3">
+      <Keywords Operation="Add">
+        <Keyword Value="4" />
+      </Keywords>
+    </EventProvider>
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <!-- ReferenceSet (Verbose) -->
+
+    <Profile Name="ReferenceSet" Description="Reference Set (RAM Usage) / VirtualAlloc / Memory Stats every 0.5 sec"
+     DetailLevel="Verbose" LoggingMode="File" Id="ReferenceSet.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_384-MB">
+          <SystemProviderId Value="SP_ReferenceSet" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_HeapRanges" />
+            <!-- Some older versions of WPR fail with only the two EventProviders above. -->
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="ReferenceSet" Description="Reference Set (RAM Usage) / VirtualAlloc / Memory Stats every 0.5 sec"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="ReferenceSet.Verbose.File" Id="ReferenceSet.Verbose.Memory" />
+
+    <!-- LeanReferenceSet (Light) -->
+
+    <Profile Name="LeanReferenceSet" Description="Lean Reference Set (RAM Usage), no stackwalks"
+     DetailLevel="Light" LoggingMode="File" Id="LeanReferenceSet.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_512-MB"> <!-- Many buffers for long duration! -->
+          <SystemProviderId Value="SP_MemoryLean" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_HeapRanges" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="LeanReferenceSet" Description="Lean Reference Set (RAM Usage), no stackwalks"
+     DetailLevel="Light" LoggingMode="Memory" Base="LeanReferenceSet.Light.File" Id="LeanReferenceSet.Light.Memory" />
+
+    <!-- MemoryStats (Light) -->
+
+    <Profile Name="MemoryStats" Description="Memory Stats Per Process Every 1/2 Second"
+     DetailLevel="Light" LoggingMode="File" Id="MemoryStats.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_256-MB">
+          <SystemProviderId Value="SP_MemoryStats" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_4-MB">
+          <EventProviders Operation="Add">
+
+            <!-- What caused the memory usage to jump up!? -->
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="MemoryStats" Description="Memory Stats Per Process Every 1/2 Second"
+     DetailLevel="Light" LoggingMode="Memory" Base="MemoryStats.Light.File" Id="MemoryStats.Light.Memory" />
+
+    <!-- ResidentSet (Light) -->
+    <!-- WPA does not work with Resident Set when launched with: -cliprundown -->
+
+    <Profile Name="ResidentSet" Description="Memory Resident Set / NO: WPA -cliprundown"
+     DetailLevel="Light" LoggingMode="File" Id="ResidentSet.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_256-MB">
+          <SystemProviderId Value="SP_ResidentSet" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_HeapRanges" /> <!-- for Page Category = Win32Heap -->
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+
+          </EventProviders>
+        </EventCollectorId>
+      </Collectors>
+    </Profile>
+
+    <Profile Name="ResidentSet" Description="Memory Resident Set / NO: WPA -cliprundown"
+     DetailLevel="Light" LoggingMode="Memory" Base="ResidentSet.Light.File" Id="ResidentSet.Light.Memory" />
+
+    <!-- Private Commit Charge (Light) -->
+
+    <Profile Name="PrivateCommitCharge" Description="Private Commit Charge - Committed Address Space Charged to the PageFile"
+     DetailLevel="Light" LoggingMode="File" Id="PrivateCommitCharge.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_256-MB">
+          <SystemProviderId Value="SP_PrivateCommitCharge" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_HeapRanges" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="PrivateCommitCharge" Description="Private Commit Charge - Committed Address Space Charged to the PageFile"
+     DetailLevel="Light" LoggingMode="Memory" Base="PrivateCommitCharge.Light.File" Id="PrivateCommitCharge.Light.Memory" />
+
+    <!-- Full Commit Charge (Verbose) -->
+
+    <Profile Name="CommitCharge" Description="Commit Charge - Committed Address Space Charged to the PageFile"
+     DetailLevel="Verbose" LoggingMode="File" Id="CommitCharge.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_384-MB">
+          <SystemProviderId Value="SP_CommitCharge" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_HeapRanges" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="CommitCharge" Description="Commit Charge - Committed Address Space Charged to the PageFile"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="CommitCharge.Verbose.File" Id="CommitCharge.Verbose.Memory" />
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+
+    In the discussion below, replace '~' with '-'.  (XML comments do not allow double-hyphens.)
+
+    In older versions of Edge/Chrome, capturing ETW stackwalks requires providing a switch: ~~js-flags=~~enable-etw-stack-walking
+    Other switches make the stackwalks more readable, but may reduce performance: ~~no-short-builtin-calls ~~interpreted-frames-native-stack
+
+    To enable ETW tracing in MSEdge.exe, first make sure that there are no running instances.
+      TaskKill /im MSEdge.exe
+
+    Then Start MSEdge with these cmdline switches:
+      ~~js-flags="~~enable-etw-stack-walking ~~no-short-builtin-calls ~~interpreted-frames-native-stack"
+
+    To enable ETW tracing in WebView2, set an environment variable (within the context of the current user):
+    Using System Properties > Advanced > Environment Variables > User Variables (replacing '~' with '-'):
+      Variable = WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS
+      Value = ~~js-flags="~~enable-etw-stack-walking ~~no-short-builtin-calls ~~interpreted-frames-native-stack"
+    Or from the Admin cmdline (replacing '~' with '-'):
+      setx WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS "~~js-flags=\"~~enable-etw-stack-walking ~~no-short-builtin-calls ~~interpreted-frames-native-stack\""
+
+    Note that tracing the Chakra JavaScript engine works without requiring any special flags at launch.
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <EventCollector Id="EC_32-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="32" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/Keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+-->
+
+    <EventProvider Id="EP_Microsoft-JScript" Name="57277741-3638-4a4b-bdba-0ac6e45da56c"> <!-- OR: V8.js -->
+      <Keywords>
+        <Keyword Value="0x00000001" /> <!-- "JScriptRuntime" -->
+<!--
+        <Keyword Value="0x00000008" /> # "JScriptGCBucketStats"
+        <Keyword Value="0x00000010" /> # "JScriptProjection"
+        <Keyword Value="0x00000020" /> # "JScriptFrontend"
+        <Keyword Value="0x00000040" /> # "JScriptGarbageCollection"
+        <Keyword Value="0x00000080" /> # "JScriptProfile"
+        <Keyword Value="0x00000100" /> # "JscriptBackend"
+        <Keyword Value="0x00000200" /> # "JscriptJIT"
+        <Keyword Value="0x00000400" /> # "JScriptMemoryTracing"
+        <Keyword Value="0x00000800" /> # "JScriptObjectAllocation" 
+        <Keyword Value="0x00001000" /> # "JScriptExternalReferenceAddRef" 
+        <Keyword Value="0x00002000" /> # "JScriptObjectCleanup" 
+        <Keyword Value="0x00004000" /> # "JScriptExternalReferenceRelease" 
+        <Keyword Value="0x00008000" /> # "JScriptAsyncCausality"
+        <Keyword Value="0x00010000" /> # "JScriptByteCode"
+        <Keyword Value="0x00020000" /> # "JScriptHosting"
+        <Keyword Value="0x00040000" /> # "JScriptStackTrace"
+        <Keyword Value="0x00080000" /> # "JScriptAsyncCausality_V2"
+        <Keyword Value="0x00100000" /> # "JScriptSourceMapping"
+        <Keyword Value="0x00200000" /> # "MemProtectGarbageCollection"
+        <Keyword Value="0x00400000" /> # "MemProtectObjectAllocation" 
+        <Keyword Value="0x00800000" /> # "MemProtectHeapSize"
+        <Keyword Value="0x01000000" /> # "Internal"
+        <Keyword Value="0x02000000" /> # "MemProtectGCBucketStats"
+-->
+      </Keywords>
+      <CaptureStateOnStart>
+        <Keyword Value="0x2" /> <!-- "JScriptStartRundown" -->
+      </CaptureStateOnStart>
+      <CaptureStateOnSave>
+        <Keyword Value="0x4" /> <!-- "JScriptEndRundown" -->
+      </CaptureStateOnSave>
+    </EventProvider>
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <Profile Name="JS" Description="JavaScript Runtime"
+     DetailLevel="Light" LoggingMode="File" Id="JS.Light.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_32-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Microsoft-JScript" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="JS" Description="JavaScript Runtime"
+     DetailLevel="Light" LoggingMode="Memory" Base="JS.Light.File" Id="JS.Light.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <SystemCollector Id="SC_Base" Name="NT Kernel Logger">
+      <BufferSize Value="1024" />
+      <Buffers Value="8" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_32-MB" Base="SC_Base">
+      <Buffers Value="32" />
+    </SystemCollector>
+
+    <EventCollector Id="EC_Base" Name="MSO Event Logger">
+      <BufferSize Value="1024" />
+      <Buffers Value="4" />
+    </EventCollector>
+
+    <EventCollector Id="EC_32-MB" Name="MSO Event Logger" Base="EC_Base">
+      <Buffers Value="32" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wprcontrolprofiles-schema
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+-->
+
+    <!-- Base requirement for process/thread/module info and symbol resolution. -->
+
+    <SystemProvider Id="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+    </SystemProvider>
+
+    <!-- Tracing Kernel Object Handles with call stacks -->
+
+    <SystemProvider Id="SP_KernelHandles" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="Handle" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="ImageLoad" />
+        <Stack Value="HandleCreate" />
+        <Stack Value="HandleDuplicate" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Additional Module/Load info -->
+
+    <EventProvider Id="EP_Microsoft-Windows-ImageLoad" Name="2cb15d1d-5fc1-11d2-abe1-00a0c911f518">
+      <Keywords Operation="Add">
+        <Keyword Value="0x10" />
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="EP_FakeProvider" Name="{8899F15E-0A43-457E-9BA3-19B38E50F33E}" />
+
+    <!-- GDI and User Handles: Requires Windows 10.0.18315+ -->
+
+    <EventProvider Id="EP_Microsoft-Windows-Win32k_Handles" Name="8c416c79-d49b-4f01-a467-e56d3aa8234c" Level="4" Stack="true" NonPagedMemory="true">
+      <Keywords Operation="Add">
+        <Keyword Value="0x30000000000" />
+      </Keywords>
+    </EventProvider>
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <Profile Name="WindowsHandles" Description="Kernel / GDI / User Object Handles (Windows 10.0.18315+)"
+     DetailLevel="Verbose" LoggingMode="File" Id="WindowsHandles.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_32-MB">
+          <SystemProviderId Value="SP_KernelHandles" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_32-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-Win32k_Handles" />
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="WindowsHandles" Description="Kernel / GDI / User Object Handles (Windows 10.0.18315+)"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="WindowsHandles.Verbose.File" Id="WindowsHandles.Verbose.Memory" />
+
+
+    <Profile Name="WindowsHandles" Description="Kernel Object Handles Only"
+     DetailLevel="Light" LoggingMode="File" Id="WindowsHandles.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_32-MB">
+          <SystemProviderId Value="SP_KernelHandles" />
+        </SystemCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="WindowsHandles" Description="Kernel Object Handles Only"
+     DetailLevel="Light" LoggingMode="Memory" Base="WindowsHandles.Light.File" Id="WindowsHandles.Light.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <!--FileCompression Value="true" /-->
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    Collectors with the same name get merged across Profiles and WPRP files.
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <SystemCollector Id="SC_4-MB" Name="NT Kernel Logger">
+      <BufferSize Value="1024" />
+      <Buffers Value="4" />
+    </SystemCollector>
+
+    <EventCollector Id="EC_4-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="4" />
+    </EventCollector>
+
+    <EventCollector Id="EC_8-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="8" />
+    </EventCollector>
+
+    <EventCollector Id="EC_16-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="16" />
+    </EventCollector>
+
+    <EventCollector Id="EC_ALT_1-MB" Name="MSO ALT Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="1" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wprcontrolprofiles-schema
+-->
+
+    <SystemProvider Id="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+    </SystemProvider>
+
+    <EventProvider Id="EP_Windows_UIEvents" Name="8c416c79-d49b-4f01-a467-e56d3aa8234c" NonPagedMemory="true" Stack="true"> <!-- Microsoft-Windows-Win32k -->
+      <Keywords Operation="Add">
+        <Keyword Value="0x000000002000" /> <!-- Focus -->
+        <Keyword Value="0x000000020000" /> <!-- UserActivity -->
+        <Keyword Value="0x000000040000" /> <!-- UIUnresponsiveness -->
+      </Keywords>
+      <!-- These event filters are optional, and may be abandoned by WPR when this EventProvider is merged with others of the same Win32K provider. -->
+      <EventFilters FilterIn="true">
+        <EventId Value="2" />    <!-- Focus::FocusChange -->
+        <EventId Value="25" />   <!-- UserActivity::UserActive -->
+        <EventId Value="26" />   <!-- UserActivity::FocusedProcessChange -->
+        <EventId Value="35" />   <!-- UIUnresponsiveness::WaitCursor -->
+        <EventId Value="37" />   <!-- UIUnresponsiveness::InputProcessDelay -->
+        <EventId Value="38" />   <!-- UIUnresponsiveness::MessageCheckDelay -->
+        <EventId Value="172" />  <!-- UIUnresponsiveness::ImmersiveInputProcessDelay -->
+        <EventId Value="173" />  <!-- UIUnresponsiveness::ImmersiveMessageCheckDelay -->
+      </EventFilters>
+    </EventProvider>
+
+    <EventProvider Id="EP_Windows_UIEvents_ALT" Name="8c416c79-d49b-4f01-a467-e56d3aa8234c" NonPagedMemory="true" Stack="true"> <!-- Microsoft-Windows-Win32k -->
+      <Keywords Operation="Add">
+        <Keyword Value="0x000000800000" /> <!-- MessagePumpInternalAndInput - EXPENSIVE on Win11 -->
+      </Keywords>
+      <!-- An expensive keyword must be further filtered by Event ID. -->
+      <EventFilters FilterIn="true">
+        <EventId Value="66" />   <!-- MessagePumpInternalAndInput::InputQueueLocked -->
+      </EventFilters>
+    </EventProvider>
+
+    <EventProvider Id="EP_Windows_Info" Name="487d6e37-1b9d-46d3-a8fd-54ce8bdf8a53" Level="5" NonPagedMemory="true" Stack="true"> <!-- Microsoft.Windows.Win32k.TraceLogging / Win32kTraceLogging -->
+      <Keywords>
+        <Keyword Value="0x0000000000000002" /> <!-- WIN32K_KEYWORD_BROADCAST_MESSAGE -->
+        <Keyword Value="0x0000000000040000" /> <!-- MessageCheckDelayEvent -->
+        <Keyword Value="0x0000000010000000" /> <!-- UserCritInfo -->
+        <Keyword Value="0x0000400000000000" /> <!-- AppUsageAndDisplayInfoOnExit -->
+        <Keyword Value="0x0000800000000000" /> <!-- AppInteractivitySummary -->
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="EP_Windows_Shell" Name="30336ed4-e327-447c-9de0-51b652c86108"> <!-- Microsoft-Windows-Shell-Core -->
+      <Keywords>
+        <Keyword Value="0x04000000" /> <!-- StartupPerf -->
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="EP_KernelProcess" Name="2839ff94-8f12-4e1b-82e3-af7af77a450f" NonPagedMemory="true" /> <!-- KernelProcess -->
+
+    <!-- ProcessMonitor-like Provider -->
+    <EventProvider Id="EP_Windows_Kernel_Process" Name="22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716" NonPagedMemory="true"> <!-- Microsoft-Windows-Kernel-Process -->
+      <Keywords>
+        <Keyword Value="0x0010" /> <!-- PROCESS -->
+        <Keyword Value="0x0200" /> <!-- PROCESS_FREEZE -->
+        <Keyword Value="0x0400" /> <!-- JOB -->
+        <Keyword Value="0x4000" /> <!-- JOB_SILO -->
+<!-- EXPENSIVE:
+        <Keyword Value="0x0020" /> # THREAD
+        <Keyword Value="0x0040" /> # IMAGE
+        <Keyword Value="0x0080" /> # CPU_PRIORITY
+        <Keyword Value="0x0100" /> # OTHER_PRIORITY
+        <Keyword Value="0x0800" /> # ENABLE_PROCESS_TRACING_CALLBACKS
+        <Keyword Value="0x1000" /> # JOB_IO
+        <Keyword Value="0x2000" /> # WORK_ON_BEHALF
+-->
+      </Keywords>
+    </EventProvider>
+
+    <!-- Network Connection Status Indicator -->
+    <EventProvider Id="EP_Microsoft_Windows_NCSI" Name="314de49f-ce63-4779-ba2b-d616f6963a88" /> <!-- Microsoft-Windows-NCSI -->
+
+    <EventProvider Id="EP_Microsoft_Windows_WLAN_AutoConfig" Name="9580d7dd-0379-4658-9870-d5be7d52d6de"> <!-- Microsoft-Windows-WLAN-AutoConfig -->
+      <Keywords>
+        <Keyword Value="0x200" /> <!-- WLANConnect -->
+      </Keywords>
+    </EventProvider>
+
+    <!-- SMB: Server Message Block (Noisy!) -->
+    <EventProvider Id="EP_Microsoft_Windows_SMBClient" Name="988c59c5-0a1c-45b6-a555-0c62276e327d"> <!-- Microsoft-Windows-SMBClient -->
+      <Keywords>
+        <Keyword Value="0x001" /> <!-- Smb_Perf -->
+        <Keyword Value="0x002" /> <!-- Networking_Perf -->
+        <Keyword Value="0x004" /> <!-- Smb_Info -->
+        <Keyword Value="0x008" /> <!-- InfoCache_Info -->
+        <Keyword Value="0x010" /> <!-- Smb_TFO -->
+        <Keyword Value="0x020" /> <!-- Smb_MultiChannel -->
+        <Keyword Value="0x040" /> <!-- Smb_Connectivity -->
+        <Keyword Value="0x080" /> <!-- Smb_Authentication -->
+        <Keyword Value="0x100" /> <!-- Smb_Authorization -->
+        <Keyword Value="0x200" /> <!-- Smb_Security -->
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="EP_AppLifeCycle-UI"      Name="ee97cdc4-b095-5c70-6e37-a541eb74c2b5" Level="5" /> <!-- Microsoft.Windows.AppLifeCycle.UI -->
+
+    <EventProvider Id="EP_Helium_C2RX"          Name="5526aed1-f6e5-5896-cbf0-27d9f59b6be7" Level="5"> <!-- Microsoft.Windows.ApplicationModel.DesktopAppx (C2RX/Helium) -->
+      <!-- Filter out noisiest, low-content events. These filters may be lost when this EventProvider is merged with others of the same Name/GUID. -->
+      <EventNameFilters FilterIn="false">
+        <EventName Value="LoadStateRepoPackageObject" />
+        <EventName Value="LoadStateRepoPackageProperties" />
+        <EventName Value="SecondaryPackage" />
+        <EventName Value="LoadStateRepoSecondaryPackages" />
+      </EventNameFilters>
+    </EventProvider>
+
+    <EventProvider Id="EP_ProcessStateManager"  Name="d49918cf-9489-4bf1-9d7b-014d864cf71f"/> <!-- Microsoft-Windows-ProcessStateManager -->
+
+    <EventProvider Id="EP_BrokerInfrastructure" Name="e6835967-e0d2-41fb-bcec-58387404e25a" > <!-- Microsoft-Windows-BrokerInfrastructure -->
+      <Keywords>
+        <Keyword Value="0x1"/>
+<!--
+        <Keyword Value="0x00000001" /> # "BackgroundTask"
+        <Keyword Value="0x00000002" /> # "PDC"
+        <Keyword Value="0x00000004" /> # "LowOverheadDiag"
+        <Keyword Value="0x00000008" /> # "Package"
+        <Keyword Value="0x00000010" /> # "Watchdog"
+        <Keyword Value="0x00000020" /> # "Session"
+        <Keyword Value="0x00000040" /> # "SleepStudy"
+-->
+      </Keywords>
+    </EventProvider>
+
+    <!-- Microsoft-IE: MSHTML -->
+    <EventProvider Id="EP_MS-IE" Name="9E3B3947-CA5D-4614-91A2-7B624E0E7244" Stack="true">
+      <Keywords Operation="Add">
+        <Keyword Value="0x0000200" /> <!-- Subsystem -->
+        <Keyword Value="0x0100000" /> <!-- PageMark (for Mshtml_DOM_CustomSiteEvent / Agave.AgaveActivationStart/End) -->
+<!--
+        <Keyword Value="0x0000100" /> # PrimaryNav (Expensive?)
+        <Keyword Value="0x4000000" /> # PageLoadBreakdown (Expensive!)
+-->
+      </Keywords>
+    </EventProvider>
+
+    <!-- AXE: Assessment Execution Engine -->
+    <EventProvider Id="EP_Windows_AssessmentExecutionEngine" Name="6FE1CBF0-A23C-41FE-93BA-6929AC3AB4E7"/> <!-- Microsoft-Windows-AssessmentExecutionEngine -->
+
+    <!-- ETW: Event Tracing for Windows -->
+    <EventProvider Id="EP_ETW-MetaData" Name="b675ec37-bdb6-4648-bc92-f3fdc74d3ca2" NonPagedMemory="true" Level="5" Stack="true"> <!-- Microsoft-Windows-Kernel-EventTracing -->
+      <Keywords>
+        <Keyword Value="0x10" /> <!-- ETW Session Info -->
+        <Keyword Value="0x20" /> <!-- ETW Provider Info -->
+        <Keyword Value="0x40" /> <!-- ETW Lost Events -->
+      </Keywords>
+    </EventProvider>
+
+    <!-- PerfTrack -->
+    <EventProvider Id="EP_PerfTrack-Meta"     NonPagedMemory="true" Name="8c493695-3df4-40cb-b11d-9edc41d5d2ab" /> <!-- Meta-provider for all PerfTrack providers installed on the system -->
+    <EventProvider Id="EP_PerfTrack-Windows"  NonPagedMemory="true" Name="030f2f57-abd0-4427-bcf1-3a3587d7dc7d" Stack="true" /> <!-- Microsoft-Windows-Diagnostics-PerfTrack -->
+    <EventProvider Id="EP_PerfTrack-Counters" NonPagedMemory="true" Name="c06ed57a-a7bd-42d7-b5ff-77a9dec5732d" /> <!-- Microsoft-Windows-Diagnostics-PerfTrack-Counters -->
+
+    <!-- DiagTrack -->
+    <EventProvider Id="EP_DiagTrackA" Name="43AC453B-97CD-4B51-4376-DB7C9BB963AC" /> <!-- Microsoft.Windows.DiagTrack -->
+    <EventProvider Id="EP_DiagTrackB" Name="56DC463B-97E8-4B59-E836-AB7C9BB96301" /> <!-- Microsoft-Windows-DiagTrack -->
+
+    <!-- Watson Error Reporting -->
+    <EventProvider Id="EP_HangReporting"  Name="3E0D88DE-AE5C-438A-BB1C-C2E627F8AECB" Level="5" /> <!-- Microsoft.Windows.HangReporting -->
+    <EventProvider Id="EP_FaultReporting" Name="1377561d-9312-452c-ad13-c4a1c9c906e0" Level="5" /> <!-- Microsoft.Windows.FaultReporting -->
+    <EventProvider Id="EP_ErrorReporting" Name="CC79CF77-70D9-4082-9B52-23F3A3E92FE4" Level="5" /> <!-- Microsoft.Windows.WindowsErrorReporting -->
+
+    <!-- COM: Component Object Model -->
+
+    <EventProvider Id="EP_COMRuntime" Name="bf406804-6afa-46e7-8a48-6c357e1d6d61" Stack="true"> <!-- Microsoft-Windows-COMRuntime -->
+      <Keywords>
+        <Keyword Value="0x01" /> <!-- CliModalLoop -->
+        <Keyword Value="0x02" /> <!-- ComCallWaitAnalysis -->
+        <Keyword Value="0x04" /> <!-- DropInputMessage -->
+        <Keyword Value="0x08" /> <!-- PrematureStubRundown -->
+      </Keywords>
+    </EventProvider>
+
+    <!-- Remote Procedure Calls -->
+
+    <!-- RPC Activity: Potentially very high traffic! -->
+    <EventProvider Id="EP_Microsoft-Windows-RPC" Name="6ad52b32-d609-4be9-ae07-ce8dae937e39" Level="4" Stack="true">
+    <!-- Requires WPR v10.0.15002+ -->
+      <StackFilters FilterIn="true">
+        <EventId Value="5" />  <!-- RPC Client Call Start -->
+        <EventId Value="6" />  <!-- RPC Server Call Start -->
+        <EventId Value="14" /> <!-- RPC FunctionTrace Start -->
+        <EventId Value="16" /> <!-- RPC FunctionTrace Start #2 -->
+      </StackFilters>
+    </EventProvider>
+
+    <EventProvider Id="EP_Microsoft-Windows-RPCSS" Name="d8975f88-7ddb-4ed0-91bf-3adf48c48e0c" Level="4" /> <!-- Microsoft-Windows-RPCSS -->
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <!-- RPC: Remote Procedure Calls (Light) -->
+
+    <Profile Name="RPC" Description="Remote Procedure Calls"
+     DetailLevel="Light" LoggingMode="File" Id="RPC.Light.File">
+      <Collectors Operation="Add">
+
+        <!-- Stand-alone profile: bare minimum -->
+        <SystemCollectorId Value="SC_4-MB">
+          <SystemProviderId Value="SP_Base" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_8-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Microsoft-Windows-RPC" />
+            <EventProviderId Value="EP_Microsoft-Windows-RPCSS" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="RPC" Description="Remote Procedure Calls"
+     DetailLevel="Light" LoggingMode="Memory" Base="RPC.Light.File" Id="RPC.Light.Memory" />
+
+    <!-- Basic Windows Providers -->
+
+    <Profile Name="Basic" Description="Basic Windows providers of interest to Office"
+     DetailLevel="Light" LoggingMode="File" Id="Basic.Light.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_4-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Windows_Kernel_Process" />
+            <EventProviderId Value="EP_Windows_UIEvents" />
+            <EventProviderId Value="EP_Windows_Info" />
+            <EventProviderId Value="EP_Windows_Shell" />
+            <EventProviderId Value="EP_AppLifeCycle-UI" />
+            <EventProviderId Value="EP_Helium_C2RX" />
+            <EventProviderId Value="EP_PerfTrack-Windows" />
+            <EventProviderId Value="EP_PerfTrack-Counters" />
+            <EventProviderId Value="EP_ETW-MetaData" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="Basic" Description="Basic Windows providers of interest to Office"
+     DetailLevel="Light" LoggingMode="Memory" Base="Basic.Light.File" Id="Basic.Light.Memory" />
+
+    <!-- Tutti Frutti (may stand-alone) -->
+
+    <Profile Name="TuttiFrutti" Description="All Windows providers of interest to Office"
+     DetailLevel="Verbose" LoggingMode="File" Base="Basic.Light.File" Id="TuttiFrutti.Verbose.File">
+      <Collectors Operation="Add">
+
+        <!-- Stand-alone profile: bare minimum -->
+        <SystemCollectorId Value="SC_4-MB">
+          <SystemProviderId Value="SP_Base" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_KernelProcess" />
+            <EventProviderId Value="EP_ProcessStateManager" />
+            <EventProviderId Value="EP_BrokerInfrastructure" />
+            <EventProviderId Value="EP_Windows_AssessmentExecutionEngine" />
+            <EventProviderId Value="EP_Microsoft_Windows_WLAN_AutoConfig" />
+            <EventProviderId Value="EP_Microsoft_Windows_NCSI" />
+            <EventProviderId Value="EP_Microsoft_Windows_SMBClient" />
+            <EventProviderId Value="EP_COMRuntime" />
+            <EventProviderId Value="EP_MS-IE" />
+            <EventProviderId Value="EP_Microsoft-Windows-RPC" />
+            <EventProviderId Value="EP_Microsoft-Windows-RPCSS" />
+            <EventProviderId Value="EP_DiagTrackA" />
+            <EventProviderId Value="EP_DiagTrackB" />
+            <EventProviderId Value="EP_HangReporting" />
+            <EventProviderId Value="EP_FaultReporting" />
+            <EventProviderId Value="EP_ErrorReporting" />
+          </EventProviders>
+        </EventCollectorId>
+
+        <!--
+          Complex provider sets can lose event filtering and other characteristics
+          when merged with others of the same provider, within the same named collector.
+          Put these providers in a differently named collector.
+          Do not merge. Do not lose the event filtering, else they may be too expensive.
+        -->
+
+        <EventCollectorId Value="EC_ALT_1-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Windows_UIEvents_ALT" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="TuttiFrutti" Description="All Windows providers of interest to Office"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="TuttiFrutti.Verbose.File" Id="TuttiFrutti.Verbose.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

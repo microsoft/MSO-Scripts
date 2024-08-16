@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    **** This Recording Profile requires WPR v10.0.15002+ ****
+
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    Collectors with the same name get merged across Profiles and WPRP files.
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <SystemCollector Id="SC_8-MB" Name="MSO System Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="8" />
+    </SystemCollector>
+
+    <EventCollector Id="EC_16-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="16" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+-->
+
+    <!-- Base requirement for process/thread/module info and symbol resolution. -->
+
+    <SystemProvider Id="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+    </SystemProvider>
+
+<!--
+    Windows and Office Thread Pool - Associate ThreadPool-invoked events with the callstacks that enqueued them.
+
+    These stackwalk flags are apparently not included in the standard set for the Windows ThreadPool.
+        ThreadPoolSetTimer=0x1C2A
+        ThreadPoolCancelTimer=0x1C2B
+        ThreadPoolSetNTTimer=0x1C2C
+        ThreadPoolCancelNTTimer=0x1C2D
+        ThreadPoolTimerExpireBegin=0x1C2E
+        ThreadPoolTimerExpireEnd=0x1C2F
+        ThreadPoolTimerExpiration=0x1C30
+-->
+
+<!-- EventProvider Stacks and CustomStack are available in WPR v10.0.15002+ -->
+    <EventProvider Id="EP_Windows-ThreadPool" Name="c861d0e2-a2c1-4d36-9f9c-970bab943a12">
+      <Stacks Operation="Add">
+        <Stack Value="ThreadPoolCallbackEnqueue" />
+        <CustomStack Value="0x1C2A" />
+        <CustomStack Value="0x1C2C" />
+      </Stacks>
+    </EventProvider>
+
+    <!-- To register this provider: EnsureETWProvider(".\OETW\MsoEtwTP.man") -->
+    <EventProvider Id="EP_Office-ThreadPool" Name="A019725F-CFF1-47E8-8C9E-8FE2635B6388" Level="4" Stack="true">
+      <Keywords Operation="Add">
+        <Keyword Value="0x1e" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- To register this provider: EnsureETWProvider(".\OETW\MsoEtwDQ.man") -->
+    <EventProvider Id="EP_Office-Dispatch" Name="559a5658-8100-4d84-b756-0a47a476280c" Stack="true" /> <!-- OfficeDispatchQueue -->
+
+    <!-- To register this provider: EnsureETWProvider(".\OETW\MsoEtwCM.man") # Usually pre-registered -->
+    <EventProvider Id="EP_Office-IdleTasks" Name="8736922D-E8B2-47eb-8564-23E77E728CF3" Stack="true"> <!-- Microsoft-Office-Events -->
+      <Keywords Operation="Add">
+        <Keyword Value="0x40" />
+      </Keywords>
+    </EventProvider>
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <Profile Name="ThreadPool" Description="Windows and Office ThreadPool"
+     DetailLevel="Light" LoggingMode="File" Id="ThreadPool.Light.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Windows-ThreadPool" />
+            <EventProviderId Value="EP_Office-ThreadPool" />
+            <EventProviderId Value="EP_Office-Dispatch" />
+            <EventProviderId Value="EP_Office-IdleTasks" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="ThreadPool" Description="Windows and Office ThreadPool"
+     DetailLevel="Light" LoggingMode="Memory" Base="ThreadPool.Light.File" Id="ThreadPool.Light.Memory" />
+
+    <Profile Name="ThreadPoolFull" Description="Standalone Windows and Office ThreadPool"
+     DetailLevel="Verbose" LoggingMode="File" Base="ThreadPool.Light.File" Id="ThreadPoolFull.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_8-MB">
+          <SystemProviderId Value="SP_Base" />
+        </SystemCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="ThreadPoolFull" Description="Standalone Windows and Office ThreadPool"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="ThreadPoolFull.Verbose.File" Id="ThreadPoolFull.Verbose.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

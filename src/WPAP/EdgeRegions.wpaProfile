@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences>
+<!--
+  DISCLAIMER: Regions-of-Interest are based on internal logging mechanisms, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/creating-a-regions-of-interest-file
+-->
+          <FileReference FileName="Edge\EdgeCanary.regions.xml" ServiceMoniker="Regions.{51EF6868-EFEC-42A3-B284-1838673CC095}" />
+          <FileReference FileName="Edge\EdgeDev.regions.xml" ServiceMoniker="Regions.{51EF6868-EFEC-42A3-B284-1838673CC095}" />
+          <FileReference FileName="Edge\EdgeBeta.regions.xml" ServiceMoniker="Regions.{51EF6868-EFEC-42A3-B284-1838673CC095}" />
+          <FileReference FileName="Edge\EdgeStable.regions.xml" ServiceMoniker="Regions.{51EF6868-EFEC-42A3-B284-1838673CC095}" />
+          <FileReference FileName="Edge\EdgeWebView2.regions.xml" ServiceMoniker="Regions.{51EF6868-EFEC-42A3-B284-1838673CC095}" />
+          <FileReference FileName="Edge\Chrome.regions.xml" ServiceMoniker="Regions.{51EF6868-EFEC-42A3-B284-1838673CC095}" />
+        </FileReferences>
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="75956107-c08d-4bf7-98c1-49e411207606" IsVisible="true" Title="Chromium Events">
+        <Graphs>
+          <Graph Guid="1ce7fd53-2344-4ea8-acd6-1a0722a51427" LayoutStyle="All" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Lets the application apply user-friendly labels to portions of the trace.}\li0\ri0\sa0\sb0\fi0\ql\par}">
+            <Preset Name="Edge Regions" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="25" KeyColumnCount="8" LeftFrozenColumnCount="9" RightFrozenColumnCount="23" InitialFilterQuery="[ManifestFullPath]:~=&quot;Edge&quot;" InitialFilterShouldKeep="true" GraphFilterTopValue="0" GraphFilterThresholdValue="0" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Uses a Regions of Interest file to apply additional markup to an open trace in WPA. These labels are applied by finding events that define the start and stop of a given region. The XML file contains these regions as well as their events.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;}&#xD;&#xA;}">
+              <MetadataEntries>
+                <MetadataEntry Guid="052aa8a8-ce86-486b-8cc9-158ac7d27113" Name="Stop Thread" ColumnMetadata="EndThreadId" />
+                <MetadataEntry Guid="93b276b8-d183-41b7-a16e-19eb9373dbf3" Name="Start Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="03facf2d-1d9f-43c7-b8e8-aed46477f348" Name="Stop Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="328f22af-2e8a-4abc-8a19-bfefe367bf7c" Name="ManifestFullPath" SortPriority="1" Width="50" IsVisible="false" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="11" Width="80" IsVisible="false" />
+                <Column Guid="d683f423-cea9-4275-b67e-1aadd496289d" Name="Provider" SortPriority="7" Width="200" IsVisible="false" HelpText="Provider" />
+                <Column Guid="02153301-a927-427b-a07d-050fdb06eb7a" Name="Provider Guid" SortPriority="2" Width="200" IsVisible="false" HelpText="Provider Guid" />
+                <Column Guid="d96b19f7-d47a-40f3-ba80-fe0b9fae4616" Name="Region" SortPriority="22" Width="152" IsVisible="false" />
+                <Column Guid="07ec3178-e4ce-4729-a918-f1cc44ee55b9" Name="Region Friendly Name" SortPriority="17" Width="200" IsVisible="true" />
+                <Column Guid="a310de95-c012-4af7-be28-f78dd2f71247" Name="Instance Name" SortPriority="5" Width="276" IsVisible="true" />
+                <Column Guid="d11ae606-c15c-4c87-a001-6d93a76465c3" Name="Opcode" SortPriority="6" Width="68" IsVisible="true" HelpText="Opcode" />
+                <Column Guid="b521d564-9030-485d-97ae-3bd638a979bb" Name="Event Name" SortPriority="8" Width="200" IsVisible="true" />
+                <Column Guid="9fd0ec98-a6a4-432d-b0f9-b032609923e5" Name="Payload" SortPriority="9" Width="250" IsVisible="true" />
+                <Column Guid="6d945afa-988e-4be4-906b-023fb72eda92" Name="Start Process Name" SortPriority="12" Width="150" IsVisible="false" HelpText="Start Process Name" />
+                <Column Guid="d0b2a5cb-1966-4fe9-919f-1383932b2d84" Name="Start Process" SortPriority="21" Width="195" IsVisible="true" HelpText="Start Process">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="cb796d44-2927-5ac1-d231-4b71904c18f5" Name="Thread Name" SortPriority="10" Width="80" IsVisible="false" />
+                <Column Guid="c74dbb74-97bf-4c5a-9b21-d967ce08df00" Name="Start Thread" SortPriority="18" TextAlignment="Right" Width="80" IsVisible="true" />
+                <Column Guid="04222b11-b8be-49e1-9c52-a6d1f820a6d3" Name="Stop Process Name" SortPriority="13" Width="150" IsVisible="false" />
+                <Column Guid="b9e5e33d-d875-4fb2-b4f9-7e9d14d8d370" Name="Stop Process" SortPriority="19" Width="195" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="052aa8a8-ce86-486b-8cc9-158ac7d27113" Name="Stop Thread" SortPriority="20" TextAlignment="Right" Width="80" IsVisible="true" />
+                <Column Guid="471b850d-c2bc-482d-871d-13fb7c13bd2a" Name="Region Guid" AggregationMode="Count" SortPriority="23" Width="223" IsVisible="false" />
+                <Column Guid="0c5cf8cd-9b9e-5798-1a5d-09d429f7fa3c" Name="Field 1" SortPriority="14" Width="80" IsVisible="true" />
+                <Column Guid="71badd11-26e5-56bc-44ec-12f4cc6a8f3e" Name="Field 2" SortPriority="15" Width="80" IsVisible="true" />
+                <Column Guid="411dba2d-5d6e-5272-8287-636d0841768c" Name="Field 3" SortPriority="16" Width="80" IsVisible="true" HelpText="Field 3" />
+                <Column Guid="abfa45ec-ef0f-4fdd-8a6d-1c93a140032b" Name="Duration" AggregationMode="Sum" SortPriority="24" TextAlignment="Right" Width="100" IsVisible="true" />
+                <Column Guid="93b276b8-d183-41b7-a16e-19eb9373dbf3" Name="Start Time" AggregationMode="Min" SortOrder="Ascending" SortPriority="0" TextAlignment="Right" Width="100" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="03facf2d-1d9f-43c7-b8e8-aed46477f348" Name="Stop Time" AggregationMode="Max" SortPriority="25" TextAlignment="Right" Width="100" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+
+    Profiles:
+        Light   - for viewing in WPA with Network.wpaProfile
+        Verbose - for full network with callstacks, standalone
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <SystemCollector Id="SC_32-MB" Name="NT Kernel Logger">
+      <BufferSize Value="1024" />
+      <Buffers Value="32" />
+    </SystemCollector>
+
+    <EventCollector Id="EC_128-MB" Name="MSO Event Logger">
+      <BufferSize Value="1024" />
+      <Buffers Value="128" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+-->
+
+    <!-- Base requirement for process/thread/module info and symbol resolution. -->
+
+    <SystemProvider Id="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+    </SystemProvider>
+
+    <!-- Additional Module/Load info -->
+
+    <EventProvider Id="EP_Microsoft-Windows-ImageLoad" Name="2cb15d1d-5fc1-11d2-abe1-00a0c911f518">
+      <Keywords Operation="Add">
+        <Keyword Value="0x10" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- TCP-IP -->
+
+    <EventProvider Id="EP_Microsoft-Windows-TCPIP" Name="2f07e2ee-15db-40f1-90ef-9d7ba282188a" NonPagedMemory="true" Level="4">
+      <Keywords Operation="Add">
+        <Keyword Value="0x0000001300000080" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- WinSock -->
+
+    <EventProvider Id="EP_Microsoft-Windows-Winsock-AFD" Name="e53c6823-7bb8-44bb-90dc-3f86090d48a6" Level="4" Stack="true">
+      <Keywords Operation="Add">
+        <Keyword Value="0x0004" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- WinSock Name Resolution -->
+
+    <EventProvider Id="EP_Microsoft-Windows-Winsock-NameResolution" Name="55404e71-4db9-4deb-a5f5-8f86e46dde56" />
+
+    <!-- DNS -->
+
+    <EventProvider Id="EP_Microsoft-Windows-DNS-Client" Name="1c95126e-7eea-49a9-a3fe-a378b03ddb4d" />
+
+    <!-- WinINet -->
+
+    <EventProvider Id="EP_Microsoft-Windows-WinINet" Name="43d1a55c-76d6-4f7e-995c-64c711e5cafe" Level="4" Stack="true">
+      <Keywords Operation="Add">
+        <Keyword Value="0x0087" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- WinHTTP -->
+
+    <EventProvider Id="EP_Microsoft-Windows-WinHttp" Name="7d44233d-3055-4b9c-ba64-0d47ca40a232" Level="5" Stack="true" />
+
+    <!-- WebIO
+      WebIO is Level 4
+      WinHTTP ThreadAction is Level 5
+    -->
+
+    <EventProvider Id="EP_Light_Microsoft-Windows-WebIO" Name="50b3e73c-9370-461d-bb9f-26f32d68887d" NonPagedMemory="true" Level="4" Stack="true" />
+    <EventProvider Id="EP_Verbose_Microsoft-Windows-WebIO" Name="50b3e73c-9370-461d-bb9f-26f32d68887d" NonPagedMemory="true" Level="5" Stack="true" />
+
+    <!-- Windows ThreadPool
+      Associate ThreadPool-invoked events with the callstacks that enqueued them.
+    -->
+
+    <EventProvider Id="EP_Windows-ThreadPool" Name="c861d0e2-a2c1-4d36-9f9c-970bab943a12" >
+<!-- EventProvider Stacks and CustomStack are available in WPR v10.0.15002+
+      <Stacks Operation="Add">
+        <Stack Value="ThreadPoolCallbackEnqueue" />
+        <CustomStack Value="0x1C2A" />
+      </Stacks>
+-->
+    </EventProvider>
+
+    <!-- Office ThreadPool
+      Associate ThreadPool-invoked events with the callstacks that enqueued them.
+      To register this provider: EnsureETWProvider("..\OETW\MsoEtwTP.man")
+    -->
+
+    <EventProvider Id="EP_Office-ThreadPool" Name="A019725F-CFF1-47E8-8C9E-8FE2635B6388" Level="4" Stack="true">
+      <Keywords Operation="Add">
+        <Keyword Value="0x001e" /> <!-- WorkerLifetime + WorkerExecution + WorkerSubmission + IdleProcessing -->
+      </Keywords>
+    </EventProvider>
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+<!--
+    Earlier versions of WPR require each profile to have the same name.
+    Running "WPR -Profiles <ThisFile>.wprp" uses the description of the last one listed here.
+-->
+
+    <!-- Network (Light): TCP-IP, WinSock, WinINet, WebIO, DNS -->
+
+    <Profile Name="Network" Description="Network Events: TCP-IP WinSock WinINet WebIO DNS"
+     DetailLevel="Light" LoggingMode="File" Id="Network.Light.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_128-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Microsoft-Windows-TCPIP" />
+            <EventProviderId Value="EP_Microsoft-Windows-Winsock-AFD" />
+            <EventProviderId Value="EP_Microsoft-Windows-Winsock-NameResolution" />
+            <EventProviderId Value="EP_Microsoft-Windows-DNS-Client" />
+            <EventProviderId Value="EP_Microsoft-Windows-WinINet" />
+            <EventProviderId Value="EP_Light_Microsoft-Windows-WebIO" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="Network" Description="Network Events: TCP-IP WinSock WinINet WinHTTP DNS"
+     DetailLevel="Light" LoggingMode="Memory" Base="Network.Light.File" Id="Network.Light.Memory" />
+
+    <!-- Standalone Network (Verbose) including System (required), Network, and ThreadPool Events -->
+
+    <Profile Name="Network" Description="System, Network and ThreadPool Events"
+     DetailLevel="Verbose" LoggingMode="File" Id="Network.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_32-MB">
+          <SystemProviderId Value="SP_Base" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_128-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Microsoft-Windows-TCPIP" />
+            <EventProviderId Value="EP_Microsoft-Windows-Winsock-AFD" />
+            <EventProviderId Value="EP_Microsoft-Windows-Winsock-NameResolution" />
+            <EventProviderId Value="EP_Microsoft-Windows-DNS-Client" />
+            <EventProviderId Value="EP_Microsoft-Windows-WinINet" />
+            <EventProviderId Value="EP_Microsoft-Windows-WinHttp" />
+            <EventProviderId Value="EP_Verbose_Microsoft-Windows-WebIO" />
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_Windows-ThreadPool" />
+            <EventProviderId Value="EP_Office-ThreadPool" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="Network" Description="System, Network and ThreadPool Events"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="Network.Verbose.File" Id="Network.Verbose.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <!-- FileCompression Value="true" /-->
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

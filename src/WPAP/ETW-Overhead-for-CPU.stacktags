@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<!--
+  DISCLAIMER: These stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+-->
+<Tag Name=""><!--Root-->
+
+<!--
+  For stack tags of CPU sampling you want to see when you're sampling ETW logging from other providers.
+  For stack tags of other ETW providers...most everything is ETW logging.
+  This stacktags file should be loaded last for top priority.
+  It should appear first in: Trace Properties > Stack Tags Definitions
+-->
+  <Tag Name="ETW Overhead" Priority="950">
+    <Entrypoint Module="NT*" Method="Etwp*" />
+  </Tag>
+
+</Tag>

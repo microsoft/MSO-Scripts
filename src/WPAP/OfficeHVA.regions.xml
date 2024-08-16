@@ -1,0 +1,515 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes'?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<!--
+  DISCLAIMER: Regions-of-Interest are based on internal logging mechanisms, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/creating-a-regions-of-interest-file
+-->
+<!-- NOTE: Office HVA / High Value Activity events require Optional Diagnostic Data: -->
+<!--    Options > Trust Center Settings > Privacy Settings > Enable: Send additional diagnostic data and usage to Microsoft -->
+<InstrumentationManifest>
+  <Instrumentation>
+    <Regions>
+      <RegionRoot Guid="{19781468-2821-4ca6-803a-387230f56c40}" Name="Office High Value Activities">
+
+        <!-- Microsoft.Office.Common -->
+
+        <Region Name="High Value Activities" Guid="{b949d161-b3b3-470d-90b7-7483cf6874e8}">
+          <Match>
+            <Event PID="true">
+              <Payload FieldName="InstanceId" /> <!-- special name -->
+            </Event>
+          </Match>
+          <Start>
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="HighValueActivityStart" /> <!-- Microsoft.Office.Common -->
+          </Start>
+          <Stop>
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="HighValueActivityEndSuccess" />
+          </Stop>
+          <Naming>
+            <PayloadBased NameField="ActivityName" />
+          </Naming>
+          <Metadata>
+            <Origin>O.Common HVA1</Origin>
+          </Metadata>
+        </Region>
+        <Region Name="High Value Activities" Guid="{a838d161-b3b3-470d-90b7-7483cf6874e8}">
+          <Filter>
+            <!-- Ignore this region if the other based on HighValueActivityStart is already present. -->
+            <Region RegionGuid="{b949d161-b3b3-470d-90b7-7483cf6874e8}" Type="OutPrev" />
+          </Filter>
+          <Start>
+            <!-- Start is X ms before the Stop. -->
+            <Duration Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="HighValueActivityEndSuccess" Opcode="2" Duration="DurationMs" Multiplier="1000000" />
+          </Start>
+          <Stop>
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="HighValueActivityEndSuccess" />
+          </Stop>
+          <Naming>
+            <PayloadBased NameField="ActivityName" />
+          </Naming>
+          <Metadata>
+            <Origin>O.Common HVA2</Origin>
+          </Metadata>
+        </Region>
+
+        <Region Name="OPerfMon Profile" Guid="{33317ff1-1638-f2e2-9513-4d44379ecd2f}">
+          <Start>
+            <!-- Start is X ms before the Stop. -->
+            <Duration Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="OPerfMonProfile" Opcode="2" Duration="DurationMs" Multiplier="1000000" />
+          </Start>
+          <Stop>
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="OPerfMonProfile" Opcode="2" /> <!-- Microsoft.Office.Common -->
+          </Stop>
+          <Naming>
+            <!-- Instance Name column should contain the ActivityName field value. -->
+            <PayloadBased NameField="ActivityName" InstanceEndpoint="Stop" />
+          </Naming>
+          <Metadata>
+            <Origin>O.Common OPMP</Origin>
+          </Metadata>
+        </Region>
+
+        <Region Name="OPerfMon Hang" Guid="{e74dfc1b-a622-4163-a5b6-4631941b0777}">
+          <Start>
+            <!-- Start is X ms before the Stop. -->
+            <Duration Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="OPerfMonHang" Opcode="2" Duration="DurationMs" Multiplier="1000000" />
+          </Start>
+          <Stop>
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="OPerfMonHang" Opcode="2" /> <!-- Microsoft.Office.Common -->
+          </Stop>
+          <Naming>
+            <!-- Instance Name column should contain the ScopeName field value. -->
+            <PayloadBased NameField="ScopeName" InstanceEndpoint="Stop" />
+          </Naming>
+          <Metadata>
+            <Origin>O.Common OPMH</Origin>
+          </Metadata>
+        </Region>
+
+        <Region Name="Input Delay Monitor" Guid="{67defd84-4195-4f7f-9547-5fd4708561b3}">
+          <Start>
+            <!-- Start is X ms before the Stop. -->
+            <Duration Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="InputDelayMonitor" Opcode="2" Duration="InitialDelayMs" Multiplier="1000000" />
+          </Start>
+          <Stop>
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="InputDelayMonitor" Opcode="2" /> <!-- Microsoft.Office.Common -->
+          </Stop>
+          <Naming>
+            <!-- Instance Name column should contain the ScenarioName field value. -->
+            <PayloadBased NameField="ScenarioName" InstanceEndpoint="Stop" />
+          </Naming>
+          <Metadata>
+            <Origin>O.Common IDM</Origin>
+          </Metadata>
+        </Region>
+
+<!--
+        THE 6 EARLIEST, COMMONLY AVAILABLE APP-LAUNCH MARKERS
+        #1: 22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716  Microsoft-Windows-Kernel-Process   [ProcessStart]              Explorer.exe|Cmd.exe|etc.
+        #2: 2839ff94-8f12-4e1b-82e3-af7af77a450f  KernelProcess                      [ProcessStarted]            Explorer.exe|Cmd.exe|etc.
+        #3: ee97cdc4-b095-5c70-6e37-a541eb74c2b5  Microsoft.Windows.AppLifeCycle.UI  [AppLaunch_UserClick]       StartMenuExperience.exe|Explorer.exe
+        #4: 5322d61a-9efa-4bc3-a3f9-14be95c144f8  Microsoft-Windows-Kernel-Prefetch  [ScenarioDecision]          Office Process Main Thread
+        #5: 267e4a12-6a1e-53c3-30b0-600ce7cc3e11  Microsoft.Windows.Superfetch       [ALPFScenarioDecision]      Office Process Main Thread
+        #6: e6aec961-a5e0-5560-a860-15edd6b70f6c  Microsoft.Office.SessionIdProvider [OfficeProcessSessionStart] Office Process Main Thread
+
+        THE END OF APP-LAUNCH MARKER occurs at: Mso::BootActivityHelper::Complete
+            8a3a9fd4-21d3-470b-b1d6-838b9fc8637b  Microsoft.Office.Common [Boot] Office Process Main Thread
+            ProcessIdentifier = AppName.EXE_Version_Arch_{Unique-GUID}
+            ProcessIdentifier = EXCEL.EXE_16.0.15522.20000_X86_{3E48E895-38F8-4423-A617-77A51642B81E}
+        Note that the Microsoft.Office.Common provider is not always active: It depends on user account privacy settings.
+        This event fires AFTER file load (if launched with file).
+-->
+        <!-- Container -->
+        <Region Name="Office App Launch" Guid="{0a3b2cfc-9992-4358-bbfb-956caf28a728}">
+
+        <!-- #1: Microsoft-Windows-Kernel-Process: ProcessStart -->
+        <Region Name="Launch: Process Start" Guid="{e010f6bd-0001-4c19-a0b2-b92f77e7926d}">
+          <Match>
+            <Event PID="false" TID="false">
+              <!-- [ImageName] "\Device\HarddiskVolume3\Program Files\Microsoft Office\root\Office16\<NAME>.EXE" parses to "<NAME>.EXE" -->
+              <!-- [ProcessIdentifier] "<NAME>.EXE_??.?.??????.?????_X??_{<GUID>}" parses to "<NAME>.EXE" -->
+              <Payload FieldName="ImageName" FieldValueRegEx=".+\\(\w+\.EXE)$" TargetFieldName="ProcessIdentifier" TargetFieldValueRegEx="^(\w+\.EXE).+" />
+            </Event>
+          </Match>
+          <Start> <!-- Microsoft-Windows-Kernel-Process / (Parent)Process = Explorer.exe, Cmd.exe, etc. -->
+            <Event Provider="{22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716}" Name="ProcessStart" Opcode="1" /> <!-- For MSIX/C2RX there may be 2 Office processes. Matching the 1st. -->
+          </Start>
+          <Stop>
+            <!-- Microsoft.Office.Common -->
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="Boot" Opcode="2" />
+          </Stop>
+          <Naming>
+            <!-- Instance Name column -->
+            <PayloadBased NameField="ProcessIdentifier" InstanceEndpoint="Stop" />
+          </Naming>
+          <Metadata>
+            <Origin>W-Kernel-Process</Origin>
+          </Metadata>
+        </Region>
+
+        <!-- #2: KernelProcess: ProcessStarted -->
+        <Region Name="Launch: Process Start" Guid="{e010f6bd-0002-4c19-a0b2-b92f77e7926d}">
+          <Filter>
+            <!-- Ignore this region if the Process Start region #1 is already present. -->
+            <Region RegionGuid="{e010f6bd-0001-4c19-a0b2-b92f77e7926d}" Type="Out" />
+          </Filter>
+          <Match>
+            <Event PID="false" TID="false">
+              <!-- [ImageFileName] "\Device\HarddiskVolume3\Program Files\Microsoft Office\root\Office16\<NAME>.EXE" parses to "<NAME>.EXE" -->
+              <!-- [ProcessIdentifier] "<NAME>.EXE_??.?.??????.?????_X??_{<GUID>}" parses to "<NAME>.EXE" -->
+              <Payload FieldName="ImageFileName" FieldValueRegEx=".+\\(\w+\.EXE)$" TargetFieldName="ProcessIdentifier" TargetFieldValueRegEx="^(\w+\.EXE).+" />
+            </Event>
+          </Match>
+          <Start> <!-- KernelProcess / (Parent)Process = Explorer.exe, Cmd.exe, etc. -->
+            <Event Provider="{2839ff94-8f12-4e1b-82e3-af7af77a450f}" Name="ProcessStarted" Opcode="0" /> <!-- For MSIX/C2RX there may be 2 Office processes. Matching the 1st. -->
+          </Start>
+          <Stop>
+            <!-- Microsoft.Office.Common -->
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="Boot" Opcode="2" />
+          </Stop>
+          <Naming>
+            <!-- Instance Name column -->
+            <PayloadBased NameField="ProcessIdentifier" InstanceEndpoint="Stop" />
+          </Naming>
+          <Metadata>
+            <Origin>KernelProcess</Origin>
+          </Metadata>
+        </Region>
+
+        <!-- #3: AppLifeCycle.UI: AppLaunch_UserClick -->
+        <!-- This event has many incarnations, identified by the entryPoint field: PerfTrack::Location (enum)
+
+             entryPoint <Scenario>
+                   1    StartMenu*
+                   6    StartMenu* All
+                   8    TaskBar
+                  14    Search
+                  23    File+
+                1000    StartMenu+ All
+                1004    StartMenu+ Recommended
+                1005    StartMenu+ Pinned
+             * Win10, + Win11
+
+             These events fire too late, and are not useful here:
+                   9    Desktop
+                  44    Desktop (Win11 only)
+
+             [Group A]
+               appId = Microsoft.Office.EXCEL.EXE.15 (C2R) (1,6,8,14,1000,1004,1005)
+
+             [Group B]
+               appId = EXCEL.EXE (8,1005)
+
+             [Group C]
+               appId = Microsoft.Office.C2RX_8wekyb3d8bbwe!Excel|Word|PowerPoint (C2RX) (14,23,1000,1004,1005)
+        -->
+        <!-- #3A: entryPoint = 1|6|8|14|1000|1004|1005, appId = Microsoft.Office.EXCEL.EXE.15 -->
+        <Region Name="Launch: User Click" Guid="{e010f6bd-A003-4c19-a0b2-b92f77e7926d}">
+          <Match>
+            <Event PID="false" TID="false">
+              <Payload FieldName="appId" FieldValueRegEx="Microsoft\.Office\.(\w+\.EXE)\.\d+$" TargetFieldName="ProcessIdentifier" TargetFieldValueRegEx="^(\w+\.EXE).+" />
+            </Event>
+          </Match>
+          <Start>
+            <!-- Microsoft.Windows.AppLifeCycle.UI -->
+            <Event Provider="{ee97cdc4-b095-5c70-6e37-a541eb74c2b5}" Name="AppLaunch_UserClick" Opcode="0" />
+            <PayloadIdentifier FieldName="entryPoint" FieldValue="(1|6|8|14|1000|1004|1005)" FieldValueRelationship="RegEx" />
+            <PayloadIdentifier FieldName="appId" FieldValue="Office" FieldValueRelationship="Contains" /> <!-- Case Sensitive! -->
+          </Start>
+          <Stop>
+            <!-- Microsoft.Office.Common -->
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="Boot" Opcode="2" />
+          </Stop>
+          <Naming>
+            <!-- Instance Name column -->
+            <PayloadBased NameField="ProcessIdentifier" InstanceEndpoint="Stop" />
+          </Naming>
+          <Metadata>
+            <Origin>AppLifeCycle.UI A</Origin>
+          </Metadata>
+        </Region>
+
+        <!-- #3B: entryPoint = 8|1005, appId = EXCEL.EXE -->
+        <Region Name="Launch: User Click" Guid="{e010f6bd-B003-4c19-a0b2-b92f77e7926d}">
+          <Match>
+            <Event PID="false" TID="false">
+              <Payload FieldName="appId" TargetFieldName="ProcessIdentifier" TargetFieldValueRegEx="^(\w+\.EXE).+" />
+            </Event>
+          </Match>
+          <Start>
+            <!-- Microsoft.Windows.AppLifeCycle.UI -->
+            <Event Provider="{ee97cdc4-b095-5c70-6e37-a541eb74c2b5}" Name="AppLaunch_UserClick" Opcode="0" />
+            <PayloadIdentifier FieldName="entryPoint" FieldValue="(8|1005)" FieldValueRelationship="RegEx" />
+          </Start>
+          <Stop>
+            <!-- Microsoft.Office.Common -->
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="Boot" Opcode="2" />
+          </Stop>
+          <Naming>
+            <!-- Instance Name column -->
+            <PayloadBased NameField="ProcessIdentifier" InstanceEndpoint="Stop" />
+          </Naming>
+          <Metadata>
+            <Origin>AppLifeCycle.UI B</Origin>
+          </Metadata>
+        </Region>
+
+        <!-- #3C: entryPoint = 14|23|1000|1004|1005, appId = Microsoft.Office.C2RX_8wekyb3d8bbwe!Excel -->
+        <Region Name="Launch: User Click" Guid="{e010f6bd-C003-4c19-a0b2-b92f77e7926d}">
+          <Match>
+            <Event PID="false" TID="false">
+              <!-- Capture this intersecting part of the app name and process name: PowerP, Word, Excel, Outlook, OneNote, etc. -->
+              <Payload FieldName="appId" FieldValueRegEx="Microsoft\.Office\..+\!(PowerP|\w+)(?:oint)*" TargetFieldName="ProcessIdentifier" TargetFieldValueRegEx="(?:WIN)*(WORD|POWERP|\w+)(?:NT)*\.EXE_.+" />
+           </Event>
+          </Match>
+          <Start>
+            <!-- Microsoft.Windows.AppLifeCycle.UI -->
+            <Event Provider="{ee97cdc4-b095-5c70-6e37-a541eb74c2b5}" Name="AppLaunch_UserClick" Opcode="0" />
+            <PayloadIdentifier FieldName="entryPoint" FieldValue="(14|23|1000|1004|1005)" FieldValueRelationship="RegEx" />
+          </Start>
+          <Stop>
+            <!-- Microsoft.Office.Common -->
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="Boot" Opcode="2" />
+          </Stop>
+          <Naming>
+            <!-- Instance Name column -->
+            <PayloadBased NameField="ProcessIdentifier" InstanceEndpoint="Stop" />
+          </Naming>
+          <Metadata>
+            <Origin>AppLifeCycle.UI C</Origin>
+          </Metadata>
+        </Region>
+
+        <!-- #4: Kernel-Prefetch: ScenarioDecision -->
+        <Region Name="Launch: Kernel Prefetch" Guid="{e010f6bd-0004-4c19-a0b2-b92f77e7926d}">
+          <Filter>
+            <!-- Ignore this region if the Process Start region #1 is already present. -->
+            <Region RegionGuid="{e010f6bd-0001-4c19-a0b2-b92f77e7926d}" Type="Out" />
+          </Filter>
+          <Filter>
+            <!-- Ignore this region if the KernelProcess region #2 is already present. -->
+            <Region RegionGuid="{e010f6bd-0002-4c19-a0b2-b92f77e7926d}" Type="Out" />
+          </Filter>
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <!-- Microsoft-Windows-Kernel-Prefetch [ScenarioDecision] -->
+            <Event Provider="{5322d61a-9efa-4bc3-a3f9-14be95c144f8}" Id="8" />
+          </Start>
+          <Stop>
+            <!-- Microsoft.Office.Common -->
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="Boot" Opcode="2" />
+          </Stop>
+          <Naming>
+            <!-- Instance Name column -->
+            <PayloadBased NameField="ProcessIdentifier" InstanceEndpoint="Stop" />
+          </Naming>
+          <Metadata>
+            <Origin>W-Prefetch</Origin>
+          </Metadata>
+        </Region>
+
+        <!-- #5: Superfetch: ALPFScenarioDecision -->
+        <Region Name="Launch: Superfetch Scenario" Guid="{e010f6bd-0005-4c19-a0b2-b92f77e7926d}">
+          <Filter>
+            <!-- Ignore this region if the Process Start region #1 is already present. -->
+            <Region RegionGuid="{e010f6bd-0001-4c19-a0b2-b92f77e7926d}" Type="Out" />
+          </Filter>
+          <Filter>
+            <!-- Ignore this region if the KernelProcess region #2 is already present. -->
+            <Region RegionGuid="{e010f6bd-0002-4c19-a0b2-b92f77e7926d}" Type="Out" />
+          </Filter>
+          <Filter>
+            <!-- Ignore this region if the Kernel Prefetch region #4 is already present. -->
+            <Region RegionGuid="{e010f6bd-0004-4c19-a0b2-b92f77e7926d}" Type="Out" />
+          </Filter>
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <!-- Microsoft.Windows.Superfetch [ALPFScenarioDecision] -->
+            <Event Provider="{267e4a12-6a1e-53c3-30b0-600ce7cc3e11}" Name="ALPFScenarioDecision" />
+          </Start>
+          <Stop>
+            <!-- Microsoft.Office.Common -->
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="Boot" Opcode="2" />
+          </Stop>
+          <Naming>
+            <!-- Instance Name column -->
+            <PayloadBased NameField="ProcessIdentifier" InstanceEndpoint="Stop" />
+          </Naming>
+          <Metadata>
+            <Origin>W.Superfetch</Origin>
+          </Metadata>
+        </Region>
+
+        <!-- #6: Office.SessionIdProvider: OfficeProcessSessionStart -->
+        <Region Name="Launch: Session Start" Guid="{e010f6bd-0006-4c19-a0b2-b92f77e7926d}">
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <!-- Microsoft.Office.SessionIdProvider [OfficeProcessSessionStart] -->
+            <Event Provider="{e6aec961-a5e0-5560-a860-15edd6b70f6c}" Name="OfficeProcessSessionStart" />
+          </Start>
+          <Stop>
+            <!-- Microsoft.Office.Common -->
+            <Event Provider="{8a3a9fd4-21d3-470b-b1d6-838b9fc8637b}" Name="Boot" Opcode="2" />
+          </Stop>
+          <Naming>
+            <!-- Instance Name column -->
+            <PayloadBased NameField="ProcessIdentifier" InstanceEndpoint="Stop" />
+          </Naming>
+          <Metadata>
+            <Origin>O.Session</Origin>
+          </Metadata>
+        </Region>
+
+        <!-- Microsoft.Windows.ApplicationModel.DesktopAppx: Prepare/PostDesktopActivation
+          C2RX app launch commonly proceeds like this:
+            ProcessStart // unpackaged process
+              PrepareDesktopActivation win:Start executablePath=""
+              PrepareDesktopActivation win:Stop
+            ProcessStop
+            ProcessStart // packaged process
+              PrepareDesktopActivation win:Start executablePath="<path>\NAME.EXE"
+              PrepareDesktopActivation win:Stop
+              PostDesktopActivation win:Start executablePath="<path>\NAME.EXE"
+              PostDesktopActivation win:Stop
+            ProcessStop
+        -->
+        <Region Name="C2RX Container Activation" Guid="{48297BCA-0001-4872-BFF0-F98231019A2D}">
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <Event Provider="{5526aed1-f6e5-5896-cbf0-27d9f59b6be7}" Name="PrepareDesktopActivation" Opcode="1" /> <!-- Microsoft.Windows.ApplicationModel.DesktopAppx -->
+            <PayloadIdentifier FieldName="executablePath" FieldValue="" FieldValueRelationship="Equal" />
+            <PayloadIdentifier FieldName="packageFullName" FieldValue="Microsoft.Office.C2RX" FieldValueRelationship="Contains" />
+          </Start>
+          <Stop>
+            <Event Provider="{5526aed1-f6e5-5896-cbf0-27d9f59b6be7}" Name="PrepareDesktopActivation" Opcode="2" /> <!-- Microsoft.Windows.ApplicationModel.DesktopAppx -->
+          </Stop>
+          <Naming>
+            <PayloadBased NameField="packageFullName" InstanceEndpoint="Start" /> <!-- "Microsoft.Office.C2RX...." -->
+          </Naming>
+          <Metadata>
+            <Origin>PrepareDesktopActivation</Origin>
+          </Metadata>
+        </Region>
+        <Region Name="C2RX Container Activation" Guid="{48297BCA-0002-4872-BFF0-F98231019A2D}">
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <Event Provider="{5526aed1-f6e5-5896-cbf0-27d9f59b6be7}" Name="PrepareDesktopActivation" Opcode="1" /> <!-- Microsoft.Windows.ApplicationModel.DesktopAppx -->
+            <PayloadIdentifier FieldName="executablePath" FieldValue="\" FieldValueRelationship="Contains" /> <!-- Contains a path. -->
+            <PayloadIdentifier FieldName="packageFullName" FieldValue="Microsoft.Office.C2RX" FieldValueRelationship="Contains" />
+          </Start>
+          <Stop>
+            <Event Provider="{5526aed1-f6e5-5896-cbf0-27d9f59b6be7}" Name="PostDesktopActivation" Opcode="2" /> <!-- Microsoft.Windows.ApplicationModel.DesktopAppx -->
+          </Stop>
+          <Naming>
+            <PayloadBased NameField="executablePath" InstanceEndpoint="Start" Type="Device" /> <!-- "<path>\NAME.EXE" --> <!-- Type="Pid" or "Device" -->
+          </Naming>
+          <Metadata>
+            <Origin>Prep/PostDesktopActivation</Origin>
+          </Metadata>
+        </Region>
+
+        <Region Name="C2RX Package Relaunch" Guid="{36bc890f-0001-4060-89b6-fb9817184a7b}">
+          <Match>
+            <!-- Parent Process: Explorer.exe, etc. -->
+            <Event PID="true" TID="true">
+              <Payload FieldName="ImageName" />
+            </Event>
+          </Match>
+          <Start>
+            <Event Provider="{22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716}" Name="ProcessStart" Opcode="1" /> <!-- Microsoft-Windows-Kernel-Process -->
+            <PayloadIdentifier FieldName="PackageFullName" FieldValue="" FieldValueRelationship="Equal" />
+          </Start>
+          <Stop>
+            <Event Provider="{22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716}" Name="ProcessStart" Opcode="1" /> <!-- Microsoft-Windows-Kernel-Process -->
+            <PayloadIdentifier FieldName="PackageFullName" FieldValue="C2RX" FieldValueRelationship="Contains" />
+          </Stop>
+          <Naming>
+            <PayloadBased NameField="PackageRelativeAppId" InstanceEndpoint="Stop" /> <!-- "Excel", etc. -->
+          </Naming>
+          <Metadata>
+            <Origin>W-Kernel-Process</Origin>
+          </Metadata>
+        </Region>
+        <Region Name="C2RX Package Relaunch" Guid="{36bc890f-0002-4060-89b6-fb9817184a7b}">
+          <Filter>
+            <!-- Ignore this region if the other based on Microsoft-Windows-Kernel-Process is already present. -->
+            <Region RegionGuid="{36bc890f-0001-4060-89b6-fb9817184a7b}" Type="Out" />
+          </Filter>
+          <Match>
+            <!-- Parent Process: Explorer.exe, etc. -->
+            <Event PID="true" TID="true">
+              <Payload FieldName="ImageFileName" />
+              <Payload FieldName="CommandLine" />
+              <Payload FieldName="SessionCreateTime" />
+            </Event>
+          </Match>
+          <Start>
+            <Event Provider="{2839ff94-8f12-4e1b-82e3-af7af77a450f}" Name="ProcessStarted" Opcode="0" /> <!-- KernelProcess -->
+            <PayloadIdentifier FieldName="PackageName" FieldValue="" FieldValueRelationship="Equal" />
+          </Start>
+          <Stop>
+            <Event Provider="{2839ff94-8f12-4e1b-82e3-af7af77a450f}" Name="ProcessStarted" Opcode="0" /> <!-- KernelProcess -->
+            <PayloadIdentifier FieldName="PackageName" FieldValue="C2RX" FieldValueRelationship="Contains" />
+          </Stop>
+          <Naming>
+            <PayloadBased NameField="PRAID" InstanceEndpoint="Stop" /> <!-- "Excel", etc. -->
+          </Naming>
+          <Metadata>
+            <Origin>KernelProcess</Origin>
+          </Metadata>
+        </Region>
+
+        </Region> <!-- End Container: Office App Launch -->
+
+<!--  MSIX / C2RX App Launch looks like this:
+        -Parent process launches the Office process.
+          o Event: Microsoft-Windows-AppLocker: ParentProcess=<Parent>.EXE SessionId=<X> SubSessionId=<Y> OriginDataPresent=True ImageName=<Path>\<Office>.EXE
+        -Office process is immediately killed and relaunched, frozen, as a "package" environment.
+        -Application Information system service sets up the Helium environment.
+        -Office process is thawed and proceeds with app launch.
+          o Event: Microsoft-Windows-AppLocker: ParentProcess=<Office>.EXE SessionId=<X> SubSessionId=<Y> OriginDataPresent=True ImageName=<Path>\<Module1>.dll
+          o Event: Microsoft-Windows-AppLocker: ParentProcess=<Office>.EXE SessionId=<X> SubSessionId=<Y> OriginDataPresent=True ImageName=<Path>\<Module2>.dll
+          o etc.
+      This region only works when the launched process has a different name, otherwise the resulting regions for that process (Edge, etc.) are erratic.
+-->
+        <Region Name="App Pre-Launch Setup" Guid="{b46a2e0f-f2cc-46b8-a84a-ef2847269930}">
+          <Match>
+            <Event PID="false" TID="false">
+              <Payload FieldName="SessionId" />
+              <Payload FieldName="SubSessionId" />
+              <!-- [ImageName] "<path>\<Name>.exe" resolves to "<Name>.exe" to match with [ParentProcess] -->
+              <Payload FieldName="ImageName" FieldValueRegEx=".+\\(\w+\.exe)$" TargetFieldName="ParentProcess" />
+            </Event>
+          </Match>
+          <Start> <!-- Launching Process -->
+            <Event Provider="{cbda4dbf-8d5d-4f69-9578-be14aa540d22}" Id="8033" /> <!-- Microsoft-Windows-AppLocker -->
+            <PayloadIdentifier FieldName="OriginDataPresent" FieldValue="True" />
+            <PayloadIdentifier FieldName="ParentProcess" FieldValue="edge" FieldValueRelationship="DoesNotContain" /> <!-- Case Sensitive! Last Relationship Wins -->
+          </Start>
+          <Stop> <!-- Office Process -->
+            <Event Provider="{cbda4dbf-8d5d-4f69-9578-be14aa540d22}" Id="8033" IgnoreRepetition="true" /> <!-- Microsoft-Windows-AppLocker -->
+            <PayloadIdentifier FieldName="OriginDataPresent" FieldValue="True" />
+            <PayloadIdentifier FieldName="ImageName" FieldValue=".exe" FieldValueRelationship="DoesNotContain" /> <!-- Case Sensitive! Last Relationship Wins -->
+          </Stop>
+          <Naming>
+            <PayloadBased NameField="ParentProcess" InstanceEndpoint="Stop" />
+          </Naming>
+          <Metadata>
+            <Origin>AppLocker</Origin>
+          </Metadata>
+        </Region>
+
+      </RegionRoot>
+    </Regions>
+  </Instrumentation>
+</InstrumentationManifest>

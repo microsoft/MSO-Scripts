@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences />
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="0fa9f798-ac3b-411e-82f0-0223463ee65c" IsVisible="true" Title="Heap Snapshots">
+        <Graphs>
+          <Graph Guid="463048cb-2f2b-480d-8e94-a54f3fd88080" LayoutStyle="All" Color="#FFBEBEBE" GraphHeight="92" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Count by Snapshot" GraphChartType="StackedBars" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="15" KeyColumnCount="5" LeftFrozenColumnCount="6" RightFrozenColumnCount="12" InitialFilterShouldKeep="true" GraphFilterColumnGuid="fdb0371a-7d64-47e7-8012-12d41db815eb" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="555b3fb9-3e48-442c-a1f6-53cd48fcecf5" Name="Snap Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="555b3fb9-3e48-442c-a1f6-53cd48fcecf5" Name="Snap Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="c636d2f3-9150-4f99-8f85-a42047541ed0" Name="Process" SortPriority="9" Width="120" IsVisible="true">
+                  <ProcessOptionsParameter />
+                  <ColorQueryEntries />
+                </Column>
+                <Column Guid="991604fa-45ec-45c8-825d-0504766a93ad" Name="PID" SortPriority="10" TextAlignment="Right" Width="60" IsVisible="false">
+                  <ColorQueryEntries />
+                </Column>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="2" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                  <ColorQueryEntries />
+                </Column>
+                <Column Guid="bd2378bf-dd18-4d0a-9678-ca787e1299f9" Name="Instance" SortOrder="Ascending" SortPriority="0" TextAlignment="Right" Width="58" IsVisible="true">
+                  <ColorQueryEntries />
+                </Column>
+                <Column Guid="e33da178-a863-4a38-975e-2562eccb8656" Name="Stack" SortPriority="5" Width="586" IsVisible="true">
+                  <ColorQueryEntries />
+                </Column>
+                <Column Guid="25d52de1-f5b8-4f42-8ce2-de477746e252" Name="Stack Depth" SortPriority="3" TextAlignment="Right" Width="78" IsVisible="false">
+                  <ColorQueryEntries />
+                </Column>
+                <Column Guid="7934aa50-2a3d-4384-b78a-d9b3bb835866" Name="Stack ID" SortPriority="12" TextAlignment="Right" Width="56" IsVisible="false">
+                  <ColorQueryEntries />
+                </Column>
+                <Column Guid="cea6c387-e307-4b03-83e7-0ba97cc74336" Name="Heap Handle" SortPriority="7" Width="126" CellFormat="x" IsVisible="false" HelpText="Heap Handle">
+                  <ColorQueryEntries />
+                </Column>
+                <Column Guid="33021112-f392-4640-abe8-92e47804554e" Name="Allocation Address" SortPriority="8" Width="133" CellFormat="x" IsVisible="true" HelpText="Allocation Address">
+                  <ColorQueryEntries />
+                </Column>
+                <Column Guid="440a6f8f-b25d-4ffd-9e9e-56c63dc74479" Name="Pointer Size" SortPriority="11" TextAlignment="Right" Width="76" IsVisible="false">
+                  <ColorQueryEntries />
+                </Column>
+                <Column Guid="0bde4a08-6a88-4562-bd65-390626884bf7" Name="Count" AggregationMode="Sum" SortPriority="6" TextAlignment="Right" Width="58" IsVisible="true">
+                  <ColorQueryEntries />
+                </Column>
+                <Column Guid="555b3fb9-3e48-442c-a1f6-53cd48fcecf5" Name="Snap Time" AggregationMode="Min" SortPriority="13" TextAlignment="Right" Width="96" CellFormat="sN" IsVisible="false">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                  <ColorQueryEntries />
+                </Column>
+                <Column Guid="fdb0371a-7d64-47e7-8012-12d41db815eb" Name="Size" AggregationMode="Sum" SortOrder="Descending" SortPriority="1" TextAlignment="Right" Width="80" CellFormat="B" IsVisible="true">
+                  <ColorQueryEntries />
+                </Column>
+                <Column Guid="fdb0371a-7d64-47e7-8012-12d41db815eb" Name="Size" AggregationMode="Max" SortPriority="4" TextAlignment="Right" Width="72" CellFormat="B" IsVisible="true">
+                  <ColorQueryEntries />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+      <!-- This graph determines the table layout of the DIFF view. -->
+      <GraphSchema Guid="18fe1bac-a7d7-471d-a3d7-2abce0eb50cd">
+        <ModifiedPresets />
+        <PersistedPresets>
+          <!-- Cannot change the Preset Name. -->
+          <Preset Name="Count by Type, Instance, Frame" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="15" KeyColumnCount="6" LeftFrozenColumnCount="7" RightFrozenColumnCount="13" InitialFilterShouldKeep="true" GraphFilterColumnGuid="6d1fbabc-bbf5-4aff-aa39-bd8f71615c02" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+            <MetadataEntries>
+              <MetadataEntry Guid="eaed3827-d16f-4a72-9864-0b126a8f936f" Name="Snap Time" ColumnMetadata="StartTime" />
+              <MetadataEntry Guid="eaed3827-d16f-4a72-9864-0b126a8f936f" Name="Snap Time" ColumnMetadata="EndTime" />
+            </MetadataEntries>
+            <HighlightEntries />
+            <Columns>
+              <Column Guid="90cce117-cd1e-4e22-9ff9-9ac3e6e7433b" Name="Process" SortPriority="7" Width="120" IsVisible="true">
+                <ProcessOptionsParameter />
+                <ColorQueryEntries />
+              </Column>
+              <Column Guid="fbc059a1-fb14-4e19-a868-2d8a790e5efc" Name="PID" SortPriority="8" TextAlignment="Right" Width="60" IsVisible="false">
+                <ColorQueryEntries />
+              </Column>
+              <Column Guid="f08d285c-2569-42f3-8bcd-50d3bf80a938" Name="DiffType" SortPriority="3" Width="80" IsVisible="true">
+                <ColorQueryEntries />
+              </Column>
+              <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="13" Width="16" IsVisible="false">
+                <AnnotationsOptionsParameter>
+                  <AnnotationQueryEntries />
+                </AnnotationsOptionsParameter>
+                <ColorQueryEntries />
+              </Column>
+              <Column Guid="d4c9125e-0fa6-4f48-ae4e-cd044c2e2623" Name="Instance" SortPriority="6" TextAlignment="Right" Width="60" IsVisible="true">
+                <ColorQueryEntries />
+              </Column>
+              <Column Guid="ea8bc55b-bf6e-45ff-8e88-bc6ddfd33ade" Name="Stack" SortPriority="11" Width="509" IsVisible="true">
+                <ColorQueryEntries />
+              </Column>
+              <Column Guid="fd80e002-777c-453c-9b2d-cc1d72f1b6f3" Name="Stack ID" SortPriority="5" TextAlignment="Right" Width="60" IsVisible="false">
+                <ColorQueryEntries />
+              </Column>
+              <Column Guid="6afe28ee-8f98-41c6-a75c-f0712a4c12fc" Name="Stack Depth" SortPriority="12" TextAlignment="Right" Width="81" IsVisible="false">
+                <ColorQueryEntries />
+              </Column>
+              <Column Guid="2f3529f7-9e2d-489b-ada2-85920b442b63" Name="Allocation Address" SortPriority="1" TextAlignment="Right" Width="142" CellFormat="x" IsVisible="true" HelpText="Allocation Address">
+                <ColorQueryEntries />
+              </Column>
+              <Column Guid="1cd1c104-4d0f-4be4-84da-d819c5496678" Name="Pointer Size" SortPriority="9" TextAlignment="Right" Width="60" IsVisible="false">
+                <ColorQueryEntries />
+              </Column>
+              <Column Guid="eaed3827-d16f-4a72-9864-0b126a8f936f" Name="Snap Time" SortPriority="10" TextAlignment="Right" Width="80" IsVisible="false">
+                <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                <ColorQueryEntries />
+              </Column>
+              <Column Guid="0bde4a08-6a88-4562-bd65-390626884bf7" Name="Count" AggregationMode="Sum" SortPriority="4" TextAlignment="Right" Width="58" IsVisible="true">
+                <ColorQueryEntries />
+              </Column>
+              <Column Guid="6d1fbabc-bbf5-4aff-aa39-bd8f71615c02" Name="Size" AggregationMode="Sum" SortOrder="Descending" SortPriority="0" TextAlignment="Right" Width="80" CellFormat="B" IsVisible="true" HelpText="Size">
+                <ColorQueryEntries />
+              </Column>
+              <Column Guid="6d1fbabc-bbf5-4aff-aa39-bd8f71615c02" Name="Size" AggregationMode="Max" SortPriority="2" TextAlignment="Right" Width="74" CellFormat="B" IsVisible="true" HelpText="Size">
+                <ColorQueryEntries />
+              </Column>
+            </Columns>
+          </Preset>
+        </PersistedPresets>
+      </GraphSchema>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

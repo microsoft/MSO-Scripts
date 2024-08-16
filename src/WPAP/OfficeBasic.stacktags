@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<!--
+  DISCLAIMER: These stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+-->
+
+<Tag Name=""><!--Root-->
+
+  <Tag Name="ETW Logging!" Priority="990">
+    <Entrypoint Module="sechost.dll" Method="*Trace*" />
+    <Entrypoint Module="NT*" Method="EtwpLogger" /> 
+  </Tag>
+
+<!-- Only works for CPU Sampling:
+  <Tag Name="ETW Overhead" Priority="950">
+    <Entrypoint Module="NT*" Method="Etwp*" />
+  </Tag>
+-->
+
+  <!-- Loading the modules FOO.exe, NTDLL.dll -->
+
+  <Tag Name="Base Modules" Priority="90">
+    <Entrypoint Module="nt*.exe" Method="PspUserThreadStartup" />
+  </Tag>
+
+  <Tag Name="Outlook PST" Priority="62">
+    <Entrypoint Module="MSPST32.dll" Method="CFileCache*" />
+  </Tag>
+
+  <Tag Name="Office AirSpace FrontEnd" Priority="60">
+    <Entrypoint Module="Mso40*.dll" Method="AirSpace::FrontEnd*" />
+  </Tag>
+
+  <Tag Name="Excel Recalc Threads" Priority="58">
+    <Entrypoint Module="Excel.exe" Method="XLSThread::XLSThreadProc" />
+  </Tag>
+
+  <Tag Name="JavaScript Threads" Priority="57">
+    <Entrypoint Module="v8jsi.dll" Method="v8::base::ThreadEntry" />
+  </Tag>
+
+  <Tag Name="WebView" Priority="56">
+    <Entrypoint Module="EmbeddedBrowserWebView.dll" Method="*ThreadMain" />
+  </Tag>
+
+  <Tag Name="Inking Threads" Priority="55">
+    <Entrypoint Module="InkObjCore.dll" Method="*ThreadProc" />
+    <Entrypoint Module="Windows.UI.Input.Inking.dll" Method="*ThreadProc" />
+  </Tag>
+
+  <Tag Name="RPC Threads" Priority="53">
+    <Entrypoint Module="combase.dll" Method="CRpcThread*" />
+  </Tag>
+
+  <Tag Name="AI Overhead Threads" Priority="54">
+    <Entrypoint Module="Mso30*.dll" Method="Msai::Thread*" />
+  </Tag>
+
+  <Tag Name="COM TaskPool" Priority="51">
+    <Entrypoint Module="SHCore.dll" Method="WorkThreadManager::CThread::*ThreadProc" />
+  </Tag>
+
+  <Tag Name="Office TaskPool Threads" Priority="50">
+    <Entrypoint Module="Mso*.dll" Method="CIOPort::ThreadProc" />
+    <Entrypoint Module="Mso*.dll" Method="CTp*ThreadProc" />
+    <Entrypoint Module="Office*.exe" Method="CIOPort::ThreadProc" />
+    <Entrypoint Module="Office*.exe" Method="CTp*ThreadProc" />
+  </Tag>
+
+  <Tag Name="Factoid Dispatch Thread" Priority="49">
+    <Entrypoint Module="MSO.dll" Method="WorkingThread" />
+  </Tag>
+
+  <Tag Name="Office Splash Screen" Priority="48">
+    <Entrypoint Module="Mso*.dll" Method="CSplashScreen::BGThreadProc" />
+  </Tag>
+
+  <Tag Name="Windows Pool Threads" Priority="47">
+    <Entrypoint Module="ntdll.dll" Method="TppWorkerThread" />
+
+    <!-- Windows may use the ThreadPool to resolve static dependencies in parallel. -->
+    <Tag Name="Static Dependencies - Parallel" Priority="47">
+      <Entrypoint Module="ntdll.dll" Method="LdrpWorkCallback" />
+    </Tag>
+  </Tag>
+
+  <!-- Other threads typically wait on this thread. -->
+  <Tag Name="STL Concurrent Thread" Priority="45">
+    <Entrypoint Module="*" Method="std::thread::_Invoke*" />
+  </Tag>
+
+  <Tag Name="CLR ThreadPool Threads" Priority="43">
+    <Entrypoint Module="clr.dll" Method="Threadpool*" />
+    <Entrypoint Module="clr.dll" Method="*ThreadProc" />
+    <Entrypoint Module="clr.dll" Method="GateThread*" />
+  </Tag>
+
+  <Tag Name="WinMain" Priority="40">
+    <Entrypoint Module="*.exe" Method="*WinMain*" />
+
+    <Tag Name="InitLiblets" Priority="40">
+      <Entrypoint Module="Mso*.dll" Method="*LibletInit" />
+      <Entrypoint Module="Office*.exe" Method="*LibletInit" />
+      <Entrypoint Module="Mso*.dll" Method="*InitLiblets" />
+      <Entrypoint Module="Office*.exe" Method="*InitLiblets" />
+    </Tag>
+
+    <Tag Name="MainLoop" Priority="40">
+      <Entrypoint Module="Excel.exe" Method="MainLoop" />
+      <Entrypoint Module="WWLib.dll" Method="FMainLoop" />
+      <Entrypoint Module="PPCore.dll" Method="PPMain" />
+      <Entrypoint Module="Outlook.exe" Method="RenLibDLL::Run" />
+      <Entrypoint Module="MSO*.dll" Method="SCM_MsoStdCompMgr::FDoIdle" />
+
+      <Tag Name="Idle" Priority="40">
+        <Entrypoint Module="Excel.exe" Method="FDoIdle*" />
+        <Entrypoint Module="WWLib.dll" Method="Idle" />
+        <Entrypoint Module="PPCore.dll" Method="ELEventPumpRun::Run" />
+        <Entrypoint Module="Outlook.EXE" Method="CWinApp::OnIdle" />
+        <Entrypoint Module="Outlook.EXE" Method="FlushDeferredCalls" />
+        <Entrypoint Module="Outlook.EXE" Method="DeferredCallMgr*" />
+        <Entrypoint Module="MSO*.dll" Method="SCM_MsoStdCompMgr::FDoIdle" /> <!-- repeated -->
+        <Entrypoint Module="MSO*.dll" Method="Mso::ApplicationModel::MSOUIScheduler::IdleTask::Run" />
+      </Tag>
+
+    </Tag> <!-- MainLoop -->
+
+    <Tag Name="WinInit" Priority="40">
+      <Entrypoint Module="Excel.exe" Method="FWinInit" />
+    </Tag>
+    <Tag Name="FWordBoot" Priority="40">
+      <Entrypoint Module="WWLib.dll" Method="FMain" /> <!-- FMain calls FWordBoot -->
+    </Tag>
+    <Tag Name="WinMain" Priority="40">
+      <Entrypoint Module="PowerPnt.exe" Method="*WinMain" />
+    </Tag>
+    <Tag Name="RenInit" Priority="40">
+      <Entrypoint Module="OUTLOOK.EXE" Method="RenLibDLL::Init*" />
+    </Tag>
+
+  </Tag> <!-- WinMain -->
+
+  <!-- Dynamic Initializers: NOT WinMain, HAS initterm -->
+
+  <Tag Name="" Priority="42">
+    <Entrypoint Module="*.exe" Method="*WinMain*" />
+
+    <Tag Name="Dynamic Initializers" Priority="42">
+      <Entrypoint Module="*" Method="*initterm*" /> <!-- _initterm, _initterm_e, etc. -->
+    </Tag>
+
+  </Tag>
+
+  <!-- AirSpace Thread: Mso40*.dll!AirSpace::* -->
+
+  <Tag Name="Office AirSpace Threads" Priority="35">
+    <Entrypoint Module="Mso40*.dll" Method="AirSpace::*::ThreadProc" />
+  </Tag>
+
+  <!-- Assorted Video Drivers -->
+
+  <Tag Name="Video Driver Threads" Priority="51">
+    <Entrypoint Module="atidx*.dll" /> <!-- ATI -->
+    <Entrypoint Module="nv*um*.dll" /> <!-- NVIDIA -->
+    <Entrypoint Module="ig*um*.dll" /> <!-- Intel -->
+  </Tag>
+
+  <!-- Static Dependencies: HAS _LdrpInitialize, NOT RtlUserThreadStart -->
+
+  <Tag Name="" Priority="30">
+    <Entrypoint Module="ntdll.dll" Method="*RtlUserThreadStart" />
+    <Entrypoint Module="*.dll" Method="dllmain*" />
+
+    <Tag Name="Static Dependencies" Priority="29">
+      <Entrypoint Module="*.dll" Method="dllmain*" /> <!-- Repeated -->
+    </Tag>
+
+    <Tag Name="Other Threads" Priority="28">
+      <Entrypoint Module="ntdll.dll" Method="*RtlUserThreadStart" /> <!-- Repeated -->
+      <Entrypoint Module="nt*.exe" Method="KxStartSystemThread" />
+    </Tag>
+
+  </Tag>
+
+  <Tag Name="Stack Fragment" Priority="1">
+    <Entrypoint Module="*" />
+  </Tag>
+
+</Tag>

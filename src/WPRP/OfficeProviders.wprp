@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    Collectors with the same name get merged across Profiles and WPRP files.
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <SystemCollector Id="SC_Base" Name="MSO System Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="8" />
+    </SystemCollector>
+
+    <EventCollector Id="EC_16-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="16" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+
+    Provider Manifest Registration is stored at:
+    HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Publishers\{GUID}
+
+    To register these providers...
+        Microsoft-Office-Events:     EnsureETWProvider(".\OETW\MsoEtwCM.man") # usually pre-registered
+        OfficeLoggingLiblet:         EnsureETWProvider(".\OETW\MsoEtwCM.man") # both in this manifest
+        Microsoft-Office-Threadpool: EnsureETWProvider(".\OETW\MsoEtwTP.man")
+        OfficeDispatchQueue:         EnsureETWProvider(".\OETW\MsoEtwDQ.man")
+        OfficeAirSpace:              EnsureETWProvider(".\OETW\MsoEtwAS.man") # usually pre-registered
+-->
+
+    <!-- Base requirement for process/thread/module info and symbol resolution. -->
+
+    <SystemProvider Id="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+    </SystemProvider>
+
+    <EventProvider Id="EP_OLog_CodeMarkers"  Name="8736922D-E8B2-47eb-8564-23E77E728CF3" Stack="true"> <!-- Microsoft-Office-Events -->
+      <Keywords Operation="Add">
+        <Keyword Value="4" />
+      </Keywords>
+    </EventProvider>
+    <EventProvider Id="EP_OLog_PerfCore"     Name="3AE5A364-0BC4-4CC7-9356-64DD32CBBF4D" /> <!-- PerfCore -->
+    <EventProvider Id="EP_OLoggingLiblet"    Name="f50d9315-e17e-43c1-8370-3edf6cc057be" /> <!-- OfficeLoggingLiblet (Expensive!) -->
+    <EventProvider Id="EP_OLoggingLite"      Name="f50d9315-e17e-43c1-8370-3edf6cc057be" Level="4" Stack="true" /> <!-- OfficeLoggingLiblet -->
+    <EventProvider Id="EP_OLog_AirSpace"     Name="f562bb8e-422d-4b5c-b20e-90d710f7d11c" Level="4" /> <!-- OfficeAirSpace -->
+    <EventProvider Id="EP_OLog_C2R"          Name="23ABE7E9-F7E2-462D-824C-18D4BD13D955" /> <!-- Microsoft.Office.Logging.C2R -->
+    <EventProvider Id="EP_OLog_Common"       Name="D983C416-203F-496D-AAC3-910FB89AA2DA" /> <!-- Microsoft.Office.Logging.Common -->
+    <EventProvider Id="EP_OCommon"           Name="8A3A9FD4-21D3-470B-B1D6-838B9FC8637B" /> <!-- Microsoft.Office.Common -->
+    <EventProvider Id="EP_OCommon_HVA"       Name="8A3A9FD4-21D3-470B-B1D6-838B9FC8637B" Level="4" Stack="true" /> <!-- Microsoft.Office.Common -->
+    <EventProvider Id="EP_OLog_MeasureFIO"   Name="a380209f-f500-586f-d5aa-1f15e23cefa5" Level="4" Stack="true" /> <!-- Microsoft.Office.Measurements -->
+    <EventProvider Id="EP_OLog_Measurements" Name="a380209f-f500-586f-d5aa-1f15e23cefa5" /> <!-- Microsoft.Office.Measurements -->
+
+    <EventProvider Id="EP_Excel"         Name="6FD91573-4ABC-43A5-84EE-ACB8DC42888F" Level="4" Stack="true" /> <!-- Microsoft.Office.Excel [OpenDocumentBegin/Success/Error] -->
+    <EventProvider Id="EP_PowerPoint"    Name="71B8AC9B-04B7-4216-82C0-DD54FEE06D2C" Level="4" Stack="true" /> <!-- Microsoft.Office.PowerPoint [OpenDocumentBegin/Success/Error, SaveDocumentProtocolBegin/Success] -->
+    <EventProvider Id="EP_OneNote"       Name="5FC204D3-EE49-47FE-AD79-2318CF78F3D5" /> <!-- Microsoft.Office.OneNote -->
+    <EventProvider Id="EP_Word1"         Name="DAF0B914-9C1C-450A-81B2-FEA7244F6FFA" /> <!-- Microsoft-Office-Word -->
+    <EventProvider Id="EP_Word1_Lean"    Name="DAF0B914-9C1C-450A-81B2-FEA7244F6FFA" Level="4" Stack="true" /> <!-- Microsoft-Office-Word -->
+    <EventProvider Id="EP_Word2"         Name="BB00E856-A12F-4AB7-B2C8-4E80CAEA5B07" /> <!-- Microsoft-Office-Word2 -->
+    <EventProvider Id="EP_Word3"         Name="A1B69D49-2195-4F59-9D33-BDF30C0FE473" /> <!-- Microsoft-Office-Word3 -->
+    <EventProvider Id="EP_Extensibility" Name="1972DB93-8AB1-47A6-8FF5-F37744FDB721" Level="4" Stack="true" /> <!-- Microsoft.Office.Extensibility [AgaveActivationStart/Stop/Info] -->
+
+    <EventProvider Id="EP_OSessionIdProvider"   Name="e6aec961-a5e0-5560-a860-15edd6b70f6c" /> <!-- Microsoft.Office.SessionIdProvider -->
+    <EventProvider Id="EP_OCorrelationMetadata" Name="fc15139c-ddf2-481f-9a9b-365919cb8ae5" /> <!-- Microsoft.Office.CorrelationMetadata -->
+    <EventProvider Id="EP_OTelemetryEngine"     Name="d1318fe0-16b7-4f5b-b5f9-ba3cd54cd9cc" /> <!-- Microsoft.Office.TelemetryEngine -->
+
+<!-- See also ThreadPool.wprp:
+    OThreadPool = A019725F-CFF1-47E8-8C9E-8FE2635B6388
+    ODispatch   = 559A5658-8100-4D84-B756-0A47A476280C
+    OIdleTasks  = 8736922D-E8B2-47eb-8564-23E77E728CF3 - Keyword:0x40
+-->
+
+<!--
+    <EventProvider Id="EP_SPP-Tracelog"      Name="6AF9E939-1D95-430A-AFA3-7526FADEE37D" Stack="true">
+      <Keywords>
+        # 0x8000000000000000: SUCCEEDED(hResult)
+        # 0x4000000000000000: FAILED(hResult)
+        # 0x00000000FFFFFFFF: The hResult bits
+        <Keyword Value="0x4000000000000000" />
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="EP_AppV" Name="9CC69D1C-7917-4ACD-8066-6BF8B63E551B" /> # Microsoft-AppV-ServiceLog
+-->
+
+    <!-- Very early app-launch events -->
+
+    <EventProvider Id="EP_AppLifeCycle-UI" Name="ee97cdc4-b095-5c70-6e37-a541eb74c2b5" /> <!-- Microsoft.Windows.AppLifeCycle.UI -->
+    <EventProvider Id="EP_Helium_C2RX"     Name="5526aed1-f6e5-5896-cbf0-27d9f59b6be7" /> <!-- Microsoft.Windows.ApplicationModel.DesktopAppx (C2RX/Helium) -->
+    <EventProvider Id="EP_KernelProcess"          Name="2839ff94-8f12-4e1b-82e3-af7af77a450f" NonPagedMemory="true" /> <!-- KernelProcess -->
+    <EventProvider Id="EP_Windows_Kernel_Process" Name="22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716" NonPagedMemory="true">   <!-- Microsoft-Windows-Kernel-Process -->
+      <Keywords>
+        <Keyword Value="0x0010" /> <!-- ProcessStart/Stop -->
+        <Keyword Value="0x0200" /> <!-- ProcessFreeze.Start/Stop -->
+      </Keywords>
+    </EventProvider>
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <!-- Office CodeMarkers, HVAs, and Other Logging (Light) -->
+    <!-- Most of these providers are required for the Office Regions of Interest view profiles. -->
+
+    <Profile Name="CodeMarkers" Description="Office Code Markers, HVAs, and Other Light Logging"
+     DetailLevel="Light" LoggingMode="File" Id="CodeMarkers.Light.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+            <EventProviderId Value="EP_OLog_MeasureFIO" />
+            <EventProviderId Value="EP_OSessionIdProvider" />
+            <EventProviderId Value="EP_OCorrelationMetadata" />
+            <EventProviderId Value="EP_OTelemetryEngine" />
+            <EventProviderId Value="EP_OCommon_HVA" /> <!-- High Value Activities (HVAs), Input Delay, End of Boot -->
+            <EventProviderId Value="EP_Excel" />
+            <EventProviderId Value="EP_PowerPoint" />
+            <EventProviderId Value="EP_Word1_Lean" />
+            <EventProviderId Value="EP_Word2" />
+            <EventProviderId Value="EP_Extensibility" />
+            <!-- Early app launch events -->
+            <EventProviderId Value="EP_AppLifeCycle-UI" />
+            <EventProviderId Value="EP_Helium_C2RX" />
+            <EventProviderId Value="EP_KernelProcess" />
+            <EventProviderId Value="EP_Windows_Kernel_Process" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="CodeMarkers" Description="Office Code Markers, HVAs, and Other Light Logging"
+     DetailLevel="Light" LoggingMode="Memory" Base="CodeMarkers.Light.File" Id="CodeMarkers.Light.Memory" />
+
+    <!-- Office Min Standalone -->
+
+    <Profile Name="OfficeMin" Description="Minimum Standalone with Office Code Markers, HVAs, etc."
+     DetailLevel="Light" LoggingMode="File" Base="CodeMarkers.Light.File" Id="OfficeMin.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_Base">
+          <SystemProviderId Value="SP_Base" />
+        </SystemCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="OfficeMin" Description="Minimum Standalone with Office Code Markers, HVAs, etc."
+     DetailLevel="Light" LoggingMode="Memory" Base="OfficeMin.Light.File" Id="OfficeMin.Light.Memory" />
+
+    <!-- OfficeLogging (Verbose) -->
+
+    <Profile Name="OfficeLogging" Description="All Office Logging Providers"
+     DetailLevel="Verbose" LoggingMode="File" Id="OfficeLogging.Verbose.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_OLog_AirSpace" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+            <EventProviderId Value="EP_OLog_Common" />
+            <EventProviderId Value="EP_OCommon" /> <!-- Logs Office launch, file open, input delays -->
+            <EventProviderId Value="EP_OLog_Measurements" />
+            <EventProviderId Value="EP_OLog_PerfCore" />
+            <EventProviderId Value="EP_OLoggingLite" /> <!-- Less comprehensive, with call stacks -->
+            <EventProviderId Value="EP_OSessionIdProvider" />
+            <EventProviderId Value="EP_OCorrelationMetadata" />
+            <EventProviderId Value="EP_OTelemetryEngine" />
+            <EventProviderId Value="EP_OLog_C2R" />
+
+            <EventProviderId Value="EP_Excel" />
+            <EventProviderId Value="EP_PowerPoint" />
+            <EventProviderId Value="EP_OneNote" />
+            <EventProviderId Value="EP_Word1" />
+            <EventProviderId Value="EP_Word2" />
+            <EventProviderId Value="EP_Word3" />
+            <EventProviderId Value="EP_Extensibility" />
+
+            <!-- Early app launch events -->
+            <EventProviderId Value="EP_AppLifeCycle-UI" />
+            <EventProviderId Value="EP_Helium_C2RX" />
+            <EventProviderId Value="EP_KernelProcess" />
+            <EventProviderId Value="EP_Windows_Kernel_Process" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="OfficeLogging" Description="All Office Logging Providers"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="OfficeLogging.Verbose.File" Id="OfficeLogging.Verbose.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

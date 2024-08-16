@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <EventCollector Id="EC_16-MB" Name="MSO Event Logger">
+      <BufferSize Value="1024" />
+      <Buffers Value="16" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+
+    Provider Registration is stored at:
+    HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Publishers\{GUID}
+
+    To register these providers...
+        Microsoft-Office-Events:     EnsureETWProvider("..\OETW\MsoEtwCM.man") # usually pre-registered
+        OfficeLoggingLiblet:         EnsureETWProvider("..\OETW\MsoEtwCM.man") # both in this manifest
+        Microsoft-Office-Threadpool: EnsureETWProvider("..\OETW\MsoEtwTP.man")
+-->
+
+    <EventProvider Id="EP_OLog_CodeMarkers"  Name="8736922D-E8B2-47eb-8564-23E77E728CF3"> <!-- Microsoft-Office-Events -->
+      <Keywords Operation="Add">
+        <Keyword Value="4" />
+      </Keywords>
+    </EventProvider>
+    <EventProvider Id="EP_OLog_PerfCore"     Name="3AE5A364-0BC4-4CC7-9356-64DD32CBBF4D" /> <!-- PerfCore -->
+    <EventProvider Id="EP_OLoggingLiblet"    Name="f50d9315-e17e-43c1-8370-3edf6cc057be" /> <!-- OfficeLoggingLiblet -->
+    <EventProvider Id="EP_OLog_AirSpace"     Name="f562bb8e-422d-4b5c-b20e-90d710f7d11c" Level="4" /> <!-- OfficeAirSpace -->
+    <EventProvider Id="EP_OLog_C2R"          Name="23ABE7E9-F7E2-462D-824C-18D4BD13D955" /> <!-- Microsoft.Office.Logging.C2R -->
+    <EventProvider Id="EP_OLog_Common"       Name="D983C416-203F-496D-AAC3-910FB89AA2DA" /> <!-- Microsoft.Office.Logging.Common -->
+    <EventProvider Id="EP_OLog_CXE"          Name="9BD7837C-FC7A-41B3-902E-15DDB66AFBC0" /> <!-- Microsoft.Office.Logging.CXE -->
+    <EventProvider Id="EP_OLog_DesktopOLK"   Name="0ffeea28-6a83-4a43-a4b5-6e44fe9cdf50" /> <!-- Microsoft.Office.DesktopOutlook.ETW.Shim -->
+    <EventProvider Id="EP_OLog_DynCanvas"    Name="864C2966-308C-4ABB-A512-601127C23E69" /> <!-- Microsoft.Office.Logging.DynamicCanvas -->
+    <EventProvider Id="EP_OLog_ETW_SHIM"     Name="F231815B-8AC1-4637-A759-824C01CB9726" /> <!-- Microsoft.Office.ETW.Shim -->
+    <EventProvider Id="EP_OLog_Excel"        Name="01DB8B01-C75A-4D73-AEEB-188509B163CC" /> <!-- Microsoft.Office.Logging.Excel -->
+    <EventProvider Id="EP_OLog_FileIO"       Name="E1926C25-5277-4ACF-89AB-96E9378B3DF1" /> <!-- Microsoft.Office.Logging.FileIO -->
+    <EventProvider Id="EP_OLog_Goose"        Name="4EE4FE2E-FD4E-4841-AA8F-2828CFE71681" /> <!-- Microsoft.Office.Logging.Goose -->
+    <EventProvider Id="EP_OLog_Gviz"         Name="828E8828-DB90-45BB-8F28-75BAA7694B7C" /> <!-- Microsoft.Office.Logging.GViz -->
+    <EventProvider Id="EP_OLog_Identity"     Name="8E91B4C0-AE4C-45BC-83B4-1E27E9146BB7" /> <!-- Microsoft.Office.Logging.Identity -->
+    <EventProvider Id="EP_OLog_Licensing"    Name="7CA5034F-5365-45BE-8FD4-41F41D86762E" /> <!-- Microsoft.Office.Logging.Licensing -->
+    <EventProvider Id="EP_OLog_Measurements" Name="a380209f-f500-586f-d5aa-1f15e23cefa5" /> <!-- Microsoft.Office.Measurements -->
+    <EventProvider Id="EP_OLog_MBULogging"   Name="94639A84-72F3-4C59-8128-B93ECAA6C8AA" /> <!-- Microsoft.Office.Logging.MBULogging -->
+    <EventProvider Id="EP_OLog_OneNote"      Name="9D6F9559-F2DC-4765-88B2-F6EA1EDEE7E7" /> <!-- Microsoft.Office.Logging.OneNote -->
+    <EventProvider Id="EP_OLog_Outlook"      Name="4C6F6E67-206C-6976-6520-416C70616361" /> <!-- Microsoft.Office.Logging.Outlook -->
+    <EventProvider Id="EP_OLog_PCX"          Name="28330003-2597-4644-9459-644E2995C377" /> <!-- Microsoft.Office.Logging.PeopleCentricExperiences -->
+    <EventProvider Id="EP_OLog_PowerPoint"   Name="686FBCC7-CB2B-45E9-9D0B-A2C362A2D638" /> <!-- Microsoft.Office.Logging.PowerPoint -->
+    <EventProvider Id="EP_OLog_Project"      Name="C87E25A3-5E77-4AF2-AC72-67DA9C61C607" /> <!-- Microsoft.Office.Logging.Project -->
+    <EventProvider Id="EP_OLog_Publisher"    Name="90281CA8-8A39-488A-868E-9690C6A72849" /> <!-- Microsoft.Office.Logging.Publisher -->
+    <EventProvider Id="EP_OLog_Scope"        Name="559185C2-E126-457A-BA70-315FA428E519" /> <!-- Microsoft.Office.Logging.Scope -->
+    <EventProvider Id="EP_OLog_ScreenReader" Name="37F15B55-7F5C-44F8-A07F-C3FFC6824666" /> <!-- Microsoft.Office.Logging.ScreenRecorder -->
+    <EventProvider Id="EP_OLog_Sway"         Name="99BC10D4-42C8-42C6-BA77-3E33079CD0E4" /> <!-- Microsoft.Office.Logging.Sway -->
+    <EventProvider Id="EP_OLog_Todo"         Name="6E4D63FA-6103-4F41-87DF-C1EF328A9B0C" /> <!-- Microsoft.Office.Logging.Todo -->
+    <EventProvider Id="EP_OLog_TPC"          Name="d25c31a7-7bf5-420a-8654-7de57227343c" /> <!-- Microsoft.Office.Logging.TPC -->
+    <EventProvider Id="EP_OLog_UnitTest"     Name="80FF5C30-0129-49BA-B2A6-CAB84FF2F25B" /> <!-- Microsoft.Office.Shared.UnitTest -->
+    <EventProvider Id="EP_OLog_Visio"        Name="C6646A07-BBBA-4616-A307-C0CC733BB6A5" /> <!-- Microsoft.Office.Logging.Visio -->
+    <EventProvider Id="EP_OLog_Whiteboard"   Name="F115963A-3B2D-4738-9628-A59C9E89729C" /> <!-- Microsoft.Office.Logging.Whiteboard -->
+    <EventProvider Id="EP_OLog_Word"         Name="A9F0B61A-9A15-4DC1-854F-828785773230" /> <!-- Microsoft.Office.Logging.Word -->
+    <EventProvider Id="EP_OLog_DEPRECATED"   Name="1082EA1A-2E9B-42D8-AC2F-3E5D430555EC" /> <!-- Microsoft.Office.Logging.Deprecated -->
+
+<!-- See also ThreadPool.wprp:
+    OThreadPool = A019725F-CFF1-47E8-8C9E-8FE2635B6388
+    ODispatch   = 559A5658-8100-4D84-B756-0A47A476280C
+    OIdleTasks  = 8736922D-E8B2-47eb-8564-23E77E728CF3 - Keyword:0x40
+-->
+
+    <EventProvider Id="EP_Windows_Timers"    Name="8c416c79-d49b-4f01-a467-e56d3aa8234c" Stack="true" NonPagedMemory="true"> <!-- Microsoft-Windows-Win32k -->
+      <Keywords>
+        <Keyword Value="0x20000000" />
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="EP_PerfTrack-Meta"     Name="8c493695-3df4-40cb-b11d-9edc41d5d2ab" /> <!-- Meta-provider for all PerfTrack providers installed on the system -->
+    <EventProvider Id="EP_PerfTrack-Windows"  Name="030f2f57-abd0-4427-bcf1-3a3587d7dc7d" /> <!-- Microsoft-Windows-Diagnostics-PerfTrack -->
+    <EventProvider Id="EP_PerfTrack-Counters" Name="c06ed57a-a7bd-42d7-b5ff-77a9dec5732d" /> <!-- Microsoft-Windows-Diagnostics-PerfTrack-Counters -->
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <!-- OfficeLogging (Light) - Code Markers -->
+
+    <Profile Name="OfficeLogging" Description="Office Code Markers"
+     DetailLevel="Light" LoggingMode="File" Id="OfficeLogging.Light.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="OfficeLogging" Description="Office Code Markers"
+     DetailLevel="Light" LoggingMode="Memory" Base="OfficeLogging.Light.File" Id="OfficeLogging.Light.Memory" />
+
+    <!-- OfficeLogging (Verbose) - All Providers -->
+
+    <Profile Name="OfficeLogging" Description="Office Logging Providers"
+     DetailLevel="Verbose" LoggingMode="File" Id="OfficeLogging.Verbose.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_OLog_AirSpace" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+            <EventProviderId Value="EP_OLog_Common" />
+            <EventProviderId Value="EP_OLog_Measurements" />
+            <EventProviderId Value="EP_OLog_PerfCore" />
+            <EventProviderId Value="EP_OLoggingLiblet" />
+
+            <EventProviderId Value="EP_OLog_C2R" />
+            <EventProviderId Value="EP_OLog_CXE" />
+            <EventProviderId Value="EP_OLog_DesktopOLK" />
+            <EventProviderId Value="EP_OLog_DynCanvas" />
+            <EventProviderId Value="EP_OLog_ETW_SHIM" />
+            <EventProviderId Value="EP_OLog_Excel" />
+            <EventProviderId Value="EP_OLog_FileIO" />
+            <EventProviderId Value="EP_OLog_Goose" />
+            <EventProviderId Value="EP_OLog_Gviz" />
+            <EventProviderId Value="EP_OLog_Identity" />
+            <EventProviderId Value="EP_OLog_Licensing" />
+            <EventProviderId Value="EP_OLog_MBULogging" />
+            <EventProviderId Value="EP_OLog_OneNote" />
+            <EventProviderId Value="EP_OLog_Outlook" />
+            <EventProviderId Value="EP_OLog_PCX" />
+            <EventProviderId Value="EP_OLog_PowerPoint" />
+            <EventProviderId Value="EP_OLog_Project" />
+            <EventProviderId Value="EP_OLog_Publisher" />
+            <EventProviderId Value="EP_OLog_Scope" />
+            <EventProviderId Value="EP_OLog_ScreenReader" />
+            <EventProviderId Value="EP_OLog_Sway" />
+            <EventProviderId Value="EP_OLog_Todo" />
+            <EventProviderId Value="EP_OLog_TPC" />
+            <EventProviderId Value="EP_OLog_UnitTest" />
+            <EventProviderId Value="EP_OLog_Visio" />
+            <EventProviderId Value="EP_OLog_Whiteboard" />
+            <EventProviderId Value="EP_OLog_Word" />
+
+            <EventProviderId Value="EP_Windows_Timers" />
+
+            <EventProviderId Value="EP_PerfTrack-Meta" />
+            <EventProviderId Value="EP_PerfTrack-Windows" />
+            <EventProviderId Value="EP_PerfTrack-Counters" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="OfficeLogging" Description="Office Logging Providers"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="OfficeLogging.Verbose.File" Id="OfficeLogging.Verbose.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <!-- FileCompression Value="true" /-->
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+
+    WARNING: Registry tracing is expensive. Consider tracking kernel handles (registry keys) instead.
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    Collectors with the same name get merged across Profiles and WPRP files.
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <SystemCollector Id="SC_Base" Name="NT Kernel Logger">
+      <BufferSize Value="1024" />
+      <Buffers Value="8" />
+      <StackCaching BucketCount="256" CacheSize="3072" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_64-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="64" />
+    </SystemCollector>
+
+    <EventCollector Id="EC_4-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="4" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+-->
+
+    <!-- Base requirement for process/thread/module info and symbol resolution. -->
+
+    <SystemProvider Id="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="ImageLoad" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Full registry collection with call stacks. -->
+
+    <SystemProvider Id="SP_Registry" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="Registry" />
+        <Keyword Value="RegistryHive" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="RegistryQueryKey" />
+        <Stack Value="RegistryEnumerateKey" />
+        <Stack Value="RegistryEnumerateValueKey" />
+        <Stack Value="RegistryDeleteKey" />
+        <Stack Value="RegistryCreateKey" />
+        <Stack Value="RegistryOpenKey" />
+        <Stack Value="RegistrySetValue" />
+        <Stack Value="RegistryDeleteValue" />
+        <Stack Value="RegistryQueryValue" />
+        <Stack Value="RegistryQueryMultipleValue" />
+        <Stack Value="RegistrySetInformation" />
+        <Stack Value="RegistryFlush" />
+        <Stack Value="RegistryKcbCreate" />
+        <Stack Value="RegistryKcbDelete" />
+        <Stack Value="RegistryVirtualize" />
+        <Stack Value="RegistryCloseKey" />
+        <Stack Value="RegistrySetSecurity" />
+        <Stack Value="RegistryQuerySecurity" />
+        <Stack Value="RegHiveInit" />
+        <Stack Value="RegHiveDestroy" />
+        <Stack Value="RegHiveLink" />
+        <Stack Value="RegHiveDirty" />
+      </Stacks>
+    </SystemProvider>
+
+<!-- RegistryNotify is not recognized by many versions of WPR that ship with Windows.
+    <SystemProvider Id="SP_RegistryExtra" Base="SP_Registry">
+      <Keywords Operation="Add">
+        <Keyword Value="RegistryNotify" />
+      </Keywords>
+      <Stacks Operation="Add">
+       <Stack Value="RegistryChangeNotify" />
+      </Stacks>
+    </SystemProvider>
+-->
+
+    <!-- Additional Module/Load info -->
+
+    <EventProvider Id="EP_Microsoft-Windows-ImageLoad" Name="2cb15d1d-5fc1-11d2-abe1-00a0c911f518">
+      <Keywords Operation="Add">
+        <Keyword Value="0x10" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- Microsoft-Office-Events - Office Code Markers -->
+
+    <EventProvider Id="EP_OLog_CodeMarkers" Name="8736922D-E8B2-47eb-8564-23E77E728CF3">
+      <Keywords Operation="Add">
+        <Keyword Value="4" />
+      </Keywords>
+    </EventProvider>
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <!-- Registry (Verbose) -->
+
+    <Profile Name="Registry" Description="Full Registry Tracing"
+     DetailLevel="Verbose" LoggingMode="File" Id="Registry.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_64-MB">
+          <SystemProviderId Value="SP_Registry" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_4-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="Registry" Description="Full Registry Tracing"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="Registry.Verbose.File" Id="Registry.Verbose.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

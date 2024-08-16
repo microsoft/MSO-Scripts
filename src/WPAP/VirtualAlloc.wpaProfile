@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences>
+<!--
+  DISCLAIMER: Stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+-->
+          <FileReference FileName="VirtualAlloc.stacktags" ServiceMoniker="StackFrameTag.{67F56EBD-2E82-493B-BF4F-712A1D0F018B}" />
+        </FileReferences>
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="1759c3d6-467e-4a14-99a6-4331add79c55" IsVisible="true" Title="Virtual Allocations">
+        <Graphs>
+          <Graph Guid="e6a4a964-3a87-46ef-9762-f9d9b9208051" LayoutStyle="All" Color="#FFBEBEBE" GraphHeight="212" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Committed Allocations by Size" GraphChartType="StackedLine" BarGraphIntervalCount="50" AggregationOverTime="OutstandingPeak" IsThreadActivityTable="false" GraphColumnCount="15" KeyColumnCount="8" LeftFrozenColumnCount="0" RightFrozenColumnCount="13" InitialFilterShouldKeep="true" GraphFilterColumnGuid="3e80b2ba-b36a-4ff1-9c2c-d2542002a6d6" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="e35ae2d1-6370-4e17-a79d-eada8afa60f6" Name="Commit Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="093b4056-cb58-4209-90b9-29cdbb8ca214" Name="Decommit Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="744222db-e5a0-4e6d-b34e-9a9796f3ce38" Name="Process Name" SortPriority="11" Width="137" IsVisible="true" />
+                <Column Guid="cfe19628-6612-4e45-ad6e-84b7423c8132" Name="Process" SortPriority="6" Width="155" IsVisible="true" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="7" Width="80" IsVisible="false" />
+                <Column Guid="02a075ed-f8f0-4ff4-b474-f44059bf7a29" Name="Committing ThreadId" SortPriority="2" TextAlignment="Right" Width="50" IsVisible="false" />
+                <Column Guid="f3e2404e-9274-48de-ba7a-81b10ac0d8e3" Name="Type" SortPriority="9" Width="51" IsVisible="false" />
+                <Column Guid="9298a5c9-42e9-42d0-b069-f211906a4078" Name="Commit Stack" SortPriority="14" Width="112" IsVisible="true" HelpText="Commit Stack Tags">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="9298a5c9-42e9-42d0-b069-f211906a4078" Name="Commit Stack" SortPriority="8" Width="380" IsVisible="true">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="cbc35ff9-0d12-4db3-9a75-578e2d746e4b" Name="Commit LifeTime" SortPriority="3" Width="134" IsVisible="false">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="e35ae2d1-6370-4e17-a79d-eada8afa60f6" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+                <Column Guid="3e80b2ba-b36a-4ff1-9c2c-d2542002a6d6" Name="Count" AggregationMode="Sum" SortPriority="12" TextAlignment="Right" Width="65" IsVisible="true" />
+                <Column Guid="355d0688-9ebd-41af-b2c4-0dc0f4294eaa" Name="Size" AggregationMode="Sum" SortPriority="10" TextAlignment="Right" Width="81" CellFormat="MB" IsVisible="true" />
+                <Column Guid="191711d7-f84c-4936-93b7-e2793639cdd1" Name="Impacting Size" AggregationMode="Sum" SortPriority="4" TextAlignment="Right" Width="135" CellFormat="MB" IsVisible="true" />
+                <Column Guid="3e80b2ba-b36a-4ff1-9c2c-d2542002a6d6" Name="Count" AggregationMode="Peak" SortPriority="5" Width="149" IsVisible="true" />
+                <Column Guid="355d0688-9ebd-41af-b2c4-0dc0f4294eaa" Name="Size" AggregationMode="Peak" SortOrder="Descending" SortPriority="0" Width="164" CellFormat="MB" IsVisible="true" />
+                <Column Guid="e35ae2d1-6370-4e17-a79d-eada8afa60f6" Name="Commit Time" SortOrder="Ascending" SortPriority="1" TextAlignment="Right" Width="113" CellFormat="sN" IsVisible="false">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="093b4056-cb58-4209-90b9-29cdbb8ca214" Name="Decommit Time" SortPriority="13" TextAlignment="Right" Width="115" CellFormat="sN" IsVisible="false">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+          <Graph Guid="e6a4a964-3a87-46ef-9762-f9d9b9208051" LayoutStyle="All" Color="#FFBEBEBE" GraphHeight="212" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Committed Allocation Timelines" GraphChartType="StackedLine" BarGraphIntervalCount="50" AggregationOverTime="OutstandingPeak" IsThreadActivityTable="false" GraphColumnCount="16" KeyColumnCount="8" LeftFrozenColumnCount="0" RightFrozenColumnCount="14" InitialFilterShouldKeep="true" GraphFilterColumnGuid="3e80b2ba-b36a-4ff1-9c2c-d2542002a6d6" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="e35ae2d1-6370-4e17-a79d-eada8afa60f6" Name="Commit Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="093b4056-cb58-4209-90b9-29cdbb8ca214" Name="Decommit Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="744222db-e5a0-4e6d-b34e-9a9796f3ce38" Name="Process Name" SortPriority="1" Width="137" IsVisible="true" />
+                <Column Guid="cfe19628-6612-4e45-ad6e-84b7423c8132" Name="Process" SortPriority="3" Width="155" IsVisible="true" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="4" Width="80" IsVisible="false" />
+                <Column Guid="02a075ed-f8f0-4ff4-b474-f44059bf7a29" Name="Committing ThreadId" SortPriority="5" TextAlignment="Right" Width="50" IsVisible="false" />
+                <Column Guid="f3e2404e-9274-48de-ba7a-81b10ac0d8e3" Name="Type" SortPriority="6" Width="51" IsVisible="true" />
+                <Column Guid="9298a5c9-42e9-42d0-b069-f211906a4078" Name="Commit Stack" SortPriority="14" Width="112" IsVisible="true" HelpText="Commit Stack">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="9298a5c9-42e9-42d0-b069-f211906a4078" Name="Commit Stack" SortPriority="7" Width="179" IsVisible="true">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="cbc35ff9-0d12-4db3-9a75-578e2d746e4b" Name="Commit LifeTime" SortPriority="8" Width="134" IsVisible="false">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="e35ae2d1-6370-4e17-a79d-eada8afa60f6" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+                <Column Guid="3e80b2ba-b36a-4ff1-9c2c-d2542002a6d6" Name="Count" AggregationMode="Sum" SortPriority="9" TextAlignment="Right" Width="65" IsVisible="true" />
+                <Column Guid="355d0688-9ebd-41af-b2c4-0dc0f4294eaa" Name="Size" AggregationMode="Sum" SortPriority="10" TextAlignment="Right" Width="81" CellFormat="MB" IsVisible="true" />
+                <Column Guid="191711d7-f84c-4936-93b7-e2793639cdd1" Name="Impacting Size" AggregationMode="Sum" SortPriority="11" TextAlignment="Right" Width="135" CellFormat="MB" IsVisible="true" />
+                <Column Guid="3e80b2ba-b36a-4ff1-9c2c-d2542002a6d6" Name="Count" AggregationMode="Peak" SortPriority="2" Width="115" IsVisible="true" />
+                <Column Guid="355d0688-9ebd-41af-b2c4-0dc0f4294eaa" Name="Size" AggregationMode="Peak" SortPriority="12" Width="164" CellFormat="MB" IsVisible="true" />
+                <Column Guid="e35ae2d1-6370-4e17-a79d-eada8afa60f6" Name="Commit Time" SortOrder="Ascending" SortPriority="0" AggregationMode="Min" TextAlignment="Right" Width="112" CellFormat="sN" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="093b4056-cb58-4209-90b9-29cdbb8ca214" Name="Decommit Time" SortPriority="13" AggregationMode="Max" TextAlignment="Right" Width="126" CellFormat="sN" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

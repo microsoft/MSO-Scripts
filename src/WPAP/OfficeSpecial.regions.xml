@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes'?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<!--
+  DISCLAIMER: Regions-of-Interest are based on internal logging mechanisms, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/creating-a-regions-of-interest-file
+-->
+<InstrumentationManifest>
+  <Instrumentation>
+    <Regions>
+      <RegionRoot Name="Office Special Events" Guid="{31cab023-b6bf-4c71-ac49-98862e3b2718}">
+
+        <Region Name="Microsoft.Office.Excel" FriendlyName="Excel OpenDocument" Guid="{ab510726-f110-452b-a29c-a00050c41751}">
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <Event Provider="{6fd91573-4abc-43a5-84ee-acb8dc42888f}" Opcode="1" /> <!-- OpenDocumentBegin, etc. -->
+          </Start>
+          <Stop>
+            <Event Provider="{6fd91573-4abc-43a5-84ee-acb8dc42888f}" Opcode="2" /> <!-- OpenDocumentSuccess/Error, etc. -->
+          </Stop>
+        </Region>
+
+        <Region Name="Microsoft.Office.PowerPoint" FriendlyName="PowerPoint OpenDocument" Guid="{f9b6eff8-6ccf-454d-a857-f67f4546bd4f}">
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <Event Provider="{71b8ac9b-04b7-4216-82c0-dd54fee06d2c}" Opcode="1" /> <!-- OpenDocumentBegin, SaveDocumentProtocolBegin -->
+          </Start>
+          <Stop>
+            <Event Provider="{71b8ac9b-04b7-4216-82c0-dd54fee06d2c}" Opcode="2" /> <!-- OpenDocumentSuccess/Error, SaveDocumentSuccess -->
+          </Stop>
+        </Region>
+
+        <Region Name="Microsoft.Office.Extensibility" FriendlyName="Agave Activation" Guid="{7565014e-0ff9-4709-9d4a-a0f43ef61a84}">
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <Event Provider="{1972db93-8ab1-47a6-8ff5-f37744fdb721}" Opcode="1" /> <!-- AgaveActivationStart -->
+          </Start>
+          <Stop>
+            <Event Provider="{1972db93-8ab1-47a6-8ff5-f37744fdb721}" Opcode="2" /> <!-- AgaveActivationStop -->
+          </Stop>
+        </Region>
+
+        <Region Name="Edge Launch" Guid="{b813ac55-ea6a-480d-9cb5-a9192771359e}">
+          <Start>
+            <Event Provider="{ee97cdc4-b095-5c70-6e37-a541eb74c2b5}" Name="AppLaunch_UserClick" /> <!-- Microsoft.Windows.AppLifeCycle.UI -->
+            <PayloadIdentifier FieldName="appId" FieldValue="MSEdge" />
+          </Start>
+          <Stop>
+            <Event Provider="{3a5f2396-5c8f-4f1f-9b67-6cca6c990e61}" Name="VisuallyReady" /> <!-- Microsoft.MSEdgeStable -->
+            <PayloadIdentifier FieldName="Phase" FieldValue="Nestable Async End" />
+          </Stop>
+        </Region>
+
+      </RegionRoot>
+    </Regions>
+  </Instrumentation>
+</InstrumentationManifest>

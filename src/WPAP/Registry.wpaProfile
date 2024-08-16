@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences>
+<!--
+  DISCLAIMER: Stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+-->
+          <FileReference FileName="OfficeBasic.stacktags" ServiceMoniker="StackFrameTag.{67F56EBD-2E82-493B-BF4F-712A1D0F018B}" />
+        </FileReferences>
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="71eb81ce-40e8-4180-ba01-ec6e178a20f2" IsVisible="true" Title="Registry Handles">
+        <Graphs>
+          <Graph Guid="7b47975b-040d-4901-9a3f-e410228e30df" LayoutStyle="All" Color="#FF0000FF" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Lifetimes" BarGraphIntervalCount="50" AggregationOverTime="OutstandingPeak" IsThreadActivityTable="false" GraphColumnCount="15" KeyColumnCount="10" LeftFrozenColumnCount="11" RightFrozenColumnCount="14" InitialFilterQuery="[Creating Process]:&lt;&gt;&quot;Unknown&quot; AND [Handle Type]:=&quot;Key&quot;" InitialFilterShouldKeep="true" GraphFilterColumnGuid="51f12d50-e733-4210-8b26-20bddd55c2e1" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="575d5e07-07a3-48c3-9449-fdf602ae4760" Name="Create Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="37f52b05-ffc2-4a2e-8082-09c618e785d2" Name="Close Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="a325601f-9e7e-4bfc-aeb8-fc93e3f8a431" Name="Handle Type" SortPriority="7" Width="142" IsVisible="false" />
+                <Column Guid="a6df4644-c240-46a3-be94-3a6ee20f014d" Name="Creating Process Name" SortOrder="Ascending" SortPriority="0" Width="166" IsVisible="true" />
+                <Column Guid="d87ad21b-694e-4695-ad72-06419899de8d" Name="Creating Process" SortPriority="2" Width="180" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="413c831c-60bb-4f85-84f7-331b2d4cd5dd" Name="Owning Process Name" SortPriority="3" Width="120" IsVisible="false" />
+                <Column Guid="21170045-d387-4203-afcf-687a3376d1e6" Name="Owning Process" SortPriority="4" Width="109" IsVisible="false">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="5" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="650bd3c8-5ac9-47cf-bd80-1f6b3b23667f" Name="Lifetime" SortPriority="6" Width="60" IsVisible="true" />
+                <Column Guid="0fadff09-6733-477c-b84e-78d4c591f38a" Name="Object Name" AggregationMode="UniqueCount" SortPriority="8" Width="266" IsVisible="true" />
+                <Column Guid="bd18fc7d-8d6f-4e6c-9571-4f563e53010a" Name="Create Stack" SortPriority="9" Width="200" IsVisible="false">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="bd18fc7d-8d6f-4e6c-9571-4f563e53010a" Name="Create Stack" SortPriority="10" Width="246" IsVisible="true">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="51f12d50-e733-4210-8b26-20bddd55c2e1" Name="Count" AggregationMode="Sum" SortOrder="Descending" SortPriority="1" TextAlignment="Right" Width="64" IsVisible="true" />
+                <Column Guid="51f12d50-e733-4210-8b26-20bddd55c2e1" Name="Count" AggregationMode="Peak" SortPriority="11" Width="142" IsVisible="true" />
+                <Column Guid="575d5e07-07a3-48c3-9449-fdf602ae4760" Name="Create Time" AggregationMode="Min" SortPriority="12" TextAlignment="Right" Width="100" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="37f52b05-ffc2-4a2e-8082-09c618e785d2" Name="Close Time" AggregationMode="Max" SortPriority="13" TextAlignment="Right" Width="100" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+          <Graph Guid="7b47975b-040d-4901-9a3f-e410228e30df" LayoutStyle="All" Color="#FF0000FF" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Outstanding Counts" GraphChartType="StackedLine" BarGraphIntervalCount="50" AggregationOverTime="OutstandingPeak" IsThreadActivityTable="false" GraphColumnCount="14" KeyColumnCount="10" LeftFrozenColumnCount="11" RightFrozenColumnCount="12" InitialFilterQuery="[Creating Process]:&lt;&gt;&quot;Unknown&quot; AND [Handle Type]:=&quot;Key&quot;" InitialFilterShouldKeep="true" GraphFilterColumnGuid="51f12d50-e733-4210-8b26-20bddd55c2e1" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="575d5e07-07a3-48c3-9449-fdf602ae4760" Name="Create Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="37f52b05-ffc2-4a2e-8082-09c618e785d2" Name="Close Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="a6df4644-c240-46a3-be94-3a6ee20f014d" Name="Creating Process Name" SortPriority="1" Width="136" IsVisible="true" />
+                <Column Guid="d87ad21b-694e-4695-ad72-06419899de8d" Name="Creating Process" SortPriority="11" Width="180" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="413c831c-60bb-4f85-84f7-331b2d4cd5dd" Name="Owning Process Name" SortPriority="2" Width="120" IsVisible="false" />
+                <Column Guid="21170045-d387-4203-afcf-687a3376d1e6" Name="Owning Process" SortPriority="10" Width="109" IsVisible="false">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="5" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="650bd3c8-5ac9-47cf-bd80-1f6b3b23667f" Name="Lifetime" SortPriority="4" Width="60" IsVisible="true" />
+                <Column Guid="a325601f-9e7e-4bfc-aeb8-fc93e3f8a431" Name="Handle Type" SortPriority="7" Width="142" IsVisible="false" />
+                <Column Guid="0fadff09-6733-477c-b84e-78d4c591f38a" Name="Object Name" AggregationMode="UniqueCount" SortPriority="3" Width="386" IsVisible="true" />
+                <Column Guid="bd18fc7d-8d6f-4e6c-9571-4f563e53010a" Name="Create Stack" SortPriority="12" Width="200" IsVisible="false">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="bd18fc7d-8d6f-4e6c-9571-4f563e53010a" Name="Create Stack" SortPriority="13" Width="347" IsVisible="true">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="51f12d50-e733-4210-8b26-20bddd55c2e1" Name="Count" AggregationMode="Peak" SortPriority="6" Width="152" IsVisible="true" />
+                <Column Guid="575d5e07-07a3-48c3-9449-fdf602ae4760" Name="Create Time" AggregationMode="Min" SortPriority="8" TextAlignment="Right" Width="100" IsVisible="false">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="37f52b05-ffc2-4a2e-8082-09c618e785d2" Name="Close Time" AggregationMode="Max" SortPriority="9" TextAlignment="Right" Width="100" IsVisible="false">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="51f12d50-e733-4210-8b26-20bddd55c2e1" Name="Count" AggregationMode="Sum" SortOrder="Descending" SortPriority="0" TextAlignment="Right" Width="62" IsVisible="true" />
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+      <View Guid="c292d52a-5b25-4dd1-90ab-c73773d332bd" IsVisible="true" Title="Registry Activity">
+        <Graphs>
+          <Graph Guid="e97b189d-b977-4e41-9448-8c214c166f84" LayoutStyle="All" Color="#FF008000" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Elapsed Time by Process, Operation, Key" GraphChartType="StackedLine" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="16" KeyColumnCount="9" LeftFrozenColumnCount="10" RightFrozenColumnCount="15" InitialFilterShouldKeep="true" GraphFilterColumnGuid="a42d1c14-a560-4cc1-9d27-abca0702612e" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="1051b1bb-35cc-413f-bdef-067a55aa2e9a" Name="Thread ID" ColumnMetadata="EndThreadId" />
+                <MetadataEntry Guid="a50fdcd5-8158-4b3c-a147-ab58b9e7c539" Name="Operation Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="a50fdcd5-8158-4b3c-a147-ab58b9e7c539" Name="Operation Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="1a9d76f5-008d-49c8-9fc6-59fa84800243" Name="Process Name" SortOrder="Ascending" SortPriority="0" Width="120" IsVisible="true" />
+                <Column Guid="82499962-6a9b-4862-accf-0dc896b654b2" Name="Service Display Name" SortPriority="4" Width="150" IsVisible="false" HelpText="Service Display Name" />
+                <Column Guid="6e161ed1-5f7b-4b73-85cc-0d65dab67d53" Name="Process" SortOrder="Ascending" SortPriority="1" Width="137" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="5" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="726bb914-96d6-4332-94a1-4491fb83fe1f" Name="Stack" SortPriority="0" Width="160" IsVisible="false" HelpText="Stack">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="0b129433-39e5-4a9e-951a-b8ef208b2cfc" Name="Entire Key (Base+Remainder)" SortPriority="6" Width="300" IsVisible="false" />
+                <Column Guid="32515a40-448a-48b3-bff0-4cf4031e9f08" Name="Entire Key (Base+Remainder) Tree" SortPriority="7" Width="300" IsVisible="true" />
+                <Column Guid="726bb914-96d6-4332-94a1-4491fb83fe1f" Name="Stack" SortPriority="9" Width="200" IsVisible="false">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="da3b10c0-1765-41f3-a783-dc51125851d1" Name="Operation" SortPriority="8" Width="100" IsVisible="true" />
+                <Column Guid="a43842b0-7cf3-4d6f-b7a2-2d6f1e00133f" Name="Count" AggregationMode="Sum" SortPriority="10" TextAlignment="Right" Width="58" IsVisible="true" />
+                <Column Guid="80fe6ecc-50c2-4ce2-ade2-599599b7f62c" Name="Handle Count" AggregationMode="Sum" SortPriority="3" TextAlignment="Right" Width="89" IsVisible="true" HelpText="Handle Count" />
+                <Column Guid="1051b1bb-35cc-413f-bdef-067a55aa2e9a" Name="Thread ID" SortPriority="11" TextAlignment="Right" Width="66" IsVisible="true" />
+                <Column Guid="1513fa10-153a-405d-82ee-33d538c2822e" Name="Status" SortPriority="12" Width="160" IsVisible="true" />
+                <Column Guid="a50fdcd5-8158-4b3c-a147-ab58b9e7c539" Name="Operation Time" SortOrder="Ascending" SortPriority="2" TextAlignment="Right" Width="114" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="a42d1c14-a560-4cc1-9d27-abca0702612e" Name="Elapsed Time" AggregationMode="Sum" SortPriority="13" TextAlignment="Right" Width="122" CellFormat="mN" IsVisible="true">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="a50fdcd5-8158-4b3c-a147-ab58b9e7c539" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+          <Graph Guid="e97b189d-b977-4e41-9448-8c214c166f84" LayoutStyle="All" Color="#FF008000" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Count by Operation, Process, Key" GraphChartType="StackedLine" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="15" KeyColumnCount="8" LeftFrozenColumnCount="9" RightFrozenColumnCount="13" InitialFilterShouldKeep="true" GraphFilterColumnGuid="a43842b0-7cf3-4d6f-b7a2-2d6f1e00133f" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="1051b1bb-35cc-413f-bdef-067a55aa2e9a" Name="Thread ID" ColumnMetadata="EndThreadId" />
+                <MetadataEntry Guid="a50fdcd5-8158-4b3c-a147-ab58b9e7c539" Name="Operation Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="1a9d76f5-008d-49c8-9fc6-59fa84800243" Name="Process Name" SortOrder="Descending" SortPriority="1" Width="114" IsVisible="true" />
+                <Column Guid="82499962-6a9b-4862-accf-0dc896b654b2" Name="Service Display Name" SortPriority="4" Width="150" IsVisible="false" HelpText="Service Display Name" />
+                <Column Guid="6e161ed1-5f7b-4b73-85cc-0d65dab67d53" Name="Process" SortOrder="Descending" SortPriority="2" Width="148" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="5" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="36094080-599c-44bb-be1c-14516446d832" Name="Is Open/Close" SortPriority="3" Width="89" IsVisible="false" HelpText="Is Open/Close" />
+                <Column Guid="0b129433-39e5-4a9e-951a-b8ef208b2cfc" Name="Entire Key (Base+Remainder)" SortPriority="6" Width="300" IsVisible="false" />
+                <Column Guid="32515a40-448a-48b3-bff0-4cf4031e9f08" Name="Entire Key (Base+Remainder) Tree" SortPriority="7" Width="380" IsVisible="true" />
+                <Column Guid="726bb914-96d6-4332-94a1-4491fb83fe1f" Name="Stack" SortPriority="8" Width="200" IsVisible="false">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="1051b1bb-35cc-413f-bdef-067a55aa2e9a" Name="Thread ID" SortPriority="9" TextAlignment="Right" Width="64" IsVisible="true" />
+                <Column Guid="da3b10c0-1765-41f3-a783-dc51125851d1" Name="Operation" SortPriority="10" Width="72" IsVisible="true" />
+                <Column Guid="1513fa10-153a-405d-82ee-33d538c2822e" Name="Status" SortPriority="11" Width="94" IsVisible="true" />
+                <Column Guid="80fe6ecc-50c2-4ce2-ade2-599599b7f62c" Name="Handle Count" AggregationMode="Sum" SortPriority="12" TextAlignment="Right" Width="90" IsVisible="true" HelpText="Handle Count" />
+                <Column Guid="a43842b0-7cf3-4d6f-b7a2-2d6f1e00133f" Name="Count" AggregationMode="Sum" SortOrder="Descending" SortPriority="0" TextAlignment="Right" Width="58" IsVisible="true" />
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

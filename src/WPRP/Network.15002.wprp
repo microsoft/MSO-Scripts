@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    **** This Recording Profile requires WPR v10.0.15002+ ****
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+
+    Profiles:
+        NetworkMain - for viewing in WPA with Network.wpaProfile
+        NetworkMax  - for full network with callstacks, use this with ThreadPool.wprp!ThreadPool, etc.
+        NetworkFull - for full network with callstacks, standalone
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    Collectors with the same name get merged across Profiles and WPRP files.
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <SystemCollector Id="SC_32-MB" Name="MSO System Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="32" />
+    </SystemCollector>
+
+<!-- Certain ETL processing tools don't yet understand <StackCaching ...> -->
+
+    <EventCollector Id="EC_64-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="64" />
+    </EventCollector>
+
+    <EventCollector Id="EC_128-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="128" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+-->
+
+    <!-- Base requirement for process/thread/module info and symbol resolution. -->
+
+    <SystemProvider Id="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="ThreadCreate" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Additional Module/Load info -->
+
+    <EventProvider Id="EP_Microsoft-Windows-ImageLoad" Name="2cb15d1d-5fc1-11d2-abe1-00a0c911f518">
+      <Keywords Operation="Add">
+        <Keyword Value="0x10" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- TCP-IP -->
+
+    <EventProvider Id="EP_Microsoft-Windows-TCPIP" Name="2f07e2ee-15db-40f1-90ef-9d7ba282188a" NonPagedMemory="true" Level="4">
+      <Keywords Operation="Add">
+        <Keyword Value="0x0000001300000080" />
+      </Keywords>
+    </EventProvider>
+    <EventProvider Id="EP_Filtered_Microsoft-Windows-TCPIP" Name="2f07e2ee-15db-40f1-90ef-9d7ba282188a" NonPagedMemory="true" Level="4">
+      <Keywords Operation="Add">
+        <Keyword Value="0x0000001300000080" />
+      </Keywords>
+      <!-- Include only events required by NetBlame, WPA annotations, and related. -->
+      <EventFilters FilterIn="true">
+        <EventId Value="1002" /> <!-- TcpRequestConnect -->
+        <EventId Value="1017" /> <!-- TcpAcceptListenerComplete -->
+        <EventId Value="1031" /> <!-- TcpConnectTcbProceeding -->
+        <EventId Value="1033" /> <!-- TcpConnectTcbComplete -->
+        <EventId Value="1034" /> <!-- TcpConnectTcbFailure -->
+        <EventId Value="1038" /> <!-- TcpCloseTcbRequest -->
+        <EventId Value="1039" /> <!-- TcpAbortTcbRequest -->
+        <EventId Value="1043" /> <!-- TcpDisconnectTcbComplete -->
+        <EventId Value="1044" /> <!-- TcpShutdownTcb -->
+        <EventId Value="1045" /> <!-- TcpConnectTcbTimeout -->
+        <EventId Value="1074" /> <!-- TcpDataTransferReceive -->
+        <EventId Value="1156" /> <!-- TcpReceiveRequest -->
+        <EventId Value="1159" /> <!-- TcpSendPosted -->
+        <EventId Value="1169" /> <!-- UdpEndpointSendMessages -->
+        <EventId Value="1170" /> <!-- UdpEndpointReceiveMessages -->
+        <EventId Value="1300" /> <!-- TcpConnectionRundown -->
+        <EventId Value="1332" /> <!-- TcpDataTransferSend -->
+        <EventId Value="1382" /> <!-- InspectConnectWithNameResContext -->
+        <EventId Value="1397" /> <!-- UdpCloseEndpointBound -->
+      </EventFilters>
+    </EventProvider>
+
+    <!-- WinSock -->
+
+    <EventProvider Id="EP_Microsoft-Windows-Winsock-AFD" Name="e53c6823-7bb8-44bb-90dc-3f86090d48a6" Level="4" Stack="true">
+      <Keywords Operation="Add">
+        <Keyword Value="0x0004" />
+      </Keywords>
+    </EventProvider>
+    <EventProvider Id="EP_Filtered_Microsoft-Windows-Winsock-AFD" Name="e53c6823-7bb8-44bb-90dc-3f86090d48a6" Level="4" Stack="true">
+      <Keywords Operation="Add">
+        <Keyword Value="0x0004" />
+      </Keywords>
+      <!-- Include only events and stacks required by NetBlame and related. -->
+      <EventFilters FilterIn="true">
+        <EventId Value="1000" /> <!-- AfdCreate -->
+        <EventId Value="1001" /> <!-- AfdClose -->
+        <EventId Value="1003" /> <!-- AfdSend -->
+        <EventId Value="1004" /> <!-- AfdReceive -->
+        <EventId Value="1009" /> <!-- AfdReceiveFromWithAddress (UDP) -->
+        <EventId Value="1013" /> <!-- AfdSendMessageWithAddress (UDP) -->
+        <EventId Value="1015" /> <!-- AfdReceiveMessageWithAddress (UDP) -->
+        <EventId Value="1018" /> <!-- AfdConnectWithAddress -->
+        <EventId Value="1021" /> <!-- AfdConnectExWithAddress -->
+        <EventId Value="1027" /> <!-- AfdAcceptExWithAddress -->
+        <EventId Value="1030" /> <!-- AfdBindWithAddress -->
+        <EventId Value="1032" /> <!-- AfdAbort -->
+      </EventFilters>
+      <StackFilters FilterIn="true">
+        <EventId Value="1000" /> <!-- AfdCreate -->
+      </StackFilters>
+    </EventProvider>
+
+    <!-- WinSock Name Resolution -->
+
+    <EventProvider Id="EP_Microsoft-Windows-Winsock-NameResolution" Name="55404e71-4db9-4deb-a5f5-8f86e46dde56" />
+    <EventProvider Id="EP_Filtered_Microsoft-Windows-Winsock-NameResolution" Name="55404e71-4db9-4deb-a5f5-8f86e46dde56">
+      <!-- Include only events required by NetBlame. -->
+      <EventFilters FilterIn="true">
+        <EventId Value="1001" /> <!-- GetAddrInfo_Stop -->
+        <EventId Value="1004" /> <!-- GetAddrInfoX_Stop -->
+      </EventFilters>
+    </EventProvider>
+
+    <!-- DNS -->
+
+    <EventProvider Id="EP_Microsoft-Windows-DNS-Client" Name="1c95126e-7eea-49a9-a3fe-a378b03ddb4d" />
+    <EventProvider Id="EP_Filtered_Microsoft-Windows-DNS-Client" Name="1c95126e-7eea-49a9-a3fe-a378b03ddb4d">
+      <!-- Include only events required by NetBlame and WPA Annotations. -->
+      <EventFilters FilterIn="true">
+        <EventId Value="3008" /> <!-- DNSQueryExComplete -->
+        <EventId Value="3009" /> <!-- DNSNetworkQuery -->
+        <EventId Value="3018" /> <!-- DNSCacheLookupExit -->
+      </EventFilters>
+    </EventProvider>
+
+    <!-- WinINet -->
+
+    <EventProvider Id="EP_Microsoft-Windows-WinINet" Name="43d1a55c-76d6-4f7e-995c-64c711e5cafe" Level="4" Stack="true">
+      <Keywords Operation="Add">
+        <Keyword Value="0x0087" />
+      </Keywords>
+    </EventProvider>
+    <EventProvider Id="EP_Filtered_Microsoft-Windows-WinINet" Name="43d1a55c-76d6-4f7e-995c-64c711e5cafe" Level="4" Stack="true">
+      <Keywords Operation="Add">
+        <Keyword Value="0x0087" />
+      </Keywords>
+      <!-- Include only events and stacks required by NetBlame, WPA Annotations, and related. -->
+      <EventFilters FilterIn="true">
+        <EventId Value="101" />  <!-- RootHandleCreated -->
+        <EventId Value="102" />  <!-- OpenURLHandleCreated -->
+        <EventId Value="103" />  <!-- ConnectCreated -->
+        <EventId Value="104" />  <!-- RequestCreatedA -->
+        <EventId Value="105" />  <!-- HandleClosed -->
+        <EventId Value="108" />  <!-- RequestCreatedB -->
+        <EventId Value="200" />  <!-- HTTPRequest_Start -->
+        <EventId Value="301" />  <!-- TCP_CONNECTION -->
+        <EventId Value="304" />  <!-- DNSQuery_Start -->
+        <EventId Value="305" />  <!-- DNSQuery_Stop1 (Cache Miss) -->
+        <EventId Value="307" />  <!-- DNSQuery_Stop2 (Cache Hit) -->
+        <EventId Value="1007" /> <!-- SendRequest_Start -->
+        <EventId Value="1008" /> <!-- SendRequest_Stop -->
+        <EventId Value="1017" /> <!-- PreNet_CacheHit -->
+        <EventId Value="1031" /> <!-- SendRequest_Main -->
+        <EventId Value="1033" /> <!-- SendRequest_Extra -->
+        <EventId Value="1037" /> <!-- ReadData -->
+        <EventId Value="1045" /> <!-- Connect_Start -->
+        <EventId Value="1046" /> <!-- Connect_Stop -->
+        <EventId Value="1049" /> <!-- Redirect -->
+        <EventId Value="1064" /> <!-- ReadData_Indicated -->
+      </EventFilters>
+      <StackFilters FilterIn="true">
+        <EventId Value="104" />  <!-- RequestCreatedA -->
+        <EventId Value="1007" /> <!-- SendRequest_Start -->
+      </StackFilters>
+    </EventProvider>
+
+    <!-- WinHTTP -->
+
+    <EventProvider Id="EP_Microsoft-Windows-WinHttp" Name="7d44233d-3055-4b9c-ba64-0d47ca40a232" Level="5" Stack="true" />
+    <EventProvider Id="EP_Filtered_Microsoft-Windows-WinHttp" Name="7d44233d-3055-4b9c-ba64-0d47ca40a232" Level="5" Stack="true">
+      <!-- Include only events and stacks required by NetBlame. -->
+      <EventFilters FilterIn="true">
+        <EventId Value="59995" /> <!-- ThreadAction_Cancel -->
+        <EventId Value="59996" /> <!-- ThreadAction_Queue -->
+        <EventId Value="59997" /> <!-- ThreadAction_Stop -->
+        <EventId Value="59998" /> <!-- ThreadAction_Start -->
+      </EventFilters>
+      <StackFilters FilterIn="true">
+        <EventId Value="59996" /> <!-- ThreadAction_Queue -->
+      </StackFilters>
+    </EventProvider>
+
+    <!-- WebIO
+      WebIO is Level 4
+      WinHTTP ThreadAction is Level 5
+    -->
+
+    <EventProvider Id="EP_Light_Microsoft-Windows-WebIO"   Name="50b3e73c-9370-461d-bb9f-26f32d68887d" NonPagedMemory="true" Level="4" Stack="true" />
+    <EventProvider Id="EP_Verbose_Microsoft-Windows-WebIO" Name="50b3e73c-9370-461d-bb9f-26f32d68887d" NonPagedMemory="true" Level="5" Stack="true" />
+    <EventProvider Id="EP_Filtered_Microsoft-Windows-WebIO" Name="50b3e73c-9370-461d-bb9f-26f32d68887d" NonPagedMemory="true" Level="5" Stack="true">
+      <!-- Include only events and stacks required by NetBlame, WPA Annotations, and related. -->
+      <EventFilters FilterIn="true">
+        <EventId Value="5" />  <!-- SessionCreate -->
+        <EventId Value="6" />  <!-- SessionCreate_Error -->
+        <EventId Value="7" />  <!-- SessionClose_Start -->
+        <EventId Value="29" /> <!-- SessionClose_Stop -->
+        <EventId Value="8" />  <!-- SessionClose_Error -->
+        <EventId Value="17" /> <!-- RequestCreate -->
+        <EventId Value="18" /> <!-- RequestCreate_Error -->
+        <EventId Value="19" /> <!-- RequestClose_Start -->
+        <EventId Value="30" /> <!-- RequestClose_Stop -->
+        <EventId Value="20" /> <!-- RequestClose_Error -->
+        <EventId Value="100" /> <!-- RequestHeader (send) -->
+        <EventId Value="101" /> <!-- RequestHeader (recv) -->
+        <EventId Value="104" /> <!-- RequestWaitingForConnection_Stop -->
+        <EventId Value="200" /> <!-- ConnectionSocketConnect_Start -->
+        <EventId Value="201" /> <!-- ConnectionSocketConnect_Stop -->
+        <EventId Value="202" /> <!-- ConnectionSocketConnect_Error -->
+        <EventId Value="203" /> <!-- ConnectionSocketCreate -->
+        <EventId Value="204" /> <!-- ConnectionSocketClose -->
+        <EventId Value="205" /> <!-- ConnectionNameResolutionRequest_Start -->
+        <EventId Value="206" /> <!-- ConnectionNameResolutionRequest_Stop -->
+        <EventId Value="211" /> <!-- ConnectionNameResolution_Start -->
+        <EventId Value="212" /> <!-- ConnectionNameResolution_Stop -->
+        <EventId Value="213" /> <!-- ConnectionSocketSend_Start -->
+        <EventId Value="214" /> <!-- ConnectionSocketSend_Stop -->
+        <EventId Value="215" /> <!-- ConnectionSocketReceive_Start -->
+        <EventId Value="216" /> <!-- ConnectionSocketReceive_Stop -->
+        <EventId Value="59995" /> <!-- ThreadAction_Cancel -->
+        <EventId Value="59996" /> <!-- ThreadAction_Queue -->
+        <EventId Value="59997" /> <!-- ThreadAction_Stop -->
+        <EventId Value="59998" /> <!-- ThreadAction_Start -->
+      </EventFilters>
+      <StackFilters FilterIn="true">
+        <EventId Value="5" />  <!-- SessionCreate -->
+        <EventId Value="17" /> <!-- RequestCreate -->
+        <EventId Value="59996" /> <!-- ThreadAction_Queue -->
+      </StackFilters>
+    </EventProvider>
+
+    <!-- URLMon (CInet is built upon WinINet, so this is likely redundant.) -->
+
+    <EventProvider Id="EP_Filtered_URLMon" Name="245f975d-909d-49ed-b8f9-9a75691d6b6b" Level="4" Stack="true">
+      <EventFilters FilterIn="true">
+        <!-- For now, just get a list of URLs accessed. -->
+        <EventId Value="805" /> <!-- URLMON_CInet_Start -->
+      </EventFilters>
+      <StackFilters FilterIn="true">
+        <EventId Value="805" /> <!-- URLMON_CInet_Start -->
+      </StackFilters>
+    </EventProvider>
+
+    <!-- Windows ThreadPool
+      Associate ThreadPool-invoked events with the callstacks that enqueued them.
+    -->
+
+    <!-- EventProvider Stacks and CustomStack are available in WPR v10.0.15002+ -->
+    <EventProvider Id="EP_Windows-ThreadPool" Name="c861d0e2-a2c1-4d36-9f9c-970bab943a12" Stack="true">
+      <Stacks Operation="Add">
+        <Stack Value="ThreadPoolCallbackEnqueue" />
+        <CustomStack Value="0x1C2A" /> <!-- ThreadPoolSetTimer -->
+      </Stacks>
+    </EventProvider>
+
+    <!-- Office ThreadPool
+      Associate ThreadPool-invoked events with the callstacks that enqueued them.
+      To register this provider: EnsureETWProvider(".\OETW\MsoEtwTP.man")
+    -->
+
+    <EventProvider Id="EP_Filtered_Office-ThreadPool" Name="A019725F-CFF1-47E8-8C9E-8FE2635B6388" Level="4" Stack="true">
+      <Keywords Operation="Add">
+        <Keyword Value="0x001e" /> <!-- WorkerLifetime + WorkerExecution + WorkerSubmission + IdleProcessing -->
+      </Keywords>
+      <StackFilters FilterIn="true">
+        <EventId Value="32" /> <!-- TPWorkObjectCreate -->
+        <EventId Value="40" /> <!-- TPWorkerStartExec -->
+        <EventId Value="62" /> <!-- TPTimerSubmit -->
+      </StackFilters>
+    </EventProvider>
+
+    <!-- OfficeDispatchQueue
+      To register this provider: EnsureETWProvider(".\OETW\MsoEtwDQ.man")
+    -->
+
+    <EventProvider Id="EP_Filtered_Office-Dispatch" Name="559a5658-8100-4d84-b756-0a47a476280c" Stack="true">
+      <EventFilters FilterIn="true">
+        <EventId Value="36" />   <!-- DoExitIdleDisabled - FUTURE -->
+        <EventId Value="37" />   <!-- DoExitIdleDisabledAndAllowIdleProcessing - FUTURE -->
+        <EventId Value="38" />   <!-- DoEnterIdleDisabled - FUTURE -->
+        <EventId Value="39" />   <!-- DoEnterIdleDisabledAndDisableIdleProcessing - FUTURE -->
+        <EventId Value="56" />   <!-- CallbackContextInvoke -->
+        <EventId Value="65" />   <!-- UIQueuePost -->
+        <EventId Value="66" />   <!-- UIQueueInvokeStart -->
+        <EventId Value="67" />   <!-- UIQueueInvokeEnd -->
+        <EventId Value="99" />   <!-- ConcurrentQueuePostIdle -->
+        <EventId Value="101" />  <!-- ConcurrentQueueInvokeStart -->
+        <EventId Value="102" />  <!-- ConcurrentQueueInvokeEnd -->
+        <EventId Value="104" />  <!-- LimitedConcurrentQueuePost -->
+        <EventId Value="113" />  <!-- LimitedConcurrentQueueInvokeStart -->
+        <EventId Value="114" />  <!-- LimitedConcurrentQueueInvokeEnd -->
+        <EventId Value="119" />  <!-- LooperQueueInvokeStart -->
+        <EventId Value="120" />  <!-- LooperQueueInvokeEnd -->
+        <EventId Value="121" />  <!-- UIQueuePostIdle -->
+        <EventId Value="130" />  <!-- SequentialQueueInvokeStart -->
+        <EventId Value="131" />  <!-- SequentialQueueInvokeEnd -->
+        <EventId Value="133" />  <!-- SequentialQueuePostIdle -->
+      </EventFilters>
+      <StackFilters FilterIn="true">
+        <EventId Value="65" />   <!-- UIQueuePost -->
+        <EventId Value="99" />   <!-- ConcurrentQueuePostIdle -->
+        <EventId Value="104" />  <!-- LimitedConcurrentQueuePost -->
+        <EventId Value="121" />  <!-- UIQueuePostIdle -->
+        <EventId Value="133" />  <!-- SequentialQueuePostIdle -->
+      </StackFilters>
+    </EventProvider>
+
+    <!-- Microsoft-Office-Events : Code Markers & MsoIdleMgr - Idle Task Manager (Main Thread)
+      Associate IdleTask-invoked events with the callstacks that registered them.
+      To register this provider: EnsureETWProvider(".\OETW\MsoEtwCM.man") # Usually pre-registered
+    -->
+
+    <EventProvider Id="EP_Office-Events" Name="8736922D-E8B2-47eb-8564-23E77E728CF3" Level="4" Stack="true">
+      <Keywords Operation="Add">
+        <Keyword Value="0x04" /> <!-- Code Markers -->
+        <Keyword Value="0x40" /> <!-- Idle Events -->
+      </Keywords>
+      <EventFilters FilterIn="true">
+        <EventId Value="6" />  <!-- Code Markers -->
+        <EventId Value="36" /> <!-- IdleRegisterTask -->
+        <EventId Value="37" /> <!-- IdleDeregisterTask -->
+        <EventId Value="39" /> <!-- IdleStartExecution -->
+        <EventId Value="40" /> <!-- IdleEndExecution -->
+        <EventId Value="44" /> <!-- IdleExecuteTask -->
+        <EventId Value="50" /> <!-- IdleUpdateQueued -->
+      </EventFilters>
+      <StackFilters FilterIn="true">
+        <EventId Value="6" />  <!-- Code Markers -->
+        <EventId Value="36" /> <!-- RegisterTask -->
+        <EventId Value="50" /> <!-- IdleUpdateQueued -->
+      </StackFilters>
+    </EventProvider>
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <!-- Network (Light) filtered for NetBlame, etc., excluding ThreadPool Events -->
+
+    <Profile Name="NetworkMain" Description="Filtered Network Events: TCP-IP WinSock WinINet WinHTTP DNS"
+     DetailLevel="Light" LoggingMode="File" Id="NetworkMain.Light.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_64-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Filtered_Microsoft-Windows-TCPIP" />
+            <EventProviderId Value="EP_Filtered_Microsoft-Windows-Winsock-AFD" />
+            <EventProviderId Value="EP_Filtered_Microsoft-Windows-Winsock-NameResolution" />
+            <EventProviderId Value="EP_Filtered_Microsoft-Windows-DNS-Client" />
+            <EventProviderId Value="EP_Filtered_Microsoft-Windows-WinINet" />
+            <EventProviderId Value="EP_Filtered_Microsoft-Windows-WinHttp" />
+            <EventProviderId Value="EP_Filtered_Microsoft-Windows-WebIO" />
+            <EventProviderId Value="EP_Filtered_URLMon" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="NetworkMain" Description="Filtered Network Events: TCP-IP WinSock WinINet WinHTTP DNS"
+     DetailLevel="Light" LoggingMode="Memory" Base="NetworkMain.Light.File" Id="NetworkMain.Light.Memory" />
+
+    <!-- Network (Verbose) excluding ThreadPool Events -->
+
+    <Profile Name="NetworkMax" Description="Verbose Network Events: TCP-IP WinSock WinINet WinHTTP DNS"
+     DetailLevel="Verbose" LoggingMode="File" Id="NetworkMax.Verbose.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_128-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Microsoft-Windows-TCPIP" />
+            <EventProviderId Value="EP_Microsoft-Windows-Winsock-AFD" />
+            <EventProviderId Value="EP_Microsoft-Windows-Winsock-NameResolution" />
+            <EventProviderId Value="EP_Microsoft-Windows-DNS-Client" />
+            <EventProviderId Value="EP_Microsoft-Windows-WinINet" />
+            <EventProviderId Value="EP_Microsoft-Windows-WinHttp" />
+            <EventProviderId Value="EP_Verbose_Microsoft-Windows-WebIO" />
+            <EventProviderId Value="EP_Filtered_URLMon" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="NetworkMax" Description="Verbose Network Events: TCP-IP WinSock WinINet WinHTTP DNS"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="NetworkMax.Verbose.File" Id="NetworkMax.Verbose.Memory" />
+
+    <!-- Standalone Network (Light) including System (required), Filtered Network, and ThreadPool Events -->
+
+    <Profile Name="NetworkFull" Description="Standalone System, Filtered Network and ThreadPool Events"
+     DetailLevel="Light" LoggingMode="File" Base="NetworkMain.Light.File" Id="NetworkFull.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_32-MB">
+          <SystemProviderId Value="SP_Base" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_64-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_Office-Events" />
+            <EventProviderId Value="EP_Windows-ThreadPool" />
+            <EventProviderId Value="EP_Filtered_Office-ThreadPool" />
+            <EventProviderId Value="EP_Filtered_Office-Dispatch" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="NetworkFull" Description="Standalone System, Filtered Network and ThreadPool Events"
+     DetailLevel="Light" LoggingMode="Memory" Base="NetworkFull.Light.File" Id="NetworkFull.Light.Memory" />
+
+    <!-- Network (Light) Low Level Events: TcpIp, WinSock, DNS -->
+
+    <Profile Name="NetworkMin" Description="Low Level, Filtered Network Events: TCP-IP WinSock DNS"
+     DetailLevel="Light" LoggingMode="File" Id="NetworkMin.Light.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_64-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Filtered_Microsoft-Windows-TCPIP" />
+            <EventProviderId Value="EP_Filtered_Microsoft-Windows-Winsock-AFD" />
+            <EventProviderId Value="EP_Microsoft-Windows-Winsock-NameResolution" />
+            <EventProviderId Value="EP_Microsoft-Windows-DNS-Client" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="NetworkMin" Description="Low Level, Filtered Network Events: TCP-IP WinSock DNS"
+     DetailLevel="Light" LoggingMode="Memory" Base="NetworkMin.Light.File" Id="NetworkMin.Light.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

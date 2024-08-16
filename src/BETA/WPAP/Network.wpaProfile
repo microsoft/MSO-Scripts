@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences />
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="43f196d4-b5e2-43f8-b8ff-0f182bf4b5f4" IsVisible="true" Title="NetBlame URL Table">
+        <Graphs>
+          <Graph Guid="846ffd66-1260-46b2-8919-e66448de7f94" LayoutStyle="All" Color="#FFF08080" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Master" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="20" KeyColumnCount="7" LeftFrozenColumnCount="8" RightFrozenColumnCount="18" InitialFilterShouldKeep="false" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="8635ca60-dd1a-f9b6-038b-4e099a41ca23" Name="Open Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="c2a764ec-9a6c-eb16-8137-cf1b6b8b8bea" Name="Close Time" ColumnMetadata="EndTime" />
+                <MetadataEntry Guid="e02d2ae0-3de9-d493-df2b-6b2d2813d302" Name="Duration" ColumnMetadata="Duration" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="ba925579-5499-8ba7-239b-c197054068a4" Name="Process Name" SortPriority="2" Width="120" IsVisible="false" HelpText="All processes with the same name" />
+                <Column Guid="b6ec7abe-b6ae-29cc-35a4-b47475e12afe" Name="Process" SortOrder="Ascending" SortPriority="0" Width="180" IsVisible="true" HelpText="Process instances with PID" />
+                <Column Guid="9aa1b039-3489-3d71-34a6-60af4204f2a9" Name="Server" SortPriority="2" Width="180" IsVisible="true" HelpText="Base Server Name" />
+                <Column Guid="ef1b18ea-e397-1c5b-b538-146400f1565f" Name="Alt DNS Name" SortPriority="2" Width="180" IsVisible="false" HelpText="Alternate Server DNS Name" />
+                <Column Guid="1b1e7b9e-82da-c2e6-f113-62dc0de6df54" Name="First Stack" SortPriority="2" Width="220" IsVisible="false" HelpText="Earliest available callstack:&#xD;&#xA;Callstack which first initiated/enqueued the eventual Network Request -&#xD;&#xA;usually near WinMain, or as far back as can be linked." />
+                <Column Guid="06eb3431-fc75-e92d-a5c0-9072704bb126" Name="Middle Stacks" SortPriority="2" Width="220" IsVisible="false" HelpText="Aggregated callstack which led to the Network Request -&#xD;&#xA;chained across threadpools, excluding the first and last stacks." />
+                <Column Guid="bea769c7-0ca8-cfb5-e0e3-a019ae798e65" Name="Last Stack" SortPriority="2" Width="220" IsVisible="false" HelpText="Callstack of the actual Network Request -&#xD;&#xA;usually via threadpool dispatch" />
+                <Column Guid="e93f994f-01c5-37c4-e2f7-d8528c3eb5e9" Name="Count" AggregationMode="Sum" SortPriority="2" TextAlignment="Right" Width="58" IsVisible="true" HelpText="Count of items" />
+                <Column Guid="888a77f5-ac07-48b6-c800-1822417df8b6" Name="Protocol" SortPriority="2" Width="70" IsVisible="true" HelpText="WinHTTP, WinINet, WinSock, LDAP" />
+                <Column Guid="4c3880bb-027f-159e-8010-41b1021e88e8" Name="Method" SortPriority="2" Width="66" IsVisible="true" HelpText="HTTP/WinINet Method or WinSock IPProtocol" />
+                <Column Guid="575e3163-8dd8-8da6-60cd-2541baa5ebcd" Name="Send (B)" AggregationMode="Sum" SortPriority="2" TextAlignment="Right" Width="70" CellFormat="N0" IsVisible="true" HelpText="Bytes Sent" />
+                <Column Guid="dba9bbbc-a27a-e12d-f41a-a0e908e0949c" Name="Recv (B)" AggregationMode="Sum" SortPriority="2" TextAlignment="Right" Width="70" CellFormat="N0" IsVisible="true" HelpText="Bytes Received"/>
+                <Column Guid="e6b391a8-d2c4-d459-02a2-3a8b6585703d" Name="URL" SortPriority="2" Width="386" IsVisible="true" HelpText="Full URL Path" />
+                <Column Guid="da5cd305-10bf-285c-61e2-493e6f232fb3" Name="IPAddr:Port" SortPriority="2" Width="170" IsVisible="true" HelpText="Remote IP Address &amp; Port" />
+                <Column Guid="ec53a8c4-f07b-aed5-d882-5072c89799be" Name="Status" SortPriority="0" Width="150" IsVisible="false" HelpText="Last non-zero status of the transaction" />
+                <Column Guid="6c2c4e61-8f05-ab1d-567a-d53851e77c3d" Name="GeoLocation" SortPriority="0" Width="180" IsVisible="false" HelpText="IP Geolocation by geoPlugin:&#xA; https://www.geoplugin.com/ &#xA;This product includes GeoLite data created by MaxMind,&#xA;available from: https://www.maxmind.com" />
+                <Column Guid="e02d2ae0-3de9-d493-df2b-6b2d2813d302" Name="Duration" AggregationMode="Max" SortPriority="2" TextAlignment="Right" Width="96" CellFormat="mN" IsVisible="true" HelpText="Time from Open to Close (ms)">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="c2a764ec-9a6c-eb16-8137-cf1b6b8b8bea" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+                <Column Guid="8635ca60-dd1a-f9b6-038b-4e099a41ca23" Name="Open Time" AggregationMode="Min" SortOrder="Ascending" SortPriority="1" TextAlignment="Right" Width="98" CellFormat="sN" IsVisible="true" HelpText="Time Opened">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="c2a764ec-9a6c-eb16-8137-cf1b6b8b8bea" Name="Close Time" AggregationMode="Max" SortPriority="2" TextAlignment="Right" Width="98" CellFormat="sN" IsVisible="true" HelpText="Time Closed">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

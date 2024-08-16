@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<instrumentationManifest xsi:schemaLocation="http://schemas.microsoft.com/win/2004/08/events eventman.xsd" xmlns:win="http://manifests.microsoft.com/win/2004/08/windows/events" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:trace="http://schemas.microsoft.com/win/2004/08/events/trace" xmlns="http://schemas.microsoft.com/win/2004/08/events">
+  <instrumentation>
+    <events>
+      <provider
+        name="OfficeAirSpace"
+        guid="{f562bb8e-422d-4b5c-b20e-90d710f7d11c}"
+        resourceFileName="MsoEtwAS.res"
+        messageFileName="MsoEtwAS.res" />
+    </events>
+  </instrumentation>
+</instrumentationManifest>
+

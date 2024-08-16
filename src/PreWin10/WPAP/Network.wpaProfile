@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfile xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" SavedWith="6.3.9600.16384 (winblue_rtm.130821-1623)" AppendNtSymbolPath="" AppendNtSymCachePath="" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell">
+  <WpaProfile.UISessions>
+    <UISessionProperties Index="0" />
+  </WpaProfile.UISessions>
+  <WpaProfile.Views>
+    <AnalysisView Name="396afc73-a2b0-4897-9c95-3f65ddb9f7ba" IsVisible="True" LayoutMode="Tiled" xmlns="clr-namespace:Microsoft.Performance.Shell.Graphing;assembly=Microsoft.Performance.Shell">
+      <AnalysisView.Title>
+        <ViewTitle Title="Stacks" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.Title>
+      <AnalysisView.UISessionRef>
+        <UISessionRef Index="0" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.UISessionRef>
+      <Core4SummaryTableFillerGraphTreeItem LayoutStyleFree="All" Color="#FF005DE0" ClsID="00f566da-55ea-4e31-a242-fb28c798a63e" xmlns="clr-namespace:Microsoft.Performance.Shell.Tables;assembly=Microsoft.Performance.Shell">
+        <Core4SummaryTableFillerGraphTreeItem.HdvViewModelPreset>
+          <HdvViewModelPreset Name="Count by Event Name" GraphColumnCount="15" KeyColumnCount="5" LeftFrozenColumnCount="6" RightFrozenColumnCount="15" InitialFilterQuery="" InitialSelectionQuery="" GraphFilterColumnGuid="b1ebb11a-2f72-515d-b293-fbc9d0976973" xmlns="clr-namespace:Microsoft.Performance.UI.DataEngine.ViewModelPresets;assembly=Microsoft.Performance.UI.DataEngine">
+            <HdvViewModelPreset.ColumnMetadataEntries>
+              <ColumnMetadataEntry Guid="a145e1c5-8b59-580e-01eb-f2ab18dd4d93" Name="Time (s)" ColumnMetadata="StartTime" />
+              <ColumnMetadataEntry Guid="a145e1c5-8b59-580e-01eb-f2ab18dd4d93" Name="Time (s)" ColumnMetadata="EndTime" />
+            </HdvViewModelPreset.ColumnMetadataEntries>
+            <HdvViewModelPreset.HighlightEntries />
+            <HdvViewModelPreset.ConfigurableColumns>
+              <HdvColumnViewModelPreset Guid="cfd534e3-60db-5f11-f2d2-fad8929c73e8" Name="Process Name" IsVisible="True" SortPriority="199" Width="125" />
+              <HdvColumnViewModelPreset Guid="92fa623e-7ee8-5155-0ead-2333e1124ced" Name="Process" SortOrder="Ascending" SortPriority="200" Width="168" />
+              <HdvColumnViewModelPreset Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="201" Width="80" />
+              <HdvColumnViewModelPreset Guid="24e5cf4d-b56a-5510-84d6-d05bd655cf28" Name="Provider Name" IsVisible="True" SortPriority="202" Width="208" />
+              <HdvColumnViewModelPreset Guid="ea881084-3ef5-536f-90ba-13e8c3cfce90" Name="Stack" IsVisible="True" SortPriority="203" Width="114">
+                <HdvColumnViewModelPreset.Parameter>
+                  <PresetStackOptions xmlns="clr-namespace:Microsoft.Performance.Shell.Stacks;assembly=Microsoft.Performance.Shell" />
+                </HdvColumnViewModelPreset.Parameter>
+              </HdvColumnViewModelPreset>
+              <HdvColumnViewModelPreset Guid="d4fcd2fc-f6b4-59af-7725-4213458bc582" Name="Count" AggregationMode="Count" IsVisible="True" SortOrder="Descending" TextAlignment="Right" Width="80" />
+              <HdvColumnViewModelPreset Guid="7eb6e45c-4f9b-5246-fbfa-9e83a54b3aec" Name="Thread" IsVisible="True" SortOrder="Ascending" SortPriority="1" TextAlignment="Right" Width="70" />
+              <HdvColumnViewModelPreset Guid="518bbde0-39b2-5cfa-38b7-9fc33872ef9c" Name="Task" IsVisible="True" SortPriority="204" TextAlignment="Right" Width="70" />
+              <HdvColumnViewModelPreset Guid="f13085a9-7f9a-5fa1-0227-5b2d2e1ab8a6" Name="Id" IsVisible="True" SortPriority="205" TextAlignment="Right" Width="70" />
+              <HdvColumnViewModelPreset Guid="f850348b-9446-55c7-0973-55d8dff5cd98" Name="ProviderId" AggregationMode="UniqueCount" SortPriority="206" Width="218" />
+              <HdvColumnViewModelPreset Guid="a6bf93b2-111a-5334-5f71-dcbb00b3835e" Name="Event Name" AggregationMode="UniqueCount" IsVisible="True" SortPriority="207" Width="277" />
+              <HdvColumnViewModelPreset Guid="cde3bdbc-d34f-5923-0190-a06839d05e78" Name="Level" IsVisible="True" SortPriority="208" TextAlignment="Right" Width="50" />
+              <HdvColumnViewModelPreset Guid="a21b8360-48c1-5e6f-80d3-a82db8b533cd" Name="Keyword" IsVisible="True" SortPriority="209" TextAlignment="Right" Width="120" />
+              <HdvColumnViewModelPreset Guid="a145e1c5-8b59-580e-01eb-f2ab18dd4d93" Name="Time (s)" IsVisible="True" SortOrder="Ascending" SortPriority="2" TextAlignment="Right" Width="120" />
+            </HdvViewModelPreset.ConfigurableColumns>
+          </HdvViewModelPreset>
+        </Core4SummaryTableFillerGraphTreeItem.HdvViewModelPreset>
+      </Core4SummaryTableFillerGraphTreeItem>
+    </AnalysisView>
+    <AnalysisView Name="61616ac4-7f81-47b9-bc62-8ead4a52ac35" IsVisible="True" xmlns="clr-namespace:Microsoft.Performance.Shell.Graphing;assembly=Microsoft.Performance.Shell">
+      <AnalysisView.Title>
+        <ViewTitle Title="WinINet" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.Title>
+      <AnalysisView.UISessionRef>
+        <UISessionRef Index="0" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.UISessionRef>
+      <Core4SummaryTableFillerGraphTreeItem LayoutStyleFree="All" Color="#FFFF9000" ClsID="4fc0828a-4555-480c-b485-6561cd0d0482" xmlns="clr-namespace:Microsoft.Performance.Shell.Tables;assembly=Microsoft.Performance.Shell">
+        <Core4SummaryTableFillerGraphTreeItem.HdvViewModelPreset>
+          <HdvViewModelPreset Name="Timeline by Accessed URL" GraphColumnCount="25" KeyColumnCount="6" LeftFrozenColumnCount="7" RightFrozenColumnCount="24" InitialFilterQuery="" InitialSelectionQuery="" InitialExpansionQuery="" xmlns="clr-namespace:Microsoft.Performance.UI.DataEngine.ViewModelPresets;assembly=Microsoft.Performance.UI.DataEngine">
+            <HdvViewModelPreset.ColumnMetadataEntries>
+              <ColumnMetadataEntry Guid="39acb88c-9b8d-53f3-75b3-21e285f0eff3" Name="Start Time (us)" ColumnMetadata="StartTime" />
+              <ColumnMetadataEntry Guid="b69dd12e-cb52-59f6-4624-1e185ae05a5c" Name="End Time (us)" ColumnMetadata="EndTime" />
+            </HdvViewModelPreset.ColumnMetadataEntries>
+            <HdvViewModelPreset.HighlightEntries />
+            <HdvViewModelPreset.ConfigurableColumns>
+              <HdvColumnViewModelPreset Guid="736f2945-8daa-5513-e95d-c9a262982293" Name="Process Id" SortPriority="2" TextAlignment="Right" Width="60" />
+              <HdvColumnViewModelPreset Guid="6bfabf4e-640a-5e41-9af1-f5db2c588d16" Name="Thread Id" SortPriority="3" TextAlignment="Right" Width="60" />
+              <HdvColumnViewModelPreset Guid="e0ddb5fd-c4e7-5205-4f11-326a8fbf1711" Name="Server Name" SortPriority="14" Width="90" />
+              <HdvColumnViewModelPreset Guid="27d0f84c-4dc2-50db-bd00-7d7328801577" Name="Accessed Url" IsVisible="True" Width="406" />
+              <HdvColumnViewModelPreset Guid="404a29af-766a-5010-a419-8346dde96664" Name="Activity Id" SortPriority="1" Width="200" />
+              <HdvColumnViewModelPreset Guid="ad4f4693-c28f-5d28-cfb7-370153c2b405" Name="Download Index" SortOrder="Ascending" SortPriority="-1" TextAlignment="Right" Width="30" />
+              <HdvColumnViewModelPreset Guid="cb796d44-2927-5ac1-d231-4b71904c18f5" Name="Thread Name" Width="80" />
+              <HdvColumnViewModelPreset Guid="82ddfdff-ee93-5f35-08ac-4705069618dc" Name="Thread Activity Tag" Width="80" />
+              <HdvColumnViewModelPreset Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" Width="80" />
+              <HdvColumnViewModelPreset Guid="c81c371b-419f-5281-0705-883811be70c5" Name="Recv Bytes" AggregationMode="Sum" IsVisible="True" SortPriority="-1" TextAlignment="Right" Width="90" />
+              <HdvColumnViewModelPreset Guid="3243d6cc-84b0-5616-c88b-277b88d301ed" Name="Sent Bytes" AggregationMode="Sum" IsVisible="True" SortPriority="-1" TextAlignment="Right" Width="90" />
+              <HdvColumnViewModelPreset Guid="720adfa6-3ea4-5b8b-9289-0fcb9f59c5a4" Name="WinINet Init Duration (us)" AggregationMode="Sum" SortPriority="38" TextAlignment="Right" Width="110" />
+              <HdvColumnViewModelPreset Guid="7452b883-8d85-510d-b81b-6556ab45d5a4" Name="Cache Lookup Duration (ms)" AggregationMode="Sum" SortPriority="41" TextAlignment="Right" Width="100" />
+              <HdvColumnViewModelPreset Guid="4fcd907f-2abf-5be9-8084-c54ba4921587" Name="Connect Duration (ms)" AggregationMode="Sum" IsVisible="True" SortPriority="45" TextAlignment="Right" Width="100" />
+              <HdvColumnViewModelPreset Guid="66543d57-07d0-585b-a379-d6b21a9d61e7" Name="Resolve Duration (ms)" AggregationMode="Sum" IsVisible="True" SortPriority="48" TextAlignment="Right" Width="100" />
+              <HdvColumnViewModelPreset Guid="a47d1bd0-373f-51f3-5a1a-2003d8cb9ca7" Name="TCP Connect Duration (ms)" AggregationMode="Sum" IsVisible="True" SortPriority="51" TextAlignment="Right" Width="100" />
+              <HdvColumnViewModelPreset Guid="17647cc8-0d6c-51e0-2e89-043ecbd63c5d" Name="SSL Handshake Duration (ms)" AggregationMode="Sum" IsVisible="True" SortPriority="54" TextAlignment="Right" Width="100" />
+              <HdvColumnViewModelPreset Guid="651e5f9c-77c0-5d3a-8ddf-9c4db6147067" Name="Send Request Duration (ms)" AggregationMode="Sum" IsVisible="True" SortPriority="57" TextAlignment="Right" Width="100" />
+              <HdvColumnViewModelPreset Guid="b945fe69-cf18-5ac7-9624-7a2f0743b84f" Name="Wait Response Duration (ms)" AggregationMode="Sum" IsVisible="True" SortPriority="60" TextAlignment="Right" Width="100" />
+              <HdvColumnViewModelPreset Guid="139206a8-af3a-58fd-1840-f0600bbd7a8a" Name="Transfer Duration (ms)" AggregationMode="Sum" IsVisible="True" SortPriority="63" TextAlignment="Right" Width="100" />
+              <HdvColumnViewModelPreset Guid="f11d7df8-bf24-56d6-bca2-5b155796e38c" Name="Duration (ms)" AggregationMode="Sum" IsVisible="True" SortPriority="35" TextAlignment="Right" Width="100" />
+              <HdvColumnViewModelPreset Guid="25dacf69-830c-50e8-dc2c-a83a0d40491c" Name="Count" AggregationMode="Count" IsVisible="True" SortPriority="68" TextAlignment="Right" Width="50" />
+              <HdvColumnViewModelPreset Guid="39acb88c-9b8d-53f3-75b3-21e285f0eff3" Name="Start Time (us)" AggregationMode="Min" IsVisible="True" SortOrder="Ascending" SortPriority="-1" TextAlignment="Right" Width="110" />
+              <HdvColumnViewModelPreset Guid="b69dd12e-cb52-59f6-4624-1e185ae05a5c" Name="End Time (us)" AggregationMode="Max" IsVisible="True" SortPriority="78" TextAlignment="Right" Width="110" />
+            </HdvViewModelPreset.ConfigurableColumns>
+          </HdvViewModelPreset>
+        </Core4SummaryTableFillerGraphTreeItem.HdvViewModelPreset>
+      </Core4SummaryTableFillerGraphTreeItem>
+    </AnalysisView>
+    <AnalysisView Name="81a09593-f37a-48d6-adc9-a2c31e2b8d6c" IsSelected="True" IsVisible="True" LayoutMode="Tiled" xmlns="clr-namespace:Microsoft.Performance.Shell.Graphing;assembly=Microsoft.Performance.Shell">
+      <AnalysisView.Title>
+        <ViewTitle Title="Network Events" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.Title>
+      <AnalysisView.UISessionRef>
+        <UISessionRef Index="0" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.UISessionRef>
+      <GenericEventsGraphTreeItem LayoutStyleFree="All" Color="#FF005DE0" xmlns="clr-namespace:Microsoft.Performance.Shell.Tables;assembly=Microsoft.Performance.Shell">
+        <GenericEventsGraphTreeItem.HdvViewModelPreset>
+          <HdvViewModelPreset Name="Activity by Provider, Task, Opcode" GraphColumnCount="29" KeyColumnCount="6" LeftFrozenColumnCount="5" RightFrozenColumnCount="28" InitialFilterQuery="" InitialSelectionQuery="" xmlns="clr-namespace:Microsoft.Performance.UI.DataEngine.ViewModelPresets;assembly=Microsoft.Performance.UI.DataEngine">
+            <HdvViewModelPreset.ColumnMetadataEntries>
+              <ColumnMetadataEntry Guid="edf01e5d-3644-4dbc-ab9d-f8954e6db6ea" Name="ThreadId" ColumnMetadata="EndThreadId" />
+              <ColumnMetadataEntry Guid="bbfc990a-b6c9-4dcd-858b-f040ab4a1efe" Name="Time (s)" ColumnMetadata="StartTime" />
+              <ColumnMetadataEntry Guid="bbfc990a-b6c9-4dcd-858b-f040ab4a1efe" Name="Time (s)" ColumnMetadata="EndTime" />
+            </HdvViewModelPreset.ColumnMetadataEntries>
+            <HdvViewModelPreset.HighlightEntries />
+            <HdvViewModelPreset.ConfigurableColumns>
+              <HdvColumnViewModelPreset Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortOrder="Ascending" Width="190" />
+              <HdvColumnViewModelPreset Guid="8b4c40f8-0d99-437d-86ab-56ec200137dc" Name="Provider Name" AggregationMode="UniqueCount" IsVisible="True" SortPriority="4" Width="172" />
+              <HdvColumnViewModelPreset Guid="85d40897-ae0f-4a6b-aea3-b4bcd27c14f7" Name="Process Name" IsVisible="True" SortPriority="1" Width="124" />
+              <HdvColumnViewModelPreset Guid="7ee6a5ff-1faf-428a-a7c2-7d2cb2b5cf26" Name="Process" AggregationMode="UniqueCount" SortPriority="25" Width="120" />
+              <HdvColumnViewModelPreset Guid="26eed6bf-f07d-4bb0-a36f-43a7d3a68828" Name="Stack" SortPriority="2" Width="490">
+                <HdvColumnViewModelPreset.Parameter>
+                  <PresetStackOptions xmlns="clr-namespace:Microsoft.Performance.Shell.Stacks;assembly=Microsoft.Performance.Shell" />
+                </HdvColumnViewModelPreset.Parameter>
+              </HdvColumnViewModelPreset>
+              <HdvColumnViewModelPreset Guid="342f7677-17b2-4c7e-b9ec-e89612c49792" Name="Count" AggregationMode="Count" IsVisible="True" SortPriority="24" TextAlignment="Right" Width="50" />
+              <HdvColumnViewModelPreset Guid="edf01e5d-3644-4dbc-ab9d-f8954e6db6ea" Name="ThreadId" AggregationMode="UniqueCount" SortPriority="3" Width="50" />
+              <HdvColumnViewModelPreset Guid="2a23f9b1-65d6-46d2-87b2-72f3606b7f75" Name="Provider Id" SortPriority="5" Width="260" />
+              <HdvColumnViewModelPreset Guid="511777f7-30ef-4e86-bd0b-0facaf23a0d3" Name="Task Name" IsVisible="True" SortPriority="6" Width="124" />
+              <HdvColumnViewModelPreset Guid="c72e1c5a-f6db-4c84-8c0b-85989e514075" Name="Id" IsVisible="True" SortPriority="7" Width="40" CellFormat="N0" />
+              <HdvColumnViewModelPreset Guid="5b51716b-b88f-443a-a396-c6316296d5f8" Name="Opcode Name" IsVisible="True" SortPriority="8" Width="90" />
+              <HdvColumnViewModelPreset Guid="0734f1a4-fbd9-4ff6-aec0-cf43875c8253" Name="Message" SortPriority="9" Width="230" />
+              <HdvColumnViewModelPreset Guid="0c5cf8cd-9b9e-5798-1a5d-09d429f7fa3c" Name="Field 1" IsVisible="True" SortPriority="10" Width="80" />
+              <HdvColumnViewModelPreset Guid="71badd11-26e5-56bc-44ec-12f4cc6a8f3e" Name="Field 2" IsVisible="True" SortPriority="11" Width="80" />
+              <HdvColumnViewModelPreset Guid="411dba2d-5d6e-5272-8287-636d0841768c" Name="Field 3" IsVisible="True" SortPriority="12" Width="80" />
+              <HdvColumnViewModelPreset Guid="048f5050-1f17-59b3-fa22-4b0781ee630b" Name="Field 4" IsVisible="True" SortPriority="13" Width="80" />
+              <HdvColumnViewModelPreset Guid="94e48f22-d499-5227-bb04-be011b4159b0" Name="Field 5" IsVisible="True" SortPriority="14" Width="80" />
+              <HdvColumnViewModelPreset Guid="c1054028-424a-59ba-e760-6d30abbd69c5" Name="Field 6" IsVisible="True" SortPriority="15" Width="80" />
+              <HdvColumnViewModelPreset Guid="5cbc4b58-2de1-5449-55b2-4651d4edf90a" Name="Field 7" IsVisible="True" SortPriority="16" Width="80" />
+              <HdvColumnViewModelPreset Guid="fc01e6c9-a43b-51a1-fd2e-112ba48aff65" Name="Field 8" IsVisible="True" SortPriority="17" Width="80" />
+              <HdvColumnViewModelPreset Guid="e3dcf300-46e2-5c43-ef4b-2c3db489ec25" Name="Field 9" IsVisible="True" SortPriority="18" Width="80" />
+              <HdvColumnViewModelPreset Guid="87c21ddb-4b29-58e3-5ddc-f114c5ca209a" Name="Field 10" IsVisible="True" SortPriority="19" Width="80" />
+              <HdvColumnViewModelPreset Guid="65f8fe42-ad02-5016-3521-f93329c76227" Name="Field 11" IsVisible="True" SortPriority="20" Width="80" />
+              <HdvColumnViewModelPreset Guid="03d48fd3-0fe4-57f5-a477-49beb0d70a1f" Name="Field 12" IsVisible="True" SortPriority="21" Width="80" />
+              <HdvColumnViewModelPreset Guid="998f8e2d-0f5a-5a54-0133-226e2de62c0b" Name="Field 13" IsVisible="True" SortPriority="22" Width="80" />
+              <HdvColumnViewModelPreset Guid="bb772c34-9600-5bf7-3f54-e6080f8a0611" Name="Field 14" IsVisible="True" SortPriority="23" Width="80" />
+              <HdvColumnViewModelPreset Guid="bbfc990a-b6c9-4dcd-858b-f040ab4a1efe" Name="Time (s)" IsVisible="True" SortPriority="26" Width="80" CellFormat="sN" />
+            </HdvViewModelPreset.ConfigurableColumns>
+          </HdvViewModelPreset>
+        </GenericEventsGraphTreeItem.HdvViewModelPreset>
+      </GenericEventsGraphTreeItem>
+    </AnalysisView>
+  </WpaProfile.Views>
+  <WpaProfile.HdvPresetCollections>
+    <HdvPresetCollections xmlns="clr-namespace:Microsoft.Performance.UI.DataEngine.ViewModelPresets;assembly=Microsoft.Performance.UI.DataEngine">
+      <HdvPresetCollections.PresetCollections>
+        <HdvViewModelPresetCollection Name="84255312-bf75-49e3-ab62-fa6acc6a10da">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="31119377-4dc0-4c74-808d-3f45d34b6008">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="b186f02d-8d06-4bbb-9ad1-abf7985fb61a">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="04109c2c-d66b-46cf-8fd7-a7ea67c64cb0">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="88b342b3-e1b7-4ef3-95c2-664ce0d294d8">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="79926001-a767-4658-9d56-cdbfc8140de9">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="c58f5fea-0319-4046-932d-e695ebe20b47">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="4237fcb5-808e-4868-ae15-96772fb57e41">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="b0b4901b-0981-4842-b282-2a9904c53280">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="8d943a59-1562-425a-a65e-3932e457258b">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="9cfb2296-2c89-45af-a5bd-23b4885dcbab">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="7c60aeff-a47f-4ba8-942c-d2b154087ab9">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="3c18eb9c-2211-4988-bf94-bb029e4ce96e">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="a4a4ee28-f3e3-43f0-8b35-6fc4e37e8675">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="5279a15b-e0ad-4ec4-8d80-a8bc6bb8b7c8">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="3b77a6f0-391f-4d84-9ee9-67e7bae59fd1">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="cb079a8b-de14-4516-9f83-6c5695b0845a">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="ec60ccb2-4409-444e-98fa-792c5b3c36da">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="1fe3bbaa-6738-41b9-941e-7a6825821b35">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="d68e0a4e-52b1-4e1a-b83a-cddf45661efb">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="96560002-ea30-4a11-af10-52b51dbdb2a6">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="0d63da12-a68a-4ea8-8a12-dadd30f0fa1d">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="f05d032f-f475-4f4f-bbf6-c24c2b594f0f">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="faa52878-623e-4f74-9ed9-a65e379ccdd5">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="a1df89f9-5b2a-449e-aaab-1bcc3fd25c84">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="00f566da-55ea-4e31-a242-fb28c798a63e">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="920e6241-3dea-46c4-8e4f-04ce08f62c0a">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="0588f34c-77f0-48a3-a4fd-2e0a462ea764">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="04f69f98-176e-4d1c-b44e-97f734996ab8">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="cbbd1db6-d7e2-4410-8784-f3df48ad56a5">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="7ccef571-f72c-4bfa-891d-3106b7bbe54a">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="a3a3bf45-7ee8-45eb-95c1-0369c31420ce">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="3bc03cbc-93e0-4ffb-89ae-f80c8c03f568">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="da13748b-71c7-4ba1-a61d-6ae4e527e261">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="31b88db9-1be9-42fa-9452-3cd560899212">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="b855361e-7be0-4bc8-a754-3e8507715ca5">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="60578268-c574-4c17-9097-9c607b0b6c82">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="db839752-0e71-421f-99ff-51e2abbb4af5">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="54a0f0af-ac5d-4285-8276-ec3bf6b9b495">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="BBC8F512-A49B-451A-90FC-8497F20CFAD7">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="Wait Analysis">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="FFF01BCE-D67A-4D33-82B2-C993A0E82DA9">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="639F2500-02D6-4CF5-AB26-9C22E43D5D02">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="12C5387C-58CA-45D4-A5C6-450475C30E06">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="3de2a774-cbee-47ae-8ad1-1f9a03a5f8b6">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="851eeff6-c123-4da6-abfd-1cf1baf1d5bf">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="7B47975B-040D-4901-9A3F-E410228E30DF">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="47d3d0d5-b151-4a2e-a805-5e229fd69f8d">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="FA200443-7ECF-4ABC-A654-C76C81F27EC2">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="3dd69094-4675-4607-9fb4-0042b9e1a610">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="e97b189d-b977-4e41-9448-8c214c166f84">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="8FA4ED15-1687-4F8B-9AFD-A46C281E3A5A">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="1a64d983-f796-45f8-aa64-ac50b95d0e45">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="22C936DE-8DFC-462A-8CCF-C4D57E0FF12C">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="203F5854-90D5-4667-89CB-221FCF65F6E0">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="e6a4a964-3a87-46ef-9762-f9d9b9208051">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="4e358366-366b-4ec0-8fc8-0f5f1d38b397">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="21214383-88f8-4603-9eac-2a6422756b11">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="1CE7FD53-2344-4EA8-ACD6-1A0722A51427">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="bc4f0890-4a76-4fe7-b014-6ae70677f8f5">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="b859d131-dfb5-4605-be19-810b298b6975">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="a6a19e99-a04c-4569-9dfa-7ffa72f61a4f">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="21383122-63d6-4f2c-bdcd-0b8e5c34c694">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="e62570c0-7e0c-429f-b403-17a16e25daf0">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="00C2282D-6788-482D-8528-36C079EABBD5">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="F3F9ADE9-8670-4885-AED9-69E8EF5B7567">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="9F139D56-3E73-41f3-B0DD-D748427BC2AF">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="C10E1B04-AFB9-4E6B-A2F7-32BABF95B08F">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="1fa85300-2351-4a29-9bb0-dc52c6390780">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="cb85d4d1-7c17-47df-81a8-909c7a491670">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="c0455219-9b7c-450a-a2c8-829bb2faac9d">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="7a719ad8-1b6a-4315-bbdd-58f25ae244fb">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="848d19c2-eeff-4a9c-8699-7a3f893b5756">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="f0b52614-f391-4038-8811-d42610f95413">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="05d86277-7e64-4117-ba99-7619c202c90e">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="ADA56442-1641-416D-8EB0-54B8909BF7F7">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="a7e3971d-237e-49ae-ae58-c89d43b544b2">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="7551272a-91f8-4a43-853a-17f031218ed2">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="bf0c68f4-725d-4d5c-a95e-adad0b311b26">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="FCE16142-6B09-4A07-AE04-416B2A69C5B1">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="51dba6e1-eeba-4230-a152-ff5bed7dd696">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="b6fe3898-a7b0-42fb-90ec-84fbf31afc61">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="fb56303e-21bc-4a8b-88d4-1e3711881fdb">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="28d4d9ad-5391-4cde-9597-3f96bd58f9fc">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="5f5dc039-1901-464b-9260-a03801fde9c2">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="2513FE15-6FE6-4279-AACE-338307D1F63D">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="0fa1415e-10f0-40c3-a32a-5e1b9d0f49ea">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="49ea9934-6513-42ea-acb1-f4440f84664f">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="6EB7D9A5-FBCD-42B9-B2D4-18445E14E1FF">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="69a8bf19-110a-40d8-bfb2-12fa8a5dff45">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="be78b753-5471-4a6c-9b4f-80d5d5e0dc2d">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="d0b4b788-cf4e-40f0-973f-7abc33e53f08">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="bb7beac5-55df-4c09-a2c2-f313dd29ce3d">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="50856918-ed01-4edb-9daa-70ba9360b891">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+        <HdvViewModelPresetCollection Name="4fc0828a-4555-480c-b485-6561cd0d0482">
+          <HdvViewModelPresetCollection.UserPresets />
+        </HdvViewModelPresetCollection>
+      </HdvPresetCollections.PresetCollections>
+    </HdvPresetCollections>
+  </WpaProfile.HdvPresetCollections>
+</WpaProfile>

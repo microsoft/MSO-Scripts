@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences>
+<!--
+  DISCLAIMER: Stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+-->
+          <FileReference FileName="OfficeBasic.stacktags" ServiceMoniker="StackFrameTag.{67F56EBD-2E82-493B-BF4F-712A1D0F018B}" />
+        </FileReferences>
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="91711b35-0be2-4af4-81d5-f510a4d5a34e" IsVisible="true" Title="Heap Allocations">
+        <Graphs>
+          <Graph Guid="1a64d983-f796-45f8-aa64-ac50b95d0e45" LayoutStyle="All" Color="#FF0000FF" GraphHeight="252" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Outstanding Allocations by Size" GraphChartType="StackedLine" BarGraphIntervalCount="50" AggregationOverTime="OutstandingPeak" IsThreadActivityTable="false" GraphColumnCount="15" KeyColumnCount="7" LeftFrozenColumnCount="8" RightFrozenColumnCount="13" InitialFilterShouldKeep="true" GraphFilterColumnGuid="62f5e535-a192-475d-8d4d-a725b8a160bd" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="514a6402-4276-405d-9a46-f8a583089c38" Name="AllocTime" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="859cecc2-100a-4b55-8756-5b83df7e5a93" Name="FreeTime" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="8693852d-a7e2-4c48-bad6-bd076d2d587a" Name="Process Name" SortPriority="2" Width="150" IsVisible="false" />
+                <Column Guid="06155709-500b-4182-8944-29665014b5c2" Name="Process" SortPriority="3" Width="150" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="4" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="fe123e27-eca6-461a-9a1b-b98056a84feb" Name="Type" SortPriority="5" Width="56" IsVisible="true" />
+                <Column Guid="454a2bd1-379a-4c5b-8437-1fe4bdccfa8f" Name="Thread" SortPriority="6" TextAlignment="Right" Width="150" IsVisible="false" />
+                <Column Guid="759dc840-5079-49db-bae0-3c54e553b7fd" Name="Stack" SortPriority="7" Width="200" IsVisible="false">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="759dc840-5079-49db-bae0-3c54e553b7fd" Name="Stack" SortPriority="8" Width="464" IsVisible="true">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="219f972c-9c3e-413b-a921-228a9881d4b5" Name="LifeTime" AggregationMode="Max" SortPriority="10" TextAlignment="Right" Width="80" IsVisible="false">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="514a6402-4276-405d-9a46-f8a583089c38" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+                <Column Guid="aecdc967-1546-420b-a035-1d7184115e33" Name="Is Realloc" SortPriority="9" Width="62" IsVisible="false" />
+                <Column Guid="62f5e535-a192-475d-8d4d-a725b8a160bd" Name="Count" AggregationMode="Peak" SortPriority="11" TextAlignment="Left" Width="166" IsVisible="true" />
+                <Column Guid="29a4dfc2-cd62-4de8-85c3-f580af6a47dd" Name="Size" AggregationMode="Peak" SortPriority="12" TextAlignment="Left" Width="168" CellFormat="KB" IsVisible="true" />
+                <Column Guid="62f5e535-a192-475d-8d4d-a725b8a160bd" Name="Count" AggregationMode="Sum" SortPriority="13" TextAlignment="Right" Width="66" IsVisible="true" />
+                <Column Guid="29a4dfc2-cd62-4de8-85c3-f580af6a47dd" Name="Size" AggregationMode="Sum" SortOrder="Descending" SortPriority="0" TextAlignment="Right" Width="82" CellFormat="KB" IsVisible="true" />
+                <Column Guid="514a6402-4276-405d-9a46-f8a583089c38" Name="AllocTime" SortOrder="Ascending" SortPriority="1" TextAlignment="Right" Width="94" IsVisible="false">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="859cecc2-100a-4b55-8756-5b83df7e5a93" Name="FreeTime" SortPriority="14" TextAlignment="Right" Width="86" IsVisible="false">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+          <Graph Guid="1a64d983-f796-45f8-aa64-ac50b95d0e45" LayoutStyle="All" Color="#FF0000FF" GraphHeight="252" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Allocation Timelines" GraphChartType="StackedLine" BarGraphIntervalCount="50" AggregationOverTime="OutstandingPeak" IsThreadActivityTable="false" GraphColumnCount="16" KeyColumnCount="7" LeftFrozenColumnCount="8" RightFrozenColumnCount="13" InitialFilterShouldKeep="true" InitialSelectionQuery="[Series Name]:=&quot;Process&quot;" GraphFilterColumnGuid="62f5e535-a192-475d-8d4d-a725b8a160bd" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="514a6402-4276-405d-9a46-f8a583089c38" Name="AllocTime" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="859cecc2-100a-4b55-8756-5b83df7e5a93" Name="FreeTime" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="8693852d-a7e2-4c48-bad6-bd076d2d587a" Name="Process Name" SortPriority="1" Width="150" IsVisible="false" />
+                <Column Guid="06155709-500b-4182-8944-29665014b5c2" Name="Process" SortPriority="3" Width="150" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="4" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="fe123e27-eca6-461a-9a1b-b98056a84feb" Name="Type" SortPriority="5" Width="52" IsVisible="true" />
+                <Column Guid="454a2bd1-379a-4c5b-8437-1fe4bdccfa8f" Name="Thread" SortPriority="6" TextAlignment="Right" Width="150" IsVisible="false" />
+                <Column Guid="759dc840-5079-49db-bae0-3c54e553b7fd" Name="Stack" SortPriority="7" Width="200" IsVisible="false">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="759dc840-5079-49db-bae0-3c54e553b7fd" Name="Stack" SortPriority="8" Width="260" IsVisible="true">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="219f972c-9c3e-413b-a921-228a9881d4b5" Name="LifeTime" AggregationMode="Max" SortPriority="10" TextAlignment="Right" Width="80" IsVisible="false">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="514a6402-4276-405d-9a46-f8a583089c38" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+                <Column Guid="aecdc967-1546-420b-a035-1d7184115e33" Name="Is Realloc" SortPriority="9" Width="62" IsVisible="false" />
+                <Column Guid="62f5e535-a192-475d-8d4d-a725b8a160bd" Name="Count" AggregationMode="Sum" SortPriority="11" TextAlignment="Right" Width="166" IsVisible="true" />
+                <Column Guid="29a4dfc2-cd62-4de8-85c3-f580af6a47dd" Name="Size" AggregationMode="Sum" SortPriority="12" TextAlignment="Right" Width="168" CellFormat="KB" IsVisible="true" />
+                <Column Guid="62f5e535-a192-475d-8d4d-a725b8a160bd" Name="Count" AggregationMode="Peak" SortPriority="13" TextAlignment="Right" Width="66" IsVisible="true" />
+                <Column Guid="29a4dfc2-cd62-4de8-85c3-f580af6a47dd" Name="Size" AggregationMode="Peak" SortPriority="2" TextAlignment="Right" Width="82" CellFormat="KB" IsVisible="true" />
+                <Column Guid="514a6402-4276-405d-9a46-f8a583089c38" Name="AllocTime" SortOrder="Ascending" SortPriority="0" TextAlignment="Right" Width="94" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="859cecc2-100a-4b55-8756-5b83df7e5a93" Name="FreeTime" SortPriority="14" TextAlignment="Right" Width="86" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences>
+<!--
+  DISCLAIMER: Stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+-->
+          <FileReference FileName="OfficeBasic.stacktags" ServiceMoniker="StackFrameTag.{67F56EBD-2E82-493B-BF4F-712A1D0F018B}" />
+        </FileReferences>
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="1524a6d0-5e5a-4f1a-b671-87dbbb5a5736" IsVisible="true" Title="Stacks">
+        <Graphs>
+          <Graph Guid="ca513049-5ae4-4470-8e13-330db7bd49cc" LayoutStyle="All" Color="#FF005DE0" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Count by Event Name" GraphChartType="StackedLine" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="16" KeyColumnCount="6" LeftFrozenColumnCount="0" RightFrozenColumnCount="15" InitialFilterShouldKeep="true" GraphFilterColumnGuid="d4fcd2fc-f6b4-59af-7725-4213458bc582" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="7eb6e45c-4f9b-5246-fbfa-9e83a54b3aec" Name="Thread Id" ColumnMetadata="EndThreadId" />
+                <MetadataEntry Guid="a145e1c5-8b59-580e-01eb-f2ab18dd4d93" Name="Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="a145e1c5-8b59-580e-01eb-f2ab18dd4d93" Name="Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="cfd534e3-60db-5f11-f2d2-fad8929c73e8" Name="Process Name" SortPriority="1" Width="180" IsVisible="true" />
+                <Column Guid="92fa623e-7ee8-5155-0ead-2333e1124ced" Name="Process" SortPriority="11" Width="168" IsVisible="false">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="5" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="24e5cf4d-b56a-5510-84d6-d05bd655cf28" Name="Provider Name" SortPriority="2" Width="224" IsVisible="true" />
+                <Column Guid="ea881084-3ef5-536f-90ba-13e8c3cfce90" Name="Stack" SortPriority="4" Width="408" IsVisible="true">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="d4fcd2fc-f6b4-59af-7725-4213458bc582" Name="Count" AggregationMode="Sum" SortOrder="Descending" SortPriority="0" TextAlignment="Right" Width="58" IsVisible="true" />
+                <Column Guid="7eb6e45c-4f9b-5246-fbfa-9e83a54b3aec" Name="Thread Id" SortPriority="6" Width="80" IsVisible="true" />
+                <Column Guid="518bbde0-39b2-5cfa-38b7-9fc33872ef9c" Name="Task" SortPriority="9" Width="70" CellFormat="x" IsVisible="true" />
+                <Column Guid="f13085a9-7f9a-5fa1-0227-5b2d2e1ab8a6" Name="Event Id" SortPriority="8" Width="70" CellFormat="x" IsVisible="true" />
+                <Column Guid="f850348b-9446-55c7-0973-55d8dff5cd98" Name="Provider Id" AggregationMode="UniqueCount" SortPriority="13" Width="242" IsVisible="true" />
+                <Column Guid="a6bf93b2-111a-5334-5f71-dcbb00b3835e" Name="Event Name" AggregationMode="UniqueCount" SortPriority="3" Width="370" IsVisible="true" />
+                <Column Guid="cde3bdbc-d34f-5923-0190-a06839d05e78" Name="Level" SortPriority="10" Width="50" CellFormat="x" IsVisible="true" />
+                <Column Guid="a21b8360-48c1-5e6f-80d3-a82db8b533cd" Name="Keyword" SortPriority="12" Width="120" CellFormat="x" IsVisible="true" />
+                <Column Guid="a145e1c5-8b59-580e-01eb-f2ab18dd4d93" Name="Time" SortPriority="7" TextAlignment="Right" Width="120" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+      <View Guid="e402bfb0-f25d-40eb-8112-ed3a6bd88098" IsVisible="true" Title="TcpIp">
+        <Graphs>
+          <Graph Guid="21214383-88f8-4603-9eac-2a6422756b11" LayoutStyle="All" Color="#FF5FC7C7" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Throughput over Time" BarGraphIntervalCount="50" AggregationOverTime="Rate" IsThreadActivityTable="false" GraphColumnCount="18" KeyColumnCount="8" LeftFrozenColumnCount="9" RightFrozenColumnCount="17" InitialFilterShouldKeep="true" GraphFilterColumnGuid="b1ff4098-d080-48a4-ab78-5ebf571e6cf0" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="869dba43-0f44-4572-9994-29d61aa43280" Name="Time" ColumnMetadata="StartTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="399c8e56-3484-493e-83c3-8a21acc24601" Name="Process Name" SortPriority="1" Width="130" IsVisible="false" />
+                <Column Guid="bfdd92db-9783-49a1-9627-3562e237ea57" Name="Process" SortPriority="2" Width="140" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="3" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="3bbabfdb-4679-45b7-8451-3deef7d3b459" Name="Remote Address" AggregationMode="UniqueCount" SortPriority="4" Width="239" IsVisible="true" />
+                <Column Guid="08b8fe6b-4261-494a-9a03-b71f0c7c954e" Name="Protocol" SortPriority="5" Width="66" IsVisible="true" />
+                <Column Guid="aabbf5f7-fc6a-4ff6-af78-0d90f340968f" Name="Event Type" SortPriority="6" Width="158" IsVisible="false" />
+                <Column Guid="b1ff4098-d080-48a4-ab78-5ebf571e6cf0" Name="Connection Id" SortPriority="7" Width="120" IsVisible="false" />
+                <Column Guid="2ccdf1ec-969a-4b64-949d-f128d64bce6e" Name="Event SubType" SortPriority="8" Width="120" IsVisible="false" />
+                <Column Guid="7aef84b7-38e4-41ba-8bcb-033a6e048f52" Name="Count" AggregationMode="Sum" SortPriority="9" TextAlignment="Right" Width="68" IsVisible="true" />
+                <Column Guid="ae3f2bb9-4d8e-4d72-8536-b42ecfca6b93" Name="Bytes" AggregationMode="Sum" SortPriority="10" TextAlignment="Right" Width="120" IsVisible="false" />
+                <Column Guid="f65f987f-8756-4e90-9ee9-905aef6f3ebb" Name="Bytes Sent" AggregationMode="Sum" SortPriority="11" TextAlignment="Right" Width="120" IsVisible="true" />
+                <Column Guid="a4287486-67fa-4a19-a3c8-201ede64c02f" Name="Bytes Received" AggregationMode="Sum" SortPriority="12" TextAlignment="Right" Width="120" IsVisible="true" />
+                <Column Guid="73e0a86e-4d6b-468b-b974-301026067f25" Name="Local Address" AggregationMode="UniqueCount" SortPriority="13" Width="120" IsVisible="false" />
+                <Column Guid="869dba43-0f44-4572-9994-29d61aa43280" Name="Time" AggregationMode="Min" SortPriority="14" TextAlignment="Right" Width="120" IsVisible="false">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="5d5c7263-fce9-41ad-9ea3-4c5d5962a53e" Name="Duration" AggregationMode="Max" SortPriority="15" TextAlignment="Right" Width="120" IsVisible="true" />
+                <Column Guid="402aecb8-769c-4c8a-8bcc-baf180f474fe" Name="Connection Start Time" AggregationMode="Min" SortOrder="Ascending" SortPriority="0" TextAlignment="Right" Width="113" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="bc6ac4c0-eab3-411f-9074-e250a2b82478" Name="Next Event Time" SortPriority="17" TextAlignment="Right" Width="120" IsVisible="false">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="6803f962-fe4c-4afc-87a5-8c76da9a11b8" Name="Connection End Time" AggregationMode="Max" SortPriority="18" TextAlignment="Right" Width="109" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+      <View Guid="d620d825-5d3e-4bc1-8fd5-c6150c395701" IsVisible="true" Title="WinInet">
+        <Graphs>
+          <Graph Guid="4fc0828a-4555-480c-b485-6561cd0d0482" LayoutStyle="All" Color="#FF5FC7C7" GraphHeight="128" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Timeline by Accessed URL" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="20" KeyColumnCount="6" LeftFrozenColumnCount="7" RightFrozenColumnCount="19" InitialFilterShouldKeep="true" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="39acb88c-9b8d-53f3-75b3-21e285f0eff3" Name="Start Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="b69dd12e-cb52-59f6-4624-1e185ae05a5c" Name="End Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="7f448ecf-fa2d-4739-a2e2-61e30426eb97" Name="Process Name" SortPriority="1" Width="90" IsVisible="true" />
+                <Column Guid="d8d0ad45-2d01-5ab7-0d31-5881b415f315" Name="Process" SortPriority="2" Width="130" IsVisible="true" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="3" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="6bfabf4e-640a-5e41-9af1-f5db2c588d16" Name="Thread Id" SortPriority="4" TextAlignment="Right" Width="60" IsVisible="false" />
+                <Column Guid="e0ddb5fd-c4e7-5205-4f11-326a8fbf1711" Name="Server Name" AggregationMode="UniqueCount" SortPriority="5" Width="143" IsVisible="true" />
+                <Column Guid="27d0f84c-4dc2-50db-bd00-7d7328801577" Name="Accessed Url" AggregationMode="UniqueCount" SortPriority="6" Width="200" IsVisible="true" />
+                <Column Guid="650bc433-3628-5fcf-1e9c-532f9a459a51" Name="Main Url" SortPriority="7" Width="200" IsVisible="false" />
+                <Column Guid="db73c3ef-e1c9-5230-dfac-0d21cd35897c" Name="Absolute Url" SortPriority="8" Width="200" IsVisible="false" />
+                <Column Guid="25dacf69-830c-50e8-dc2c-a83a0d40491c" Name="Count" AggregationMode="Sum" SortPriority="9" TextAlignment="Right" Width="63" IsVisible="false" />
+                <Column Guid="3243d6cc-84b0-5616-c88b-277b88d301ed" Name="Sent Bytes" AggregationMode="Sum" SortPriority="10" TextAlignment="Right" Width="90" IsVisible="true" />
+                <Column Guid="c81c371b-419f-5281-0705-883811be70c5" Name="Recv Bytes" AggregationMode="Sum" SortPriority="11" TextAlignment="Right" Width="90" IsVisible="true" />
+                <Column Guid="c7a06ba8-de17-5cb8-28a1-fefb26bbd46f" Name="Read Rate KBps" AggregationMode="Sum" SortPriority="12" TextAlignment="Right" Width="109" IsVisible="false" />
+                <Column Guid="f11d7df8-bf24-56d6-bca2-5b155796e38c" Name="Duration" AggregationMode="Sum" SortPriority="13" TextAlignment="Right" Width="100" CellFormat="mN" IsVisible="true">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="d1617058-05d6-5b30-b23c-699cc81a28fa" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+                <Column Guid="65bfe2b2-9c1c-5276-4399-a053551befab" Name="Content Type" SortPriority="14" Width="100" IsVisible="true" />
+                <Column Guid="f37b5dec-cd74-5e34-8876-0ccdcf661b4e" Name="HTTP Status" SortPriority="15" Width="152" IsVisible="true" />
+                <Column Guid="245a5cde-e9e2-5d14-690c-d8f6b43a1290" Name="HTTP Request Headers" SortPriority="16" Width="182" IsVisible="true" />
+                <Column Guid="5e4d9ab5-24d6-5214-4ffd-43a4e74782e4" Name="Protocol" SortPriority="17" Width="90" IsVisible="false" />
+                <Column Guid="39acb88c-9b8d-53f3-75b3-21e285f0eff3" Name="Start Time" AggregationMode="Min" SortOrder="Ascending" SortPriority="0" TextAlignment="Right" Width="110" CellFormat="N" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="b69dd12e-cb52-59f6-4624-1e185ae05a5c" Name="End Time" AggregationMode="Max" SortPriority="18" TextAlignment="Right" Width="110" CellFormat="N" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+      <View Guid="ca353628-f78b-43ba-bc0a-5dda490e7004" IsVisible="true" Title="Network Events">
+        <Graphs>
+          <Graph Guid="04f69f98-176e-4d1c-b44e-97f734996ab8" LayoutStyle="All" Color="#FF005DE0" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Shows every event in the trace, including the associated payload fields.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;{\f2 \li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;{\f2 {\ltrch New capability - graph payload fields!}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;{\f2 \li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;{\f2 {\ltrch 1. Filter down to the event with the payload field you want to graph.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;{\f2 {\ltrch 2. Drag the column corresponding to the payload field you want to graph to the right of the blue bar.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;{\f2 {\ltrch 3. If the automatic graphing isn't representing your data correctly, go to View Editor and:}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;{\f2 {\ltrch a. Adjust the aggregation mode for your column, or}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;{\f2 {\ltrch b. Go to Advanced &gt; Graph Configuration and change your graphing aggregation mode.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;}&#xD;&#xA;}">
+            <Preset Name="Activity by Provider, Task, Opcode" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="21" KeyColumnCount="4" LeftFrozenColumnCount="5" RightFrozenColumnCount="20" InitialFilterShouldKeep="true" GraphFilterTopValue="0" GraphFilterThresholdValue="0" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Groups all the events by provider, task, and opcode.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;}&#xD;&#xA;}">
+              <MetadataEntries>
+                <MetadataEntry Guid="edf01e5d-3644-4dbc-ab9d-f8954e6db6ea" Name="ThreadId" ColumnMetadata="EndThreadId" />
+                <MetadataEntry Guid="bbfc990a-b6c9-4dcd-858b-f040ab4a1efe" Name="Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="bbfc990a-b6c9-4dcd-858b-f040ab4a1efe" Name="Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortOrder="Ascending" SortPriority="0" Width="190" IsVisible="true">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries>
+                      <AnnotationQueryEntry Annotation="TCP-Connect" AnnotationQuery="[Provider Name]:=Microsoft-Windows-TCPIP AND [Id]:=1002" />
+                      <AnnotationQueryEntry Annotation="TCP-Rundown" AnnotationQuery="[Provider Name]:=Microsoft-Windows-TCPIP AND [Id]:=1300" />
+                      <AnnotationQueryEntry Annotation="DNS-Servers" AnnotationQuery="[Provider Name]:=Microsoft-Windows-DNS-Client AND [Id]:=3008 AND [Field 2]:&lt;&gt;1" />
+                      <AnnotationQueryEntry Annotation="WebIO-Request" AnnotationQuery="[Provider Name]:=Microsoft-Windows-WebIO AND [Id]:=17" />
+                      <AnnotationQueryEntry Annotation="WebIO-Servers" AnnotationQuery="[Provider Name]:=Microsoft-Windows-WebIO AND [Id]:=211" />
+                      <AnnotationQueryEntry Annotation="WinINet-Request" AnnotationQuery="[Provider Name]:=Microsoft-Windows-WinINet AND ([Id]:=1007 OR [Id]:=1049)" />
+                      <AnnotationQueryEntry Annotation="WinINet-Servers" AnnotationQuery="[Provider Name]:=Microsoft-Windows-WinINet AND [Id]:=305" />
+                      <AnnotationQueryEntry Annotation="URLMon-URLs" AnnotationQuery="[Provider Name]:=Microsoft-Windows-URLMon AND [Id]:=805" />
+                    </AnnotationQueryEntries>
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="85d40897-ae0f-4a6b-aea3-b4bcd27c14f7" Name="Process Name" SortPriority="1" Width="93" IsVisible="true" />
+                <Column Guid="7ee6a5ff-1faf-428a-a7c2-7d2cb2b5cf26" Name="Process" AggregationMode="UniqueCount" SortPriority="2" Width="121" IsVisible="false">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="26eed6bf-f07d-4bb0-a36f-43a7d3a68828" Name="Stack" SortPriority="3" Width="490" IsVisible="false">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="342f7677-17b2-4c7e-b9ec-e89612c49792" Name="Count" AggregationMode="Sum" SortPriority="4" TextAlignment="Right" Width="58" IsVisible="true" />
+                <Column Guid="edf01e5d-3644-4dbc-ab9d-f8954e6db6ea" Name="ThreadId" AggregationMode="UniqueCount" SortPriority="5" Width="50" IsVisible="false" />
+                <Column Guid="8b4c40f8-0d99-437d-86ab-56ec200137dc" Name="Provider Name" AggregationMode="UniqueCount" SortPriority="7" Width="173" IsVisible="true" />
+                <Column Guid="2a23f9b1-65d6-46d2-87b2-72f3606b7f75" Name="Provider Id" SortPriority="6" Width="259" IsVisible="false" />
+                <Column Guid="511777f7-30ef-4e86-bd0b-0facaf23a0d3" Name="Task Name" SortPriority="8" Width="124" IsVisible="true" />
+                <Column Guid="c72e1c5a-f6db-4c84-8c0b-85989e514075" Name="Id" SortPriority="9" TextAlignment="Right" Width="39" IsVisible="true" />
+                <Column Guid="5b51716b-b88f-443a-a396-c6316296d5f8" Name="Opcode Name" SortPriority="10" Width="91" IsVisible="true" />
+                <Column Guid="0734f1a4-fbd9-4ff6-aec0-cf43875c8253" Name="Message" SortPriority="11" Width="231" IsVisible="false" />
+                <Column Guid="0c5cf8cd-9b9e-5798-1a5d-09d429f7fa3c" Name="Field 1" SortPriority="12" Width="155" IsVisible="true" />
+                <Column Guid="71badd11-26e5-56bc-44ec-12f4cc6a8f3e" Name="Field 2" SortPriority="13" Width="162" IsVisible="true" />
+                <Column Guid="411dba2d-5d6e-5272-8287-636d0841768c" Name="Field 3" SortPriority="14" Width="154" IsVisible="true" />
+                <Column Guid="048f5050-1f17-59b3-fa22-4b0781ee630b" Name="Field 4" SortPriority="15" Width="145" IsVisible="true" />
+                <Column Guid="94e48f22-d499-5227-bb04-be011b4159b0" Name="Field 5" SortPriority="16" Width="138" IsVisible="true" />
+                <Column Guid="c1054028-424a-59ba-e760-6d30abbd69c5" Name="Field 6" SortPriority="17" Width="548" IsVisible="true" />
+                <Column Guid="bbfc990a-b6c9-4dcd-858b-f040ab4a1efe" Name="Time" SortPriority="18" Width="80" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs />
+  </Content>
+</WpaProfileContainer>

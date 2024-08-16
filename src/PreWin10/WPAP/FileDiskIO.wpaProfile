@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfile xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" SavedWith="6.3.9600.16384 (winblue_rtm.130821-1623)" AppendNtSymbolPath="" AppendNtSymCachePath="" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell">
+  <WpaProfile.UISessions>
+    <UISessionProperties Index="0" />
+  </WpaProfile.UISessions>
+  <WpaProfile.Views>
+    <AnalysisView Name="7e291eac-2ffc-4986-9cab-d856a700754f" IsVisible="True" LayoutMode="Tiled" xmlns="clr-namespace:Microsoft.Performance.Shell.Graphing;assembly=Microsoft.Performance.Shell">
+      <AnalysisView.Title>
+        <ViewTitle Title="Modules Loaded" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.Title>
+      <AnalysisView.UISessionRef>
+        <UISessionRef Index="0" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.UISessionRef>
+      <Core4SummaryTableFillerGraphTreeItem LayoutStyleFree="All" Color="#FF005DE0" ClsID="a1df89f9-5b2a-449e-aaab-1bcc3fd25c84" xmlns="clr-namespace:Microsoft.Performance.Shell.Tables;assembly=Microsoft.Performance.Shell">
+        <Core4SummaryTableFillerGraphTreeItem.HdvViewModelPreset>
+          <HdvViewModelPreset Name="Transient Lifetime By Process, Image" GraphColumnCount="22" KeyColumnCount="8" LeftFrozenColumnCount="9" RightFrozenColumnCount="21" InitialFilterQuery="" InitialSelectionQuery="" InitialExpansionQuery="Lifetime:=Transient" xmlns="clr-namespace:Microsoft.Performance.UI.DataEngine.ViewModelPresets;assembly=Microsoft.Performance.UI.DataEngine">
+            <HdvViewModelPreset.ColumnMetadataEntries>
+              <ColumnMetadataEntry Guid="84fa7f2c-c8bb-575c-e607-9b03f2839a2d" Name="Start Time (s)" ColumnMetadata="StartTime" />
+              <ColumnMetadataEntry Guid="b5b4978f-1421-5920-14e0-f4edbe844cd6" Name="End Time (s)" ColumnMetadata="EndTime" />
+            </HdvViewModelPreset.ColumnMetadataEntries>
+            <HdvViewModelPreset.HighlightEntries />
+            <HdvViewModelPreset.ConfigurableColumns>
+              <HdvColumnViewModelPreset Guid="f84ccf4e-afa5-5a62-4a56-6a9eca9ed590" Name="Lifetime" IsVisible="True" SortPriority="2" Width="80" />
+              <HdvColumnViewModelPreset Guid="1088f617-20a8-53a7-9952-3eabefc445cf" Name="Process Name" IsVisible="True" SortOrder="Ascending" Width="104" />
+              <HdvColumnViewModelPreset Guid="63f64d61-d8b1-5fe8-661a-4e48aaf8c613" Name="Process" IsVisible="True" SortPriority="6" Width="123" />
+              <HdvColumnViewModelPreset Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="7" Width="80" />
+              <HdvColumnViewModelPreset Guid="7a2ec259-c797-5968-d0a4-c21af6274215" Name="Session ID" SortPriority="8" TextAlignment="Right" Width="60" />
+              <HdvColumnViewModelPreset Guid="813414b6-dc1b-594f-6c6b-b1fdc69300b4" Name="Parent Process ID" SortPriority="9" TextAlignment="Right" Width="80" />
+              <HdvColumnViewModelPreset Guid="805996ba-9555-5226-f229-e3a3c0625e12" Name="Image Name" IsVisible="True" SortOrder="Ascending" SortPriority="1" Width="200" />
+              <HdvColumnViewModelPreset Guid="26b77cb5-b290-5151-5b9a-184315cef673" Name="Load Stack" SortPriority="10" Width="200">
+                <HdvColumnViewModelPreset.Parameter>
+                  <PresetStackOptions xmlns="clr-namespace:Microsoft.Performance.Shell.Stacks;assembly=Microsoft.Performance.Shell" />
+                </HdvColumnViewModelPreset.Parameter>
+              </HdvColumnViewModelPreset>
+              <HdvColumnViewModelPreset Guid="756d7d5a-a03f-5d80-6eba-c3aa94cfe34b" Name="Count" AggregationMode="Count" IsVisible="True" SortPriority="11" TextAlignment="Right" Width="49" />
+              <HdvColumnViewModelPreset Guid="8c7175b2-2ccc-5612-79ca-e6cbffdaa6c4" Name="Load Reason" SortPriority="3" Width="91" />
+              <HdvColumnViewModelPreset Guid="9c84e061-f412-5cd0-1ef5-336821b37382" Name="Parent Image Name" SortPriority="4" Width="122" />
+              <HdvColumnViewModelPreset Guid="a3ca869a-9c38-5325-e8cd-e6b0d562a72a" Name="ImageSize" IsVisible="True" SortPriority="12" TextAlignment="Right" Width="80" />
+              <HdvColumnViewModelPreset Guid="542dbdbb-e4f1-5cb0-f70a-2da71320e1ce" Name="Start Address" AggregationMode="Min" IsVisible="True" SortPriority="13" TextAlignment="Right" Width="140" />
+              <HdvColumnViewModelPreset Guid="2b724277-8050-5de3-b33f-997462ea0eed" Name="End Address" AggregationMode="Max" IsVisible="True" SortPriority="14" TextAlignment="Right" Width="140" />
+              <HdvColumnViewModelPreset Guid="79c9c924-a76c-57f7-8a45-9570d12a6a0c" Name="File Description" IsVisible="True" SortPriority="16" Width="234" />
+              <HdvColumnViewModelPreset Guid="16e51d5d-f040-5d0f-072e-0242ec3890ca" Name="TimeDateStamp" SortPriority="15" TextAlignment="Right" Width="99" />
+              <HdvColumnViewModelPreset Guid="4cfbf4ef-4d37-5805-a53a-53d60d46f323" Name="Company Name" IsVisible="True" SortPriority="18" Width="122" />
+              <HdvColumnViewModelPreset Guid="0ffcc6cd-c664-593b-f363-92d7bfd0de4f" Name="File Version" IsVisible="True" SortPriority="17" Width="262" />
+              <HdvColumnViewModelPreset Guid="8db8684a-9af9-5134-8fac-ea61c4f2cee1" Name="Image Path" IsVisible="True" SortPriority="5" Width="300" />
+              <HdvColumnViewModelPreset Guid="84fa7f2c-c8bb-575c-e607-9b03f2839a2d" Name="Start Time (s)" AggregationMode="Min" IsVisible="True" SortPriority="19" TextAlignment="Right" Width="93" />
+              <HdvColumnViewModelPreset Guid="b5b4978f-1421-5920-14e0-f4edbe844cd6" Name="End Time (s)" AggregationMode="Max" IsVisible="True" SortPriority="20" TextAlignment="Right" Width="92" />
+            </HdvViewModelPreset.ConfigurableColumns>
+          </HdvViewModelPreset>
+        </Core4SummaryTableFillerGraphTreeItem.HdvViewModelPreset>
+      </Core4SummaryTableFillerGraphTreeItem>
+    </AnalysisView>
+    <AnalysisView Name="afa2ed37-b19d-4a9b-a06c-6df8828940a3" IsVisible="True" LayoutMode="Tiled" xmlns="clr-namespace:Microsoft.Performance.Shell.Graphing;assembly=Microsoft.Performance.Shell">
+      <AnalysisView.Title>
+        <ViewTitle Title="Disk I/O by Path &amp; Size" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.Title>
+      <AnalysisView.UISessionRef>
+        <UISessionRef Index="0" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.UISessionRef>
+      <DiskIOGraphTreeItem LayoutStyleFree="All" Color="#FF008000" xmlns="clr-namespace:Microsoft.Performance.Shell.Tables;assembly=Microsoft.Performance.Shell">
+        <DiskIOGraphTreeItem.HdvViewModelPreset>
+          <HdvViewModelPreset Name="Throughput by Process, IO Type" GraphChartType="StackedLine" AggregationOverTime="Rate" GraphColumnCount="16" KeyColumnCount="8" LeftFrozenColumnCount="9" RightFrozenColumnCount="15" InitialFilterQuery="" InitialSelectionQuery="" InitialExpansionQuery="" GraphFilterColumnGuid="a026c5ce-1efd-4073-b379-82882f08b68d" xmlns="clr-namespace:Microsoft.Performance.UI.DataEngine.ViewModelPresets;assembly=Microsoft.Performance.UI.DataEngine">
+            <HdvViewModelPreset.ColumnMetadataEntries>
+              <ColumnMetadataEntry Guid="59b4288c-fee0-4b90-86dc-369b79f0b526" Name="Complete Time" ColumnMetadata="EndTime" />
+              <ColumnMetadataEntry Guid="c01c5ca8-59e6-4c1d-9db7-32e00186d65c" Name="Disk Service Time" ColumnMetadata="Duration" />
+              <ColumnMetadataEntry Guid="4faeb98e-ba24-44f4-93ce-208e0321f438" Name="Disk" ColumnMetadata="ResourceId" />
+            </HdvViewModelPreset.ColumnMetadataEntries>
+            <HdvViewModelPreset.HighlightEntries />
+            <HdvViewModelPreset.ConfigurableColumns>
+              <HdvColumnViewModelPreset Guid="855b0ae3-e5fc-450c-807d-2e3f7a0ea21e" Name="Process Name" IsVisible="True" SortPriority="6" Width="120" />
+              <HdvColumnViewModelPreset Guid="585dad88-c4ba-4e39-a1e5-c41f43c4e7fb" Name="Process" IsVisible="True" SortPriority="7" Width="164" />
+              <HdvColumnViewModelPreset Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="1" Width="80" />
+              <HdvColumnViewModelPreset Guid="8986994a-34ee-48bf-9a28-29f7ff7062cc" Name="Thread ID" SortPriority="8" TextAlignment="Right" Width="80" />
+              <HdvColumnViewModelPreset Guid="cc1bde00-e396-4c90-a777-7f57a265c5a4" Name="File Extension" SortPriority="12" Width="60" />
+              <HdvColumnViewModelPreset Guid="35f601bd-6be5-4c1a-9b35-495dddbe4dff" Name="Path Tree" IsVisible="True" SortPriority="10" Width="200" />
+              <HdvColumnViewModelPreset Guid="0372579e-31f1-483c-8295-221e175f0cbd" Name="IO Type" IsVisible="True" SortPriority="13" Width="100" />
+              <HdvColumnViewModelPreset Guid="1735b930-a0d7-45a7-b7bf-85d2fdbb966a" Name="IO Init Stack" IsVisible="True" SortPriority="9" Width="301">
+                <HdvColumnViewModelPreset.Parameter>
+                  <PresetStackOptions xmlns="clr-namespace:Microsoft.Performance.Shell.Stacks;assembly=Microsoft.Performance.Shell" />
+                </HdvColumnViewModelPreset.Parameter>
+              </HdvColumnViewModelPreset>
+              <HdvColumnViewModelPreset Guid="a026c5ce-1efd-4073-b379-82882f08b68d" Name="Count" AggregationMode="Count" IsVisible="True" SortOrder="Descending" TextAlignment="Right" Width="54" />
+              <HdvColumnViewModelPreset Guid="66852a8e-74d2-4ec7-ad13-bcae0644b9c9" Name="IO Time" AggregationMode="Max" IsVisible="True" SortPriority="15" TextAlignment="Right" Width="120" />
+              <HdvColumnViewModelPreset Guid="4faeb98e-ba24-44f4-93ce-208e0321f438" Name="Disk" SortPriority="2" Width="40" />
+              <HdvColumnViewModelPreset Guid="01745275-2844-4895-967e-03c75d9e0ffe" Name="Path Name" SortPriority="11" Width="200" />
+              <HdvColumnViewModelPreset Guid="6cc32316-40ee-42a0-8f71-88f7d175301d" Name="Priority" SortPriority="14" TextAlignment="Right" Width="60" />
+              <HdvColumnViewModelPreset Guid="a0cb7c64-4495-494b-baeb-c699693162cc" Name="Size" AggregationMode="Sum" IsVisible="True" SortPriority="16" TextAlignment="Right" Width="80" />
+              <HdvColumnViewModelPreset Guid="b9c207c5-9da1-4e2d-94de-df17b84840bf" Name="Init Time" SortPriority="3" TextAlignment="Right" Width="120" CellFormat="sN" />
+              <HdvColumnViewModelPreset Guid="c01c5ca8-59e6-4c1d-9db7-32e00186d65c" Name="Disk Service Time" AggregationMode="Sum" SortPriority="4" TextAlignment="Right" Width="120" CellFormat="mN" />
+              <HdvColumnViewModelPreset Guid="59b4288c-fee0-4b90-86dc-369b79f0b526" Name="Complete Time" SortPriority="5" TextAlignment="Right" Width="200" CellFormat="sN" />
+            </HdvViewModelPreset.ConfigurableColumns>
+          </HdvViewModelPreset>
+        </DiskIOGraphTreeItem.HdvViewModelPreset>
+      </DiskIOGraphTreeItem>
+    </AnalysisView>
+    <AnalysisView Name="3b8ffad5-5965-4af5-a752-e7d727865451" IsVisible="True" LayoutMode="Tiled" xmlns="clr-namespace:Microsoft.Performance.Shell.Graphing;assembly=Microsoft.Performance.Shell">
+      <AnalysisView.Title>
+        <ViewTitle Title="Disk I/O by Disk Time" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.Title>
+      <AnalysisView.UISessionRef>
+        <UISessionRef Index="0" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.UISessionRef>
+      <DiskIOGraphTreeItem LayoutStyleFree="All" Color="#FF008000" xmlns="clr-namespace:Microsoft.Performance.Shell.Tables;assembly=Microsoft.Performance.Shell">
+        <DiskIOGraphTreeItem.HdvViewModelPreset>
+          <HdvViewModelPreset Name="IO Time by Process, IO Type" GraphChartType="StackedLine" GraphColumnCount="19" KeyColumnCount="7" LeftFrozenColumnCount="8" RightFrozenColumnCount="18" InitialFilterQuery="" InitialSelectionQuery="" GraphFilterColumnGuid="c01c5ca8-59e6-4c1d-9db7-32e00186d65c" xmlns="clr-namespace:Microsoft.Performance.UI.DataEngine.ViewModelPresets;assembly=Microsoft.Performance.UI.DataEngine">
+            <HdvViewModelPreset.ColumnMetadataEntries>
+              <ColumnMetadataEntry Guid="59b4288c-fee0-4b90-86dc-369b79f0b526" Name="Complete Time" ColumnMetadata="EndTime" />
+              <ColumnMetadataEntry Guid="4faeb98e-ba24-44f4-93ce-208e0321f438" Name="Disk" ColumnMetadata="ResourceId" />
+            </HdvViewModelPreset.ColumnMetadataEntries>
+            <HdvViewModelPreset.HighlightEntries />
+            <HdvViewModelPreset.ConfigurableColumns>
+              <HdvColumnViewModelPreset Guid="855b0ae3-e5fc-450c-807d-2e3f7a0ea21e" Name="Process Name" IsVisible="True" SortPriority="4" Width="107" />
+              <HdvColumnViewModelPreset Guid="585dad88-c4ba-4e39-a1e5-c41f43c4e7fb" Name="Process" IsVisible="True" SortPriority="5" Width="138" />
+              <HdvColumnViewModelPreset Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="2" Width="80" />
+              <HdvColumnViewModelPreset Guid="8986994a-34ee-48bf-9a28-29f7ff7062cc" Name="Thread ID" SortPriority="6" TextAlignment="Right" Width="80" />
+              <HdvColumnViewModelPreset Guid="35f601bd-6be5-4c1a-9b35-495dddbe4dff" Name="Path Tree" IsVisible="True" SortPriority="8" Width="200" />
+              <HdvColumnViewModelPreset Guid="0372579e-31f1-483c-8295-221e175f0cbd" Name="IO Type" IsVisible="True" SortPriority="11" Width="57" />
+              <HdvColumnViewModelPreset Guid="1735b930-a0d7-45a7-b7bf-85d2fdbb966a" Name="IO Init Stack" IsVisible="True" SortPriority="7" Width="307">
+                <HdvColumnViewModelPreset.Parameter>
+                  <PresetStackOptions xmlns="clr-namespace:Microsoft.Performance.Shell.Stacks;assembly=Microsoft.Performance.Shell" />
+                </HdvColumnViewModelPreset.Parameter>
+              </HdvColumnViewModelPreset>
+              <HdvColumnViewModelPreset Guid="cc1bde00-e396-4c90-a777-7f57a265c5a4" Name="File Extension" SortPriority="10" Width="60" />
+              <HdvColumnViewModelPreset Guid="01745275-2844-4895-967e-03c75d9e0ffe" Name="Path Name" SortPriority="9" Width="200" />
+              <HdvColumnViewModelPreset Guid="a026c5ce-1efd-4073-b379-82882f08b68d" Name="Count" AggregationMode="Count" IsVisible="True" SortPriority="15" TextAlignment="Right" Width="48" />
+              <HdvColumnViewModelPreset Guid="a0cb7c64-4495-494b-baeb-c699693162cc" Name="Size" AggregationMode="Sum" IsVisible="True" SortPriority="16" TextAlignment="Right" Width="80" />
+              <HdvColumnViewModelPreset Guid="66852a8e-74d2-4ec7-ad13-bcae0644b9c9" Name="IO Time" AggregationMode="Max" IsVisible="True" SortOrder="Descending" TextAlignment="Right" Width="89" />
+              <HdvColumnViewModelPreset Guid="4faeb98e-ba24-44f4-93ce-208e0321f438" Name="Disk" SortPriority="3" TextAlignment="Right" Width="40" />
+              <HdvColumnViewModelPreset Guid="6cc32316-40ee-42a0-8f71-88f7d175301d" Name="Priority" IsVisible="True" SortPriority="14" TextAlignment="Right" Width="60" />
+              <HdvColumnViewModelPreset Guid="b9c207c5-9da1-4e2d-94de-df17b84840bf" Name="Init Time" SortPriority="12" TextAlignment="Right" Width="120" />
+              <HdvColumnViewModelPreset Guid="59b4288c-fee0-4b90-86dc-369b79f0b526" Name="Complete Time" SortPriority="13" TextAlignment="Right" Width="120" />
+              <HdvColumnViewModelPreset Guid="c01c5ca8-59e6-4c1d-9db7-32e00186d65c" Name="Disk Service Time" AggregationMode="Sum" IsVisible="True" SortOrder="Descending" SortPriority="1" TextAlignment="Right" Width="120" />
+            </HdvViewModelPreset.ConfigurableColumns>
+          </HdvViewModelPreset>
+        </DiskIOGraphTreeItem.HdvViewModelPreset>
+      </DiskIOGraphTreeItem>
+    </AnalysisView>
+    <AnalysisView Name="e8c4869b-75ba-4aa4-be6d-93f5f71d5d04" IsVisible="True" LayoutMode="Tiled" xmlns="clr-namespace:Microsoft.Performance.Shell.Graphing;assembly=Microsoft.Performance.Shell">
+      <AnalysisView.Title>
+        <ViewTitle Title="Disk I/O Timeline" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.Title>
+      <AnalysisView.UISessionRef>
+        <UISessionRef Index="0" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.UISessionRef>
+      <DiskIOGraphTreeItem LayoutStyleFree="All" Color="#FF008000" xmlns="clr-namespace:Microsoft.Performance.Shell.Tables;assembly=Microsoft.Performance.Shell">
+        <DiskIOGraphTreeItem.HdvViewModelPreset>
+          <HdvViewModelPreset Name="Activity by IO Type, Process" GraphColumnCount="15" KeyColumnCount="8" LeftFrozenColumnCount="9" RightFrozenColumnCount="14" InitialFilterQuery="" InitialSelectionQuery="" xmlns="clr-namespace:Microsoft.Performance.UI.DataEngine.ViewModelPresets;assembly=Microsoft.Performance.UI.DataEngine">
+            <HdvViewModelPreset.ColumnMetadataEntries>
+              <ColumnMetadataEntry Guid="c01c5ca8-59e6-4c1d-9db7-32e00186d65c" Name="Disk Service Time" ColumnMetadata="Duration" />
+              <ColumnMetadataEntry Guid="59b4288c-fee0-4b90-86dc-369b79f0b526" Name="Complete Time" ColumnMetadata="EndTime" />
+              <ColumnMetadataEntry Guid="4faeb98e-ba24-44f4-93ce-208e0321f438" Name="Disk" ColumnMetadata="ResourceId" />
+            </HdvViewModelPreset.ColumnMetadataEntries>
+            <HdvViewModelPreset.HighlightEntries />
+            <HdvViewModelPreset.ConfigurableColumns>
+              <HdvColumnViewModelPreset Guid="855b0ae3-e5fc-450c-807d-2e3f7a0ea21e" Name="Process Name" IsVisible="True" Width="120" />
+              <HdvColumnViewModelPreset Guid="585dad88-c4ba-4e39-a1e5-c41f43c4e7fb" Name="Process" IsVisible="True" Width="180" />
+              <HdvColumnViewModelPreset Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" Width="80" />
+              <HdvColumnViewModelPreset Guid="8986994a-34ee-48bf-9a28-29f7ff7062cc" Name="Thread ID" TextAlignment="Right" Width="80" />
+              <HdvColumnViewModelPreset Guid="35f601bd-6be5-4c1a-9b35-495dddbe4dff" Name="Path Tree" Width="200" />
+              <HdvColumnViewModelPreset Guid="01745275-2844-4895-967e-03c75d9e0ffe" Name="Path Name" IsVisible="True" Width="200" />
+              <HdvColumnViewModelPreset Guid="0372579e-31f1-483c-8295-221e175f0cbd" Name="IO Type" IsVisible="True" Width="100" />
+              <HdvColumnViewModelPreset Guid="1735b930-a0d7-45a7-b7bf-85d2fdbb966a" Name="IO Init Stack" IsVisible="True" Width="200">
+                <HdvColumnViewModelPreset.Parameter>
+                  <PresetStackOptions xmlns="clr-namespace:Microsoft.Performance.Shell.Stacks;assembly=Microsoft.Performance.Shell" />
+                </HdvColumnViewModelPreset.Parameter>
+              </HdvColumnViewModelPreset>
+              <HdvColumnViewModelPreset Guid="a026c5ce-1efd-4073-b379-82882f08b68d" Name="Count" AggregationMode="Count" IsVisible="True" TextAlignment="Right" Width="40" />
+              <HdvColumnViewModelPreset Guid="a0cb7c64-4495-494b-baeb-c699693162cc" Name="Size" AggregationMode="Sum" IsVisible="True" TextAlignment="Right" Width="80" />
+              <HdvColumnViewModelPreset Guid="66852a8e-74d2-4ec7-ad13-bcae0644b9c9" Name="IO Time" AggregationMode="Max" IsVisible="True" TextAlignment="Right" Width="120" />
+              <HdvColumnViewModelPreset Guid="6cc32316-40ee-42a0-8f71-88f7d175301d" Name="Priority" IsVisible="True" TextAlignment="Right" Width="60" />
+              <HdvColumnViewModelPreset Guid="b9c207c5-9da1-4e2d-94de-df17b84840bf" Name="Init Time" AggregationMode="Min" TextAlignment="Right" Width="120" />
+              <HdvColumnViewModelPreset Guid="c01c5ca8-59e6-4c1d-9db7-32e00186d65c" Name="Disk Service Time" AggregationMode="Sum" IsVisible="True" SortOrder="Descending" SortPriority="1" TextAlignment="Right" Width="120" />
+              <HdvColumnViewModelPreset Guid="59b4288c-fee0-4b90-86dc-369b79f0b526" Name="Complete Time" AggregationMode="Max" IsVisible="True" SortPriority="10" TextAlignment="Right" Width="120" />
+            </HdvViewModelPreset.ConfigurableColumns>
+          </HdvViewModelPreset>
+        </DiskIOGraphTreeItem.HdvViewModelPreset>
+      </DiskIOGraphTreeItem>
+    </AnalysisView>
+    <AnalysisView Name="27a5f07c-88f9-44d7-9075-30c861e51537" IsVisible="True" xmlns="clr-namespace:Microsoft.Performance.Shell.Graphing;assembly=Microsoft.Performance.Shell">
+      <AnalysisView.Title>
+        <ViewTitle Title="File I/O by Path &amp; Size" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.Title>
+      <AnalysisView.UISessionRef>
+        <UISessionRef Index="0" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.UISessionRef>
+      <Core4SummaryTableFillerGraphTreeItem LayoutStyleFree="All" Color="#FF008000" ClsID="5279a15b-e0ad-4ec4-8d80-a8bc6bb8b7c8" xmlns="clr-namespace:Microsoft.Performance.Shell.Tables;assembly=Microsoft.Performance.Shell">
+        <Core4SummaryTableFillerGraphTreeItem.HdvViewModelPreset>
+          <HdvViewModelPreset Name="Size by File Name, Process, Stack for Read/Write" GraphChartType="StackedLine" GraphColumnCount="14" KeyColumnCount="8" LeftFrozenColumnCount="9" RightFrozenColumnCount="13" InitialFilterQuery="[Event Type]:=Read OR [Event Type]:=Write" InitialSelectionQuery="" InitialExpansionQuery="" GraphFilterColumnGuid="44c58faf-525f-549c-704d-a2ad0671c94c" xmlns="clr-namespace:Microsoft.Performance.UI.DataEngine.ViewModelPresets;assembly=Microsoft.Performance.UI.DataEngine">
+            <HdvViewModelPreset.ColumnMetadataEntries>
+              <ColumnMetadataEntry Guid="6c35ada7-fb10-5bca-7a8b-9e9ad795a7ea" Name="Start (s)" ColumnMetadata="StartTime" />
+            </HdvViewModelPreset.ColumnMetadataEntries>
+            <HdvViewModelPreset.HighlightEntries />
+            <HdvViewModelPreset.ConfigurableColumns>
+              <HdvColumnViewModelPreset Guid="4cee27e3-b5ea-5dab-aa27-f268cd14c3cc" Name="Process Name" IsVisible="True" SortPriority="6" Width="105" />
+              <HdvColumnViewModelPreset Guid="9edda796-bc7c-597d-3008-780160e6a8a6" Name="Process" IsVisible="True" SortPriority="1" Width="150" />
+              <HdvColumnViewModelPreset Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="2" Width="80" />
+              <HdvColumnViewModelPreset Guid="eb94f42b-cb83-506d-95f5-9fd49e9cc318" Name="Thread" SortPriority="9" TextAlignment="Right" Width="69" />
+              <HdvColumnViewModelPreset Guid="69da428d-0422-5d3d-9c59-ea6ff11d28f9" Name="File Name" IsVisible="True" SortPriority="10" Width="300" />
+              <HdvColumnViewModelPreset Guid="79529a09-f06a-5163-2f9b-c71854c6ee2a" Name="Event Type" IsVisible="True" SortPriority="3" Width="170" />
+              <HdvColumnViewModelPreset Guid="3e214024-e9a5-5afb-7aa9-add510bdfa6e" Name="Event SubType" SortPriority="5" Width="148" />
+              <HdvColumnViewModelPreset Guid="5885adde-940e-525c-6b64-4421bf808dde" Name="Stack" IsVisible="True" SortPriority="7" Width="170">
+                <HdvColumnViewModelPreset.Parameter>
+                  <PresetStackOptions xmlns="clr-namespace:Microsoft.Performance.Shell.Stacks;assembly=Microsoft.Performance.Shell" />
+                </HdvColumnViewModelPreset.Parameter>
+              </HdvColumnViewModelPreset>
+              <HdvColumnViewModelPreset Guid="44c58faf-525f-549c-704d-a2ad0671c94c" Name="Count" AggregationMode="Count" IsVisible="True" SortPriority="8" TextAlignment="Right" Width="40" />
+              <HdvColumnViewModelPreset Guid="c98da846-ddcc-5a8a-9b75-0a8407dfef96" Name="Duration (us)" AggregationMode="Max" IsVisible="True" SortPriority="11" TextAlignment="Right" Width="60" />
+              <HdvColumnViewModelPreset Guid="9010cd1f-009b-59a1-6e8c-2d8ac1b5a75e" Name="Result" IsVisible="True" SortPriority="12" Width="150" />
+              <HdvColumnViewModelPreset Guid="9b7d2fcf-6cc7-5845-b918-fd1aa9382c1c" Name="Size" AggregationMode="Sum" IsVisible="True" SortOrder="Descending" TextAlignment="Right" Width="60" />
+              <HdvColumnViewModelPreset Guid="6c35ada7-fb10-5bca-7a8b-9e9ad795a7ea" Name="Start (s)" AggregationMode="Min" SortPriority="13" TextAlignment="Right" Width="60" CellFormat="sN" />
+              <HdvColumnViewModelPreset Guid="de825965-0fbc-5649-ff3d-ee078cd286df" Name="End (s)" AggregationMode="Max" SortPriority="14" TextAlignment="Right" Width="60" CellFormat="sN" />
+            </HdvViewModelPreset.ConfigurableColumns>
+          </HdvViewModelPreset>
+        </Core4SummaryTableFillerGraphTreeItem.HdvViewModelPreset>
+      </Core4SummaryTableFillerGraphTreeItem>
+    </AnalysisView>
+    <AnalysisView Name="406e9ec5-2e1c-4e4c-bfd7-efc24debdf8e" IsSelected="True" IsVisible="True" LayoutMode="Tiled" xmlns="clr-namespace:Microsoft.Performance.Shell.Graphing;assembly=Microsoft.Performance.Shell">
+      <AnalysisView.Title>
+        <ViewTitle Title="File I/O Timeline" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.Title>
+      <AnalysisView.UISessionRef>
+        <UISessionRef Index="0" xmlns="clr-namespace:Microsoft.Performance.Shell;assembly=Microsoft.Performance.Shell" />
+      </AnalysisView.UISessionRef>
+      <Core4SummaryTableFillerGraphTreeItem LayoutStyleFree="All" Color="#FF008000" ClsID="5279a15b-e0ad-4ec4-8d80-a8bc6bb8b7c8" xmlns="clr-namespace:Microsoft.Performance.Shell.Tables;assembly=Microsoft.Performance.Shell">
+        <Core4SummaryTableFillerGraphTreeItem.HdvViewModelPreset>
+          <HdvViewModelPreset Name="Activity by Process, Thread, Type" GraphColumnCount="15" KeyColumnCount="8" LeftFrozenColumnCount="9" RightFrozenColumnCount="14" InitialFilterQuery="" InitialSelectionQuery="" xmlns="clr-namespace:Microsoft.Performance.UI.DataEngine.ViewModelPresets;assembly=Microsoft.Performance.UI.DataEngine">
+            <HdvViewModelPreset.ColumnMetadataEntries>
+              <ColumnMetadataEntry Guid="de825965-0fbc-5649-ff3d-ee078cd286df" Name="End (s)" ColumnMetadata="EndTime" />
+            </HdvViewModelPreset.ColumnMetadataEntries>
+            <HdvViewModelPreset.HighlightEntries />
+            <HdvViewModelPreset.ConfigurableColumns>
+              <HdvColumnViewModelPreset Guid="4cee27e3-b5ea-5dab-aa27-f268cd14c3cc" Name="Process Name" IsVisible="True" SortPriority="5" Width="130" />
+              <HdvColumnViewModelPreset Guid="9edda796-bc7c-597d-3008-780160e6a8a6" Name="Process" IsVisible="True" SortPriority="6" Width="138" />
+              <HdvColumnViewModelPreset Guid="eb94f42b-cb83-506d-95f5-9fd49e9cc318" Name="Thread" SortPriority="8" TextAlignment="Right" Width="69" />
+              <HdvColumnViewModelPreset Guid="69da428d-0422-5d3d-9c59-ea6ff11d28f9" Name="File Name" IsVisible="True" SortPriority="1" Width="275" />
+              <HdvColumnViewModelPreset Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="2" Width="80" />
+              <HdvColumnViewModelPreset Guid="79529a09-f06a-5163-2f9b-c71854c6ee2a" Name="Event Type" IsVisible="True" SortPriority="3" Width="89" />
+              <HdvColumnViewModelPreset Guid="3e214024-e9a5-5afb-7aa9-add510bdfa6e" Name="Event SubType" SortPriority="4" Width="148" />
+              <HdvColumnViewModelPreset Guid="5885adde-940e-525c-6b64-4421bf808dde" Name="Stack" IsVisible="True" SortPriority="7" Width="170">
+                <HdvColumnViewModelPreset.Parameter>
+                  <PresetStackOptions xmlns="clr-namespace:Microsoft.Performance.Shell.Stacks;assembly=Microsoft.Performance.Shell" />
+                </HdvColumnViewModelPreset.Parameter>
+              </HdvColumnViewModelPreset>
+              <HdvColumnViewModelPreset Guid="44c58faf-525f-549c-704d-a2ad0671c94c" Name="Count" AggregationMode="Count" IsVisible="True" SortPriority="11" TextAlignment="Right" Width="56" />
+              <HdvColumnViewModelPreset Guid="9b7d2fcf-6cc7-5845-b918-fd1aa9382c1c" Name="Size" AggregationMode="Sum" IsVisible="True" SortPriority="12" TextAlignment="Right" Width="76" />
+              <HdvColumnViewModelPreset Guid="c98da846-ddcc-5a8a-9b75-0a8407dfef96" Name="Duration (us)" AggregationMode="Sum" IsVisible="True" SortOrder="Descending" TextAlignment="Right" Width="95" />
+              <HdvColumnViewModelPreset Guid="9010cd1f-009b-59a1-6e8c-2d8ac1b5a75e" Name="Result" IsVisible="True" SortPriority="13" Width="150" />
+              <HdvColumnViewModelPreset Guid="6c35ada7-fb10-5bca-7a8b-9e9ad795a7ea" Name="Start (s)" AggregationMode="Min" IsVisible="True" SortPriority="9" TextAlignment="Right" Width="81" />
+              <HdvColumnViewModelPreset Guid="de825965-0fbc-5649-ff3d-ee078cd286df" Name="End (s)" AggregationMode="Max" IsVisible="True" SortPriority="10" TextAlignment="Right" Width="87" />
+            </HdvViewModelPreset.ConfigurableColumns>
+          </HdvViewModelPreset>
+        </Core4SummaryTableFillerGraphTreeItem.HdvViewModelPreset>
+      </Core4SummaryTableFillerGraphTreeItem>
+    </AnalysisView>
+  </WpaProfile.Views>
+  <WpaProfile.HdvPresetCollections />
+</WpaProfile>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<instrumentationManifest xmlns="http://schemas.microsoft.com/win/2004/08/events">
+<!-- https://learn.microsoft.com/en-us/previous-versions/aa385619(v=vs.85)
+     To register, run: wevtutil im [path]\[name].man /rf:[path]\[name].res /mf:[path]\[name].res
+     To unregister, run: wevtutil um [path]\[name].man
+-->
+  <instrumentation>
+    <events>
+      <provider
+        name="Microsoft-Office-Threadpool"
+        guid="{a019725f-cff1-47e8-8c9e-8fe2635b6388}"
+        resourceFileName="MsoEtwTP.res"
+        messageFileName="MsoEtwTP.res" />
+    </events>
+  </instrumentation>
+</instrumentationManifest>

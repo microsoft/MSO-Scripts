@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<instrumentationManifest xsi:schemaLocation="http://schemas.microsoft.com/win/2004/08/events eventman.xsd" xmlns:win="http://manifests.microsoft.com/win/2004/08/windows/events" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:trace="http://schemas.microsoft.com/win/2004/08/events/trace" xmlns="http://schemas.microsoft.com/win/2004/08/events">
+  <instrumentation>
+    <events>
+      <provider
+          name="MSEdge_Stable"
+          guid="{3A5F2396-5C8F-4F1F-9B67-6CCA6C990E61}"
+          resourceFileName="EdgeETW.res"
+          messageFileName="EdgeETW.res"
+          >
+      </provider>
+      <provider
+          name="MSEdge_Canary"
+          guid="{C56B8664-45C5-4E65-B3C7-A8D6BD3F2E67}"
+          resourceFileName="EdgeETW.res"
+          messageFileName="EdgeETW.res"
+          >
+      </provider>
+      <provider
+          name="MSEdge_Beta"
+          guid="{BD089BAA-4E52-4794-A887-9E96868570D2}"
+          resourceFileName="EdgeETW.res"
+          messageFileName="EdgeETW.res"
+          >
+      </provider>
+      <provider
+          name="MSEdge_Dev"
+          guid="{D30B5C9F-B58F-4DC9-AFAF-134405D72107}"
+          resourceFileName="EdgeETW.res"
+          messageFileName="EdgeETW.res"
+          >		  
+      </provider>
+      <provider
+          name="MSEdge_Internal"
+          guid="{49C85E08-E8A5-49D6-81EA-7270531EC8AF}"
+          resourceFileName="EdgeETW.res"
+          messageFileName="EdgeETW.res"
+          >		  
+      </provider>
+      <provider
+          name="MSEdge_WebView"
+          guid="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}"
+          resourceFileName="EdgeETW.res"
+          messageFileName="EdgeETW.res"
+          >		  
+      </provider>
+    </events>
+  </instrumentation>
+</instrumentationManifest>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences>
+<!--
+  DISCLAIMER: Stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+-->
+          <FileReference FileName="OfficeBasic.stacktags" ServiceMoniker="StackFrameTag.{67F56EBD-2E82-493B-BF4F-712A1D0F018B}" />
+        </FileReferences>
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="91711b35-0be2-4af4-81d5-f510a4d5a34e" IsVisible="true" Title="File I/O">
+        <Graphs>
+          <Graph Guid="e2a7d340-0dbd-4f24-8b26-e5388eeaf562" LayoutStyle="All" Color="#FF008000" GraphHeight="167" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Timelines" GraphChartType="StackedBars" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="17" KeyColumnCount="9" LeftFrozenColumnCount="10" RightFrozenColumnCount="16" InitialFilterShouldKeep="true" GraphFilterColumnGuid="1a6168db-c962-472b-9c4a-a04621f1dc03" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="26d231f4-e6e3-4ea0-b8f1-3c3cfacf067b" Name="Start" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="e2c7e540-4aeb-47e0-99ba-dacf63ec19cf" Name="End" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="f7732c29-62d3-4b32-ba4e-ced7ebe6b8ea" Name="Process Name" SortPriority="1" Width="101" IsVisible="true" />
+                <Column Guid="01cb52ab-5bb1-4cb6-9cff-e50ce2836e39" Name="Process" SortPriority="2" Width="133" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="5" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="ecf6e842-d5da-4d95-84c7-63ab3b6cf318" Name="Stack" SortPriority="0" Width="160" IsVisible="false" HelpText="Stack">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="0b043700-c82e-4d03-bc9c-ae7138093b47" Name="File Path" SortPriority="3" Width="445" IsVisible="false" />
+                <Column Guid="95611700-8168-452a-859d-b266392c7de0" Name="File Name" AggregationMode="UniqueCount" SortPriority="4" Width="250" IsVisible="true" />
+                <Column Guid="db4da22c-8331-4243-9094-44f05969de01" Name="Event Type" SortPriority="6" Width="89" IsVisible="true" />
+                <Column Guid="dcefaad1-2b62-4311-a003-1fc61c0f7f7e" Name="Event SubType" SortPriority="7" Width="170" IsVisible="false" />
+                <Column Guid="ecf6e842-d5da-4d95-84c7-63ab3b6cf318" Name="Stack" SortPriority="8" Width="224" IsVisible="true">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="1a6168db-c962-472b-9c4a-a04621f1dc03" Name="Count" AggregationMode="Sum" SortPriority="9" TextAlignment="Right" Width="58" IsVisible="true" />
+                <Column Guid="8b8d220b-a24d-4773-81cb-6c6caebb084f" Name="Size" AggregationMode="Sum" SortPriority="10" TextAlignment="Right" Width="77" CellFormat="MB" IsVisible="true" />
+                <Column Guid="0f0fd63e-942e-441d-829b-3f921965cc9a" Name="Duration" AggregationMode="Sum" SortPriority="11" TextAlignment="Right" Width="101" CellFormat="mN" IsVisible="true">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="e2c7e540-4aeb-47e0-99ba-dacf63ec19cf" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+                <Column Guid="71a12a2f-ac40-4906-a979-5760738e4ad7" Name="Thread" SortPriority="12" TextAlignment="Right" Width="69" IsVisible="false" />
+                <Column Guid="13e15a02-094f-4326-b5bd-e6721bdd3e87" Name="Result" SortPriority="13" Width="97" IsVisible="false" />
+                <Column Guid="26d231f4-e6e3-4ea0-b8f1-3c3cfacf067b" Name="Start" AggregationMode="Min" SortOrder="Ascending" SortPriority="0" TextAlignment="Right" Width="60" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="e2c7e540-4aeb-47e0-99ba-dacf63ec19cf" Name="End" AggregationMode="Max" SortPriority="14" TextAlignment="Right" Width="60" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+          <Graph Guid="e2a7d340-0dbd-4f24-8b26-e5388eeaf562" LayoutStyle="All" Color="#FF008000" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Activity by Size" GraphChartType="StackedLine" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="16" KeyColumnCount="9" LeftFrozenColumnCount="10" RightFrozenColumnCount="15" InitialFilterShouldKeep="true" GraphFilterColumnGuid="1a6168db-c962-472b-9c4a-a04621f1dc03" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="e2c7e540-4aeb-47e0-99ba-dacf63ec19cf" Name="End" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="f7732c29-62d3-4b32-ba4e-ced7ebe6b8ea" Name="Process Name" SortPriority="2" Width="130" IsVisible="true" />
+                <Column Guid="01cb52ab-5bb1-4cb6-9cff-e50ce2836e39" Name="Process" SortPriority="3" Width="140" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="8" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="ecf6e842-d5da-4d95-84c7-63ab3b6cf318" Name="Stack" SortPriority="0" Width="160" IsVisible="false" HelpText="Stack">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="71a12a2f-ac40-4906-a979-5760738e4ad7" Name="Thread" SortPriority="4" TextAlignment="Right" Width="69" IsVisible="false" />
+                <Column Guid="0b043700-c82e-4d03-bc9c-ae7138093b47" Name="File Path" SortPriority="6" Width="410" IsVisible="true" />
+                <Column Guid="db4da22c-8331-4243-9094-44f05969de01" Name="Event Type" SortPriority="5" Width="74" IsVisible="true" />
+                <Column Guid="dcefaad1-2b62-4311-a003-1fc61c0f7f7e" Name="Event SubType" SortPriority="1" Width="170" IsVisible="false" />
+                <Column Guid="ecf6e842-d5da-4d95-84c7-63ab3b6cf318" Name="Stack" SortPriority="7" Width="139" IsVisible="false">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="1a6168db-c962-472b-9c4a-a04621f1dc03" Name="Count" AggregationMode="Sum" SortPriority="9" TextAlignment="Right" Width="58" IsVisible="true" />
+                <Column Guid="0f0fd63e-942e-441d-829b-3f921965cc9a" Name="Duration" AggregationMode="Max" SortPriority="10" TextAlignment="Right" Width="100" CellFormat="mN" IsVisible="true">
+                  <DurationInViewOptionsParameter TimeStampColumnGuid="e2c7e540-4aeb-47e0-99ba-dacf63ec19cf" TimeStampType="Start" InViewEnabled="false" />
+                </Column>
+                <Column Guid="95611700-8168-452a-859d-b266392c7de0" Name="File Name" SortPriority="11" Width="500" IsVisible="false" />
+                <Column Guid="13e15a02-094f-4326-b5bd-e6721bdd3e87" Name="Result" SortPriority="12" Width="158" IsVisible="true" />
+                <Column Guid="8b8d220b-a24d-4773-81cb-6c6caebb084f" Name="Size" AggregationMode="Sum" SortOrder="Descending" SortPriority="0" TextAlignment="Right" Width="76" CellFormat="MB" IsVisible="true" />
+                <Column Guid="26d231f4-e6e3-4ea0-b8f1-3c3cfacf067b" Name="Start" AggregationMode="Min" SortPriority="13" TextAlignment="Right" Width="60" IsVisible="false">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="e2c7e540-4aeb-47e0-99ba-dacf63ec19cf" Name="End" AggregationMode="Max" SortPriority="14" TextAlignment="Right" Width="60" IsVisible="false">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

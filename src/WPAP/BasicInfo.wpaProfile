@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences>
+<!--
+  DISCLAIMER: Stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+  DISCLAIMER: Regions-of-Interest are based on internal logging mechanisms, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/creating-a-regions-of-interest-file
+-->
+          <FileReference FileName="OfficeBasic.stacktags" ServiceMoniker="StackFrameTag.{67F56EBD-2E82-493B-BF4F-712A1D0F018B}" />
+          <FileReference FileName="OfficeCodeMarkers.regions.xml" ServiceMoniker="Regions.{51EF6868-EFEC-42A3-B284-1838673CC095}" />
+          <FileReference FileName="OfficeMeasurements.regions.xml" ServiceMoniker="Regions.{51EF6868-EFEC-42A3-B284-1838673CC095}" />
+          <FileReference FileName="OfficeSpecial.regions.xml" ServiceMoniker="Regions.{51EF6868-EFEC-42A3-B284-1838673CC095}" />
+          <FileReference FileName="OfficeHVA.regions.xml" ServiceMoniker="Regions.{51EF6868-EFEC-42A3-B284-1838673CC095}" />
+        </FileReferences>
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="2b79583c-a6e5-4db2-a51e-35a1aaf6ac02" IsVisible="true" Title="Processes &amp; Modules">
+        <Graphs>
+          <Graph Guid="b186f02d-8d06-4bbb-9ad1-abf7985fb61a" LayoutStyle="All" Color="#FFBEBEBE" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Shows the duration (from beginning to end in seconds) of the process, hosted service (if applicable), and the command used to initiate the process.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;}&#xD;&#xA;}">
+            <Preset Name="Lifetimes" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="20" KeyColumnCount="8" LeftFrozenColumnCount="9" RightFrozenColumnCount="19" InitialFilterShouldKeep="true" InitialExpansionQuery="Lifetime:=Transient" GraphFilterTopValue="0" GraphFilterThresholdValue="0" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch This table shows when processes begin and end but can also help you find out if particular processes are causing delays when connected to data from other graphs, such as CPU usage.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;}&#xD;&#xA;}">
+              <MetadataEntries>
+                <MetadataEntry Guid="36c00ec5-61f8-5f89-a066-641288a34ca9" Name="Start Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="19fb5aa9-a5fc-5f14-cb83-fad0691e92a8" Name="End Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="1ba44c8d-e138-5cfa-c4d8-49580277ab41" Name="Lifetime" SortPriority="7" Width="80" IsVisible="true" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="8" Width="80" IsVisible="false" />
+                <Column Guid="d9e7685f-5f02-5731-d181-5545f0e0c5d3" Name="Process Tree" SortPriority="3" Width="200" IsVisible="false" />
+                <Column Guid="0b34b57d-f3cd-519a-4584-b182e0088701" Name="Process Name" SortOrder="Ascending" SortPriority="1" Width="117" IsVisible="true" />
+                <Column Guid="0edbeee1-8d7b-5652-6639-86415222c6e0" Name="Process" SortOrder="Ascending" SortPriority="2" Width="166" IsVisible="true" />
+                <Column Guid="5f381ee6-ad8e-5906-7de0-4b678b7d78f1" Name="Process ID" SortPriority="5" TextAlignment="Right" Width="80" IsVisible="false" />
+                <Column Guid="32ba004c-d028-5def-cc60-016892805d03" Name="Parent Process ID" SortPriority="6" TextAlignment="Right" Width="80" IsVisible="false" />
+                <Column Guid="d8e83424-bba6-55cf-41b7-d164f0cd3c7a" Name="Creation Stack" SortPriority="15" Width="200" IsVisible="false" />
+                <Column Guid="26dd2129-e3d6-57aa-c56b-34b5a5b79fcb" Name="Count" AggregationMode="Sum" SortPriority="9" TextAlignment="Right" Width="58" IsVisible="true" />
+                <Column Guid="c4cf3680-7ab6-5b50-a66e-bb282e861842" Name="Duration" AggregationMode="Sum" SortPriority="10" TextAlignment="Right" Width="110" IsVisible="false" />
+                <Column Guid="fa105ddf-fff0-57fb-8472-3b02066ee626" Name="Max Duration" AggregationMode="Max" SortPriority="16" TextAlignment="Right" Width="110" IsVisible="false" />
+                <Column Guid="3546d491-9447-5abe-f1ea-c8363af9b77f" Name="Avg Duration" AggregationMode="Average" SortPriority="17" TextAlignment="Right" Width="110" IsVisible="true" />
+                <Column Guid="fd1c6bea-5148-5a94-f0d2-720385dfddf6" Name="Min Duration" AggregationMode="Min" SortPriority="18" TextAlignment="Right" Width="110" IsVisible="false" />
+                <Column Guid="a5e0fdb2-8afa-59e2-91e7-5ade1195b805" Name="Package Full Name" SortPriority="11" Width="200" IsVisible="false" />
+                <Column Guid="7c8085f1-33de-5a34-b975-ff02c3a942fb" Name="Modern Application Friendly Name" SortPriority="12" Width="150" IsVisible="false" />
+                <Column Guid="a876035b-24bc-564f-3f6a-cede5f8c8918" Name="Hosted Services" SortPriority="13" Width="102" IsVisible="false" />
+                <Column Guid="1093bbae-e3f8-570d-d300-fe006ec801fe" Name="Command Line" SortPriority="14" Width="999" IsVisible="true" />
+                <Column Guid="36c00ec5-61f8-5f89-a066-641288a34ca9" Name="Start Time" AggregationMode="Min" SortOrder="Ascending" SortPriority="0" TextAlignment="Right" Width="96" IsVisible="true" />
+                <Column Guid="19fb5aa9-a5fc-5f14-cb83-fad0691e92a8" Name="End Time" AggregationMode="Max" SortPriority="4" TextAlignment="Right" Width="96" IsVisible="true" />
+              </Columns>
+            </Preset>
+          </Graph>
+          <Graph Guid="a1df89f9-5b2a-449e-aaab-1bcc3fd25c84" LayoutStyle="All" Color="#FFBEBEBE" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Modules Loaded" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="23" KeyColumnCount="6" LeftFrozenColumnCount="7" RightFrozenColumnCount="22" InitialFilterShouldKeep="true" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="84fa7f2c-c8bb-575c-e607-9b03f2839a2d" Name="Start Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="b5b4978f-1421-5920-14e0-f4edbe844cd6" Name="End Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="1088f617-20a8-53a7-9952-3eabefc445cf" Name="Process Name" SortOrder="Ascending" SortPriority="0" Width="136" IsVisible="true" HelpText="Process Name" />
+                <Column Guid="63f64d61-d8b1-5fe8-661a-4e48aaf8c613" Name="Process" SortOrder="Ascending" SortPriority="1" Width="166" IsVisible="true" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="4" Width="118" IsVisible="false" />
+                <Column Guid="26b77cb5-b290-5151-5b9a-184315cef673" Name="Load Stack" SortOrder="Ascending" SortPriority="5" Width="200" IsVisible="false" HelpText="Load Stack">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="805996ba-9555-5226-f229-e3a3c0625e12" Name="Image Name" AggregationMode="Count" SortOrder="Ascending" SortPriority="2" Width="152" IsVisible="true" />
+                <Column Guid="26b77cb5-b290-5151-5b9a-184315cef673" Name="Load Stack" SortPriority="6" Width="300" IsVisible="false" HelpText="Load Stack">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="756d7d5a-a03f-5d80-6eba-c3aa94cfe34b" Name="Count" AggregationMode="Sum" SortPriority="7" TextAlignment="Center" Width="58" IsVisible="false" />
+                <Column Guid="8c7175b2-2ccc-5612-79ca-e6cbffdaa6c4" Name="Load Reason" SortPriority="8" Width="122" IsVisible="true" HelpText="Load Reason" />
+                <Column Guid="9c84e061-f412-5cd0-1ef5-336821b37382" Name="Parent Image Name" SortPriority="9" Width="120" IsVisible="true" HelpText="Parent Module Name" />
+                <Column Guid="a3ca869a-9c38-5325-e8cd-e6b0d562a72a" Name="ImageSize" SortPriority="10" TextAlignment="Right" Width="74" CellFormat="x" IsVisible="true" />
+                <Column Guid="4cfbf4ef-4d37-5805-a53a-53d60d46f323" Name="Company Name" SortPriority="11" Width="122" IsVisible="true" HelpText="Company Name" />
+                <Column Guid="79c9c924-a76c-57f7-8a45-9570d12a6a0c" Name="File Description" SortPriority="12" Width="178" IsVisible="true" />
+                <Column Guid="53836370-15a4-5b6d-9cbd-0e4c23a36846" Name="Original File Name" SortPriority="13" Width="122" IsVisible="false" />
+                <Column Guid="0ffcc6cd-c664-593b-f363-92d7bfd0de4f" Name="File Version" SortPriority="14" Width="212" IsVisible="true" />
+                <Column Guid="fd3a50be-1505-5e37-7b71-fd7f2f1e0963" Name="Product Version" SortPriority="15" Width="98" IsVisible="false" />
+                <Column Guid="16e51d5d-f040-5d0f-072e-0242ec3890ca" Name="TimeDateStamp" SortPriority="16" TextAlignment="Right" Width="98" CellFormat="x" IsVisible="false" />
+                <Column Guid="542dbdbb-e4f1-5cb0-f70a-2da71320e1ce" Name="Start Address" AggregationMode="Min" SortPriority="17" TextAlignment="Right" Width="124" CellFormat="x" IsVisible="false" />
+                <Column Guid="2b724277-8050-5de3-b33f-997462ea0eed" Name="End Address" AggregationMode="Max" SortPriority="18" TextAlignment="Right" Width="124" CellFormat="x" IsVisible="false" />
+                <Column Guid="3a9fa0d1-876d-5b93-009a-2cbb3b5e1448" Name="Relocated Count" AggregationMode="Sum" SortPriority="19" TextAlignment="Right" Width="54" IsVisible="false" />
+                <Column Guid="8db8684a-9af9-5134-8fac-ea61c4f2cee1" Name="Image Path" SortPriority="20" Width="466" IsVisible="true" HelpText="Module Path" />
+                <Column Guid="84fa7f2c-c8bb-575c-e607-9b03f2839a2d" Name="Start Time" AggregationMode="Min" SortOrder="Ascending" SortPriority="3" TextAlignment="Right" Width="82" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="b5b4978f-1421-5920-14e0-f4edbe844cd6" Name="End Time" AggregationMode="Max" SortPriority="21" TextAlignment="Right" Width="82" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+<!--
+  NOTE: Office HVA / High Value Activity events require Optional Diagnostic Data:
+  Options > Trust Center Settings > Privacy Settings > Enable: Send additional diagnostic data and usage to Microsoft
+-->
+      <View Guid="ab193349-9f4d-4b2a-86fe-08f9f35f266b" IsVisible="true" Title="Office Events">
+        <Graphs>
+          <Graph Guid="1ce7fd53-2344-4ea8-acd6-1a0722a51427" LayoutStyle="All" Color="#FFBEBEBE" GraphHeight="136.714285714283" IsMinimized="false" IsShown="true" IsExpanded="false" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Lets the application apply user-friendly labels to portions of the trace.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;}&#xD;&#xA;}">
+            <Preset Name="High Value Activities" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="23" KeyColumnCount="7" LeftFrozenColumnCount="8" RightFrozenColumnCount="21" InitialFilterQuery="[ManifestFullPath]:~&gt;&quot;OfficeHVA.regions.xml&quot; AND [Start Process]:&lt;&gt;&quot;Unknown&quot;" InitialFilterShouldKeep="true" InitialExpansionQuery="[Region Friendly Name]:~&lt;&quot;Office High Value Activities&quot;" GraphFilterTopValue="0" GraphFilterThresholdValue="0" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Uses a Regions of Interest file to apply additional markup to an open trace in WPA. These labels are applied by finding events that define the start and stop of a given region. The XML file contains these regions as well as their events.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;}&#xD;&#xA;}">
+              <MetadataEntries>
+                <MetadataEntry Guid="052aa8a8-ce86-486b-8cc9-158ac7d27113" Name="Stop Thread" ColumnMetadata="EndThreadId" />
+                <MetadataEntry Guid="93b276b8-d183-41b7-a16e-19eb9373dbf3" Name="Start Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="03facf2d-1d9f-43c7-b8e8-aed46477f348" Name="Stop Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries>
+                <HighlightEntry StartTimeColumnGuid="93b276b8-d183-41b7-a16e-19eb9373dbf3" StartTimeColumnName="Start Time" HighlightQuery="[Region Friendly Name]:~=&quot;Office App Launch&quot;" HighlightColor="#FFFF0000" />
+              </HighlightEntries>
+              <Columns>
+                <Column Guid="328f22af-2e8a-4abc-8a19-bfefe367bf7c" Name="ManifestFullPath" SortPriority="12" Width="264" IsVisible="false" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="9" Width="112" IsVisible="false" />
+                <Column Guid="d96b19f7-d47a-40f3-ba80-fe0b9fae4616" Name="Region" SortPriority="2" Width="246" IsVisible="false" />
+                <Column Guid="07ec3178-e4ce-4729-a918-f1cc44ee55b9" Name="Region Friendly Name" SortPriority="13" Width="168" IsVisible="true"/>
+                <Column Guid="a310de95-c012-4af7-be28-f78dd2f71247" Name="Instance Name" AggregationMode="UniqueCount" SortPriority="17" Width="150" IsVisible="true" />
+                <Column Guid="6d945afa-988e-4be4-906b-023fb72eda92" Name="Start Process Name" SortPriority="15" Width="119" IsVisible="false" HelpText="Start Process Name" />
+                <Column Guid="d0b2a5cb-1966-4fe9-919f-1383932b2d84" Name="Start Process" SortPriority="16" Width="130" IsVisible="true" HelpText="Start Process">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="2ab66e6a-720a-564b-0369-93f576abd30e" Name="Metadata 1" SortPriority="1" Width="92" IsVisible="true" HelpText="Metadata 1" />
+                <Column Guid="c74dbb74-97bf-4c5a-9b21-d967ce08df00" Name="Start Thread" SortPriority="18" TextAlignment="Right" Width="78" IsVisible="true" />
+                <Column Guid="0c5cf8cd-9b9e-5798-1a5d-09d429f7fa3c" Name="Field 1" SortPriority="19" Width="106" IsVisible="true" />
+                <Column Guid="71badd11-26e5-56bc-44ec-12f4cc6a8f3e" Name="Field 2" SortPriority="11" Width="80" IsVisible="true" />
+                <Column Guid="411dba2d-5d6e-5272-8287-636d0841768c" Name="Field 3" SortPriority="5" Width="80" IsVisible="true" HelpText="Field 3" />
+                <Column Guid="048f5050-1f17-59b3-fa22-4b0781ee630b" Name="Field 4" SortPriority="6" Width="80" IsVisible="true" HelpText="Field 4" />
+                <Column Guid="94e48f22-d499-5227-bb04-be011b4159b0" Name="Field 5" SortPriority="7" Width="80" IsVisible="true" HelpText="Field 5" />
+                <Column Guid="c1054028-424a-59ba-e760-6d30abbd69c5" Name="Field 6" SortPriority="8" Width="90" IsVisible="true" HelpText="Field 6" />
+                <Column Guid="9fd0ec98-a6a4-432d-b0f9-b032609923e5" Name="Payload" SortPriority="20" Width="500" IsVisible="false" />
+                <Column Guid="d683f423-cea9-4275-b67e-1aadd496289d" Name="Provider" SortPriority="3" Width="194" IsVisible="true" HelpText="Provider" />
+                <Column Guid="02153301-a927-427b-a07d-050fdb06eb7a" Name="Provider Guid" SortPriority="4" Width="228" IsVisible="false" HelpText="Provider Guid" />
+                <Column Guid="471b850d-c2bc-482d-871d-13fb7c13bd2a" Name="Region Guid" SortPriority="14" Width="228" IsVisible="false" />
+                <Column Guid="abfa45ec-ef0f-4fdd-8a6d-1c93a140032b" Name="Duration" AggregationMode="Sum" SortPriority="21" TextAlignment="Right" Width="100" CellFormat="mN" IsVisible="true" />
+                <Column Guid="93b276b8-d183-41b7-a16e-19eb9373dbf3" Name="Start Time" AggregationMode="Min" SortOrder="Ascending" SortPriority="0" TextAlignment="Right" Width="96" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="03facf2d-1d9f-43c7-b8e8-aed46477f348" Name="Stop Time" AggregationMode="Max" SortPriority="10" TextAlignment="Right" Width="96" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+          <Graph Guid="1ce7fd53-2344-4ea8-acd6-1a0722a51427" LayoutStyle="All" Color="#FFBEBEBE" GraphHeight="247.85714285714653" IsMinimized="false" IsShown="true" IsExpanded="false" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Lets the application apply user-friendly labels to portions of the trace.}\li0\ri0\sa0\sb0\fi0\ql\par}">
+            <Preset Name="Code Markers &amp; Measurements" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="19" KeyColumnCount="8" LeftFrozenColumnCount="9" RightFrozenColumnCount="17" InitialFilterQuery="[ManifestFullPath]:~=&quot;Office&quot; AND [ManifestFullPath]:~!&quot;OfficeHVA&quot; AND [Start Process]:&lt;&gt;&quot;Unknown&quot;" InitialFilterShouldKeep="true" InitialExpansionQuery="[Region Friendly Name]:~&lt;&quot;Office&quot;" GraphFilterTopValue="0" GraphFilterThresholdValue="0" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Uses a Regions of Interest file to apply additional markup to an open trace in WPA. These labels are applied by finding events that define the start and stop of a given region. The XML file contains these regions as well as their events.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;}&#xD;&#xA;}">
+              <MetadataEntries>
+                <MetadataEntry Guid="052aa8a8-ce86-486b-8cc9-158ac7d27113" Name="Stop Thread" ColumnMetadata="EndThreadId" />
+                <MetadataEntry Guid="93b276b8-d183-41b7-a16e-19eb9373dbf3" Name="Start Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="03facf2d-1d9f-43c7-b8e8-aed46477f348" Name="Stop Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="328f22af-2e8a-4abc-8a19-bfefe367bf7c" Name="ManifestFullPath" SortPriority="3" Width="338" IsVisible="false"/>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="4" Width="112" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="6d945afa-988e-4be4-906b-023fb72eda92" Name="Start Process Name" SortPriority="5" Width="119" IsVisible="false" HelpText="Start Process Name"/>
+                <Column Guid="d0b2a5cb-1966-4fe9-919f-1383932b2d84" Name="Start Process" SortPriority="6" Width="105" IsVisible="true" HelpText="Start Process">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="d683f423-cea9-4275-b67e-1aadd496289d" Name="Provider" SortPriority="7" Width="194" IsVisible="false" HelpText="Provider"/>
+                <Column Guid="02153301-a927-427b-a07d-050fdb06eb7a" Name="Provider Guid" SortPriority="8" Width="228" IsVisible="false" HelpText="Provider Guid"/>
+                <Column Guid="d96b19f7-d47a-40f3-ba80-fe0b9fae4616" Name="Region" SortPriority="9" Width="246" IsVisible="false"/>
+                <Column Guid="07ec3178-e4ce-4729-a918-f1cc44ee55b9" Name="Region Friendly Name" SortPriority="10" Width="246" IsVisible="true"/>
+                <Column Guid="a310de95-c012-4af7-be28-f78dd2f71247" Name="Instance Name" AggregationMode="UniqueCount" SortOrder="Ascending" SortPriority="0" TextAlignment="Right" Width="114" IsVisible="true"/>
+                <Column Guid="c74dbb74-97bf-4c5a-9b21-d967ce08df00" Name="Start Thread" SortPriority="11" TextAlignment="Right" Width="78" IsVisible="true"/>
+                <Column Guid="d11ae606-c15c-4c87-a001-6d93a76465c3" Name="Opcode" SortPriority="2" Width="56" IsVisible="true" HelpText="Opcode"/>
+                <Column Guid="9fd0ec98-a6a4-432d-b0f9-b032609923e5" Name="Payload" SortPriority="12" Width="260" IsVisible="true"/>
+                <Column Guid="0c5cf8cd-9b9e-5798-1a5d-09d429f7fa3c" Name="Field 1" SortPriority="13" Width="106" IsVisible="false"/>
+                <Column Guid="71badd11-26e5-56bc-44ec-12f4cc6a8f3e" Name="Field 2" SortPriority="14" Width="80" IsVisible="false"/>
+                <Column Guid="471b850d-c2bc-482d-871d-13fb7c13bd2a" Name="Region Guid" SortPriority="15" Width="228" IsVisible="false"/>
+                <Column Guid="abfa45ec-ef0f-4fdd-8a6d-1c93a140032b" Name="Duration" AggregationMode="Sum" SortPriority="16" TextAlignment="Right" Width="100" CellFormat="mN" IsVisible="true"/>
+                <Column Guid="93b276b8-d183-41b7-a16e-19eb9373dbf3" Name="Start Time" AggregationMode="Min" SortOrder="Ascending" SortPriority="1" TextAlignment="Right" Width="96" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="03facf2d-1d9f-43c7-b8e8-aed46477f348" Name="Stop Time" AggregationMode="Max" SortPriority="17" TextAlignment="Right" Width="96" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+<!--
+Filters by [Provider Id]:
+  22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716 Microsoft-Windows-Kernel-Process
+  487d6e37-1b9d-46d3-a8fd-54ce8bdf8a53 Microsoft.Windows.Win32k.TraceLogging
+  8a3a9fd4-21d3-470b-b1d6-838b9fc8637b Microsoft.Office.Common
+  e6aec961-a5e0-5560-a860-15edd6b70f6c Microsoft.Office.SessionIdProvider
+  ee97cdc4-b095-5c70-6e37-a541eb74c2b5 Microsoft.Windows.AppLifeCycle.UI
+  fc15139c-ddf2-481f-9a9b-365919cb8ae5 Microsoft.Office.CorrelationMetadata
+-->
+          <Graph Guid="04f69f98-176e-4d1c-b44e-97f734996ab8" LayoutStyle="All" Color="#FFBEBEBE" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Shows every event in the trace, including the associated payload fields.}\li0\ri0\sa0\sb0\fi0\ql\par{\f2 \li0\ri0\sa0\sb0\fi0\ql\par{\f2 {\ltrch New capability - graph payload fields!}\li0\ri0\sa0\sb0\fi0\ql\par{\f2 \li0\ri0\sa0\sb0\fi0\ql\par{\f2 {\ltrch 1. Filter down to the event with the payload field you want to graph.}\li0\ri0\sa0\sb0\fi0\ql\par{\f2 {\ltrch 2. Drag the column corresponding to the payload field you want to graph to the right of the blue bar.}\li0\ri0\sa0\sb0\fi0\ql\par{\f2 {\ltrch 3. If the automatic graphing isn't representing your data correctly, go to View Editor and:}\li0\ri0\sa0\sb0\fi0\ql\par{\f2 {\ltrch a. Adjust the aggregation mode for your column, or}\li0\ri0\sa0\sb0\fi0\ql\par{\f2 {\ltrch b. Go to Advanced &gt; Graph Configuration and change your graphing aggregation mode.}\li0\ri0\sa0\sb0\fi0\ql\par}">
+            <Preset Name="Events of Interest" BarGraphIntervalCount="49" IsThreadActivityTable="false" GraphColumnCount="31" KeyColumnCount="6" LeftFrozenColumnCount="8" RightFrozenColumnCount="29" InitialFilterQuery="[Provider Id]:=&quot;487d6e37-1b9d-46d3-a8fd-54ce8bdf8a53&quot; OR [Provider Id]:=&quot;22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716&quot; OR [Provider Id]:=&quot;e6aec961-a5e0-5560-a860-15edd6b70f6c&quot; OR [Provider Id]:=&quot;8a3a9fd4-21d3-470b-b1d6-838b9fc8637b&quot; OR [Provider Id]:=&quot;fc15139c-ddf2-481f-9a9b-365919cb8ae5&quot; OR [Provider Id]:=&quot;ee97cdc4-b095-5c70-6e37-a541eb74c2b5&quot;" InitialFilterShouldKeep="true" GraphFilterTopValue="0" GraphFilterThresholdValue="0" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Groups all the events by process and providerf.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;}&#xD;&#xA;}">
+              <MetadataEntries>
+                <MetadataEntry Guid="edf01e5d-3644-4dbc-ab9d-f8954e6db6ea" Name="ThreadId" ColumnMetadata="EndThreadId" />
+                <MetadataEntry Guid="bbfc990a-b6c9-4dcd-858b-f040ab4a1efe" Name="Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="bbfc990a-b6c9-4dcd-858b-f040ab4a1efe" Name="Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries>
+                <HighlightEntry StartTimeColumnGuid="bbfc990a-b6c9-4dcd-858b-f040ab4a1efe" StartTimeColumnName="Time" HighlightQuery="[Task Name]:=&quot;OfficeProcessSessionStart&quot;" />
+              </HighlightEntries>
+              <Columns>
+                <Column Guid="85d40897-ae0f-4a6b-aea3-b4bcd27c14f7" Name="Process Name" SortOrder="Ascending" SortPriority="0" Width="142" IsVisible="true" HelpText="Process Name"/>
+                <Column Guid="7ee6a5ff-1faf-428a-a7c2-7d2cb2b5cf26" Name="Process" SortOrder="Ascending" SortPriority="1" Width="146" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="8b4c40f8-0d99-437d-86ab-56ec200137dc" Name="Provider Name" SortPriority="5" Width="168" IsVisible="false"/>
+                <Column Guid="2a23f9b1-65d6-46d2-87b2-72f3606b7f75" Name="Provider Id" SortPriority="6" Width="240" IsVisible="false"/>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="4" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="26eed6bf-f07d-4bb0-a36f-43a7d3a68828" Name="Stack" SortPriority="7" Width="270" IsVisible="false" HelpText="Stack">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="511777f7-30ef-4e86-bd0b-0facaf23a0d3" Name="Task Name" SortPriority="9" Width="176" IsVisible="true"/>
+                <Column Guid="edf01e5d-3644-4dbc-ab9d-f8954e6db6ea" Name="ThreadId" SortPriority="8" TextAlignment="Right" Width="62" IsVisible="true"/>
+                <Column Guid="c72e1c5a-f6db-4c84-8c0b-85989e514075" Name="Id" SortPriority="10" TextAlignment="Right" Width="32" IsVisible="false"/>
+                <Column Guid="5b51716b-b88f-443a-a396-c6316296d5f8" Name="Opcode Name" SortPriority="11" Width="66" IsVisible="true"/>
+                <Column Guid="19eb156f-1908-4134-a783-b9e7e2555a1d" Name="Opcode/Type " SortPriority="12" TextAlignment="Right" Width="70" IsVisible="false" HelpText="Opcode/Type "/>
+                <Column Guid="0c5cf8cd-9b9e-5798-1a5d-09d429f7fa3c" Name="Field 1" SortPriority="13" Width="106" IsVisible="true" HelpText="Field 1"/>
+                <Column Guid="71badd11-26e5-56bc-44ec-12f4cc6a8f3e" Name="Field 2" SortPriority="14" Width="80" IsVisible="true" HelpText="Field 2"/>
+                <Column Guid="411dba2d-5d6e-5272-8287-636d0841768c" Name="Field 3" SortPriority="15" Width="80" IsVisible="true" HelpText="Field 3"/>
+                <Column Guid="048f5050-1f17-59b3-fa22-4b0781ee630b" Name="Field 4" SortPriority="16" Width="80" IsVisible="true" HelpText="Field 4"/>
+                <Column Guid="94e48f22-d499-5227-bb04-be011b4159b0" Name="Field 5" SortPriority="17" Width="80" IsVisible="true" HelpText="Field 5"/>
+                <Column Guid="c1054028-424a-59ba-e760-6d30abbd69c5" Name="Field 6" SortPriority="18" Width="80" IsVisible="true" HelpText="Field 6"/>
+                <Column Guid="5cbc4b58-2de1-5449-55b2-4651d4edf90a" Name="Field 7" SortPriority="19" Width="80" IsVisible="true" HelpText="Field 7"/>
+                <Column Guid="fc01e6c9-a43b-51a1-fd2e-112ba48aff65" Name="Field 8" SortPriority="20" Width="80" IsVisible="true" HelpText="Field 8"/>
+                <Column Guid="e3dcf300-46e2-5c43-ef4b-2c3db489ec25" Name="Field 9" SortPriority="21" Width="80" IsVisible="true" HelpText="Field 9"/>
+                <Column Guid="87c21ddb-4b29-58e3-5ddc-f114c5ca209a" Name="Field 10" SortPriority="22" Width="80" IsVisible="true" HelpText="Field 10"/>
+                <Column Guid="65f8fe42-ad02-5016-3521-f93329c76227" Name="Field 11" SortPriority="23" Width="80" IsVisible="true" HelpText="Field 11"/>
+                <Column Guid="03d48fd3-0fe4-57f5-a477-49beb0d70a1f" Name="Field 12" SortPriority="24" Width="80" IsVisible="true" HelpText="Field 12"/>
+                <Column Guid="998f8e2d-0f5a-5a54-0133-226e2de62c0b" Name="Field 13" SortPriority="25" Width="80" IsVisible="true" HelpText="Field 13"/>
+                <Column Guid="bb772c34-9600-5bf7-3f54-e6080f8a0611" Name="Field 14" SortPriority="26" Width="80" IsVisible="true" HelpText="Field 14"/>
+                <Column Guid="1479add7-3dcb-580b-f1e9-87d5186ced61" Name="Field 15" SortPriority="27" Width="80" IsVisible="true" HelpText="Field 15"/>
+                <Column Guid="23f4d26d-f02e-592e-f16b-2980410ed2b2" Name="Field 16" SortPriority="28" Width="80" IsVisible="true" HelpText="Field 16"/>
+                <Column Guid="342f7677-17b2-4c7e-b9ec-e89612c49792" Name="Count" AggregationMode="Sum" SortPriority="29" TextAlignment="Right" Width="58" IsVisible="true"/>
+                <Column Guid="bbfc990a-b6c9-4dcd-858b-f040ab4a1efe" Name="Time" SortOrder="Ascending" SortPriority="2" Width="80" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

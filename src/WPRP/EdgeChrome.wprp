@@ -1,0 +1,238 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<WindowsPerformanceRecorder Version="1.0" Comments="Browser ETW Only Profile" Company="Microsoft Corporation" Copyright="Microsoft Corporation">
+    <Profiles>
+
+<!--
+    Collector Declarations
+
+    Collectors with the same name get merged across Profiles and WPRP files.
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <SystemCollector Id="SC_8-MB" Name="MSO System Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="8" />
+    </SystemCollector>
+
+    <EventCollector Id="EC_64-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="64" />
+    </EventCollector>
+
+    <EventCollector Id="EC_128-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="128" />
+    </EventCollector>
+
+<!-- SYSTEM PROVIDER DECLARATIONS -->
+
+    <!-- Base requirement for process/thread/module info and symbol resolution. -->
+
+    <SystemProvider Id="SP_Base">
+      <Keywords>
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+    </SystemProvider>
+
+<!-- EVENT PROVIDER DECLARATIONS -->
+    <!--
+        EDGE:
+          Stable     {3A5F2396-5C8F-4F1F-9B67-6CCA6C990E61}
+          Beta       {BD089BAA-4E52-4794-A887-9E96868570D2}
+          Dev        {D30B5C9F-B58F-4DC9-AFAF-134405D72107}
+          Canary     {C56B8664-45C5-4E65-B3C7-A8D6BD3F2E67}
+          WebView    {E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}
+        CHROME:
+          Chrome     {D2D578D9-2936-45B6-A09F-30E32715F42D}
+
+	From: https://source.chromium.org/chromium/chromium/src/+/main:base/trace_event/trace_event_etw_export_win.cc
+        KEYWORDS:
+          benchmark         // 0x00001
+          blink             // 0x00002
+          browser           // 0x00004
+          cc                // 0x00008
+          evdev             // 0x00010
+          gpu               // 0x00020
+          input             // 0x00040
+          netlog            // 0x00080
+          sequence_manager  // 0x00100
+          toplevel          // 0x00200
+          v8                // 0x00400
+          cc.debug          // 0x00800 // disabled by default
+          cc.debug.picture  // 0x01000 // disabled by default
+          toplevel.flow     // 0x02000 // disabled by default
+          startup           // 0x04000
+          latency           // 0x08000
+          blink.user_timing // 0x10000 // Performance.Mark - "Phase" field = "R"
+          media             // 0x20000
+          loading           // 0x40000
+          base              // 0x80000
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        EDGE-Specific:
+          MFCdmError            // 0x002000000000
+          MFCdmTrace            // 0x004000000000
+          MFCdmWarning          // 0x008000000000
+          resource_management   // 0x010000000000
+          perftrack             // 0x020000000000
+          navigation            // 0x040000000000
+          ServiceWorker         // 0x080000000000
+          Edge_WebView2         // 0x100000000000
+          diagnostic_event      // 0x200000000000
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          Windows keywords  // 0xFFFF000000000000 // see winmeta.xml
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        CHROME-Specific:
+          Other default-on  // 0x2000000000000000 // bit 61: other events which are not disabled by default
+          Other default-off // 0x4000000000000000 // bit 62: other events which are disabled by default - POISON to some apps!
+          Required          // 0x8000000000000000 // bit 63: always required
+
+        See also:
+        https://codereview.chromium.org/1176243016
+        https://issues.chromium.org/issues/40419599
+
+        Performance.Mark:
+        https://developer.mozilla.org/en-US/docs/Web/API/Performance/mark
+        https://matt.kotsenas.com/posts/using-wpa-to-analyze-performance-marks
+     -->
+
+        <!-- Microsoft.MSEdgeStable -->
+
+        <EventProvider Id="Edge-Unfiltered" Name="3A5F2396-5C8F-4F1F-9B67-6CCA6C990E61" Stack="true">
+          <Keywords>
+            <Keyword Value="0x00003FE0000FFFFF" />
+          </Keywords>
+        </EventProvider>
+
+        <EventProvider Id="Edge-Basic" Name="3A5F2396-5C8F-4F1F-9B67-6CCA6C990E61" Stack="true">
+          <Keywords>
+            <Keyword Value="0x0000000000000001" /> <!-- benchmark -->
+            <Keyword Value="0x0000000000000002" /> <!-- Blink -->
+            <Keyword Value="0x0000000000000400" /> <!-- v8 -->
+            <Keyword Value="0x0000000000004000" /> <!-- startup -->
+            <Keyword Value="0x0000000000008000" /> <!-- latency -->
+            <Keyword Value="0x0000000000010000" /> <!-- blink.user_timing -->
+            <Keyword Value="0x0000000000040000" /> <!-- Loading -->
+            <Keyword Value="0x0000040000000000" /> <!-- Edge:Navigation -->
+            <Keyword Value="0x0000080000000000" /> <!-- ServiceWorker -->
+            <Keyword Value="0x0000100000000000" /> <!-- Edge_WebView2 -->
+          </Keywords>
+        </EventProvider>
+
+        <!-- Microsoft.MSEdgeBeta -->
+
+        <EventProvider Id="Edge_Beta-Unfiltered" Name="BD089BAA-4E52-4794-A887-9E96868570D2" Base="Edge-Unfiltered" />
+
+        <EventProvider Id="Edge_Beta-Basic" Name="BD089BAA-4E52-4794-A887-9E96868570D2" Base="Edge-Basic" />
+
+        <!-- Microsoft.MSEdgeWebView2 -->
+
+        <EventProvider Id="Edge_WebView2-Unfiltered" Name="E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D" Base="Edge-Unfiltered" />
+
+        <EventProvider Id="Edge_WebView2-Basic" Name="E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D" Base="Edge-Basic" />
+
+        <!-- Microsoft.MSEdgeCanary -->
+
+        <EventProvider Id="Edge_Canary-Unfiltered" Name="C56B8664-45C5-4E65-B3C7-A8D6BD3F2E67" Base="Edge-Unfiltered" />
+
+        <EventProvider Id="Edge_Canary-Basic" Name="C56B8664-45C5-4E65-B3C7-A8D6BD3F2E67" Base="Edge-Basic" />
+
+        <!-- Microsoft.MSEdgeDev -->
+
+        <EventProvider Id="Edge_Dev-Unfiltered" Name="D30B5C9F-B58F-4DC9-AFAF-134405D72107" Base="Edge-Unfiltered" />
+
+        <EventProvider Id="Edge_Dev-Basic" Name="D30B5C9F-B58F-4DC9-AFAF-134405D72107" Base="Edge-Basic" />
+
+        <!-- CHROME -->
+
+        <EventProvider Id="Chrome-Unfiltered" Name="d2d578d9-2936-45b6-a09f-30e32715f42d" Stack="true">
+          <Keywords>
+            <Keyword Value="0xA0000000000FFFFF" />
+          </Keywords>
+        </EventProvider>
+
+        <EventProvider Id="Chrome-Basic" Name="d2d578d9-2936-45b6-a09f-30e32715f42d" Stack="true">
+          <Keywords>
+            <Keyword Value="0x0000000000000001" /> <!-- benchmark -->
+            <Keyword Value="0x0000000000000002" /> <!-- Blink -->
+            <Keyword Value="0x0000000000000400" /> <!-- v8 -->
+            <Keyword Value="0x0000000000004000" /> <!-- startup -->
+            <Keyword Value="0x0000000000008000" /> <!-- latency -->
+            <Keyword Value="0x0000000000010000" /> <!-- blink.user_timing -->
+            <Keyword Value="0x0000000000040000" /> <!-- Loading -->
+            <Keyword Value="0x8000000000000000" /> <!-- Required -->
+          </Keywords>
+        </EventProvider>
+
+<!-- PROFILE DECLARATIONS -->
+
+        <!-- BASIC -->
+
+        <Profile Id="MSEdge_Basic.Verbose.File" LoggingMode="File" Name="MSEdge_Basic" DetailLevel="Verbose" Description="Basic MSEdge, WebView2, Chrome Events">
+            <Collectors>
+
+                <SystemCollectorId Value="SC_8-MB">
+                    <SystemProviderId Value="SP_Base" />
+                </SystemCollectorId>
+
+                <EventCollectorId Value="EC_64-MB">
+                    <EventProviders>
+                        <EventProviderId Value="Edge_WebView2-Basic" />
+                        <EventProviderId Value="Edge-Basic" />
+                        <EventProviderId Value="Edge_Beta-Basic" />
+                        <EventProviderId Value="Edge_Canary-Basic" />
+                        <EventProviderId Value="Edge_Dev-Basic" />
+                        <EventProviderId Value="Chrome-Basic" />
+                    </EventProviders>
+                </EventCollectorId>
+
+            </Collectors>
+        </Profile>
+
+        <Profile Id="MSEdge_Basic.Verbose.Memory" Base="MSEdge_Basic.Verbose.File" LoggingMode="Memory" Name="MSEdge_Basic" DetailLevel="Verbose" Description="Basic MSEdge, WebView2, Chrome Events" />
+
+        <!-- UNFILTERED -->
+
+        <Profile Id="MSEdge_Unfiltered.Verbose.File" LoggingMode="File" Name="MSEdge_Unfiltered" DetailLevel="Verbose" Description="Unfiltered MSEdge, WebView2, Chrome Events">
+            <Collectors>
+
+                <SystemCollectorId Value="SC_8-MB">
+                    <SystemProviderId Value="SP_Base" />
+                </SystemCollectorId>
+
+                <EventCollectorId Value="EC_128-MB">
+                    <EventProviders>
+                        <EventProviderId Value="Edge_WebView2-Unfiltered" />
+                        <EventProviderId Value="Edge-Unfiltered" />
+                        <EventProviderId Value="Edge_Beta-Unfiltered" />
+                        <EventProviderId Value="Edge_Canary-Unfiltered" />
+                        <EventProviderId Value="Edge_Dev-Unfiltered" />
+                        <EventProviderId Value="Chrome-Unfiltered" />
+                    </EventProviders>
+                </EventCollectorId>
+            </Collectors>
+        </Profile>
+
+        <Profile Id="MSEdge_Unfiltered.Verbose.Memory" Base="MSEdge_Unfiltered.Verbose.File" LoggingMode="Memory" Name="MSEdge_Unfiltered" DetailLevel="Verbose" Description="Unfiltered MSEdge, WebView2, Chrome Events" />
+
+    </Profiles>
+
+    <TraceMergeProperties>
+        <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default" Base="">
+            <DeletePreMergedTraceFiles Value="true" />
+            <FileCompression Value="true" />
+            <CustomEvents>
+                <CustomEvent Value="ImageId" />
+                <CustomEvent Value="BuildInfo" />
+                <CustomEvent Value="VolumeMapping" />
+                <CustomEvent Value="EventMetadata" />
+                <CustomEvent Value="PerfTrackMetadata" />
+                <CustomEvent Value="WinSAT" />
+                <CustomEvent Value="NetworkInterface" />
+            </CustomEvents>
+        </TraceMergeProperty>
+    </TraceMergeProperties>
+</WindowsPerformanceRecorder>

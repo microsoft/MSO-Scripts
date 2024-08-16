@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences>
+<!--
+  DISCLAIMER: Stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+-->
+          <FileReference FileName="OfficeBasic.stacktags" ServiceMoniker="StackFrameTag.{67F56EBD-2E82-493B-BF4F-712A1D0F018B}" />
+        </FileReferences>
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="a718fcfb-e9be-44f5-bbb6-e3fc449e9efd" IsVisible="true" Title="Thread Info">
+        <Graphs>
+          <Graph Guid="a20f1ccd-d67f-4cdf-a186-0fd3f6535f18" LayoutStyle="All" Color="#FFBEBEBE" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="By Process, Thread" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="20" KeyColumnCount="13" LeftFrozenColumnCount="12" RightFrozenColumnCount="19" InitialFilterShouldKeep="true" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="cc358559-00e0-40c1-8b00-c031b7cc67e8" Name="Thread ID" ColumnMetadata="EndThreadId" />
+                <MetadataEntry Guid="f3a8ebc5-aa2a-4e2b-941b-3bcc5b8425b3" Name="Start Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="8666bd5a-97a6-4b8f-94b4-f0ac184d98d0" Name="End Time" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="2b1971b8-3ed4-472f-ad6e-80d8569447d4" Name="Process Name" SortOrder="Ascending" SortPriority="0" Width="120" IsVisible="true"/>
+                <Column Guid="70beb539-3db0-46b5-b417-7eeb1f520e9d" Name="Process" SortOrder="Ascending" SortPriority="1" Width="164" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="a24c016c-2e58-4263-a878-e3931e41bb82" Name="Lifetime" SortPriority="7" Width="72" IsVisible="true"/>
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="16" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="e3d2c6ff-a1bc-4bf4-adb9-618c9b3c1cb7" Name="Creation Stack" SortPriority="10" Width="150" IsVisible="false">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="e3d2c6ff-a1bc-4bf4-adb9-618c9b3c1cb7" Name="Creation Stack" SortPriority="11" Width="200" IsVisible="false">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="e4f53056-a46f-46fa-91e4-3601a7d73ddc" Name="Start Rundown Stack" SortPriority="12" Width="150" IsVisible="true">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="cc358559-00e0-40c1-8b00-c031b7cc67e8" Name="Thread ID" SortOrder="Ascending" SortPriority="3" TextAlignment="Right" Width="66" IsVisible="true" HelpText="Thread ID"/>
+                <Column Guid="e4f53056-a46f-46fa-91e4-3601a7d73ddc" Name="Start Rundown Stack" SortPriority="13" Width="200" IsVisible="true">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="969de915-d420-413e-8123-60141266728c" Name="End Rundown Stack" SortPriority="14" Width="150" IsVisible="false">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="cc358559-00e0-40c1-8b00-c031b7cc67e8" Name="Thread ID" SortOrder="Ascending" SortPriority="4" TextAlignment="Right" Width="66" IsVisible="false" HelpText="Thread ID"/>
+                <Column Guid="969de915-d420-413e-8123-60141266728c" Name="End Rundown Stack" SortPriority="15" Width="200" IsVisible="false">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="6915eddd-0597-4454-bc37-cdd3d9deb1e9" Name="Count" AggregationMode="Sum" SortPriority="17" TextAlignment="Right" Width="58" IsVisible="true"/>
+                <Column Guid="cb796d44-2927-5ac1-d231-4b71904c18f5" Name="Thread Name" SortPriority="18" Width="40" IsVisible="false"/>
+                <Column Guid="5b043402-efed-46d9-84bc-fbff69d81f52" Name="Thread Start Module" SortPriority="8" Width="124" IsVisible="true"/>
+                <Column Guid="bf979999-e911-4c4a-adce-004553af6ff8" Name="Thread Start Function" SortPriority="9" Width="240" IsVisible="true"/>
+                <Column Guid="6ebb8b5c-e436-48b7-b550-1549e9e0feec" Name="TEB Base" SortPriority="19" TextAlignment="Right" Width="124" CellFormat="x" IsVisible="false"/>
+                <Column Guid="f3a8ebc5-aa2a-4e2b-941b-3bcc5b8425b3" Name="Start Time" AggregationMode="Min" SortOrder="Ascending" SortPriority="2" TextAlignment="Right" Width="92" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+                <Column Guid="8666bd5a-97a6-4b8f-94b4-f0ac184d98d0" Name="End Time" AggregationMode="Max" SortPriority="6" TextAlignment="Right" Width="90" IsVisible="true">
+                  <DateTimeTimestampOptionsParameter DateTimeEnabled="false" />
+                </Column>
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

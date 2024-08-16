@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+    https://devblogs.microsoft.com/performance-diagnostics/authoring-custom-profiles-part-1/
+    https://devblogs.microsoft.com/performance-diagnostics/authoring-custom-profiles-part-2/
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    Collectors with the same name get merged across Profiles and WPRP files.
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+    https://devblogs.microsoft.com/performance-diagnostics/controlling-the-event-session-name-with-the-instance-name/#the-session-name-in-wpr
+-->
+
+    <SystemCollector Id="SC_Base" Name="NT Kernel Logger">
+      <BufferSize Value="1024" />
+      <Buffers Value="8" />
+      <StackCaching BucketCount="256" CacheSize="3072" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_768-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="768" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_512-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="512" />
+    </SystemCollector>
+
+    <EventCollector Id="EC_Base" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="4" />
+    </EventCollector>
+
+    <EventCollector Id="EC_4-MB" Base="EC_Base" Name="MSO Event Collector">
+      <Buffers Value="4" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wprcontrolprofiles-schema
+-->
+
+    <!-- Base requirement for process/thread/module info and symbol resolution. -->
+
+    <SystemProvider Id="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+    </SystemProvider>
+
+    <!-- Lightweight CPU Sampling (1 KHz) per Process/Module -->
+
+    <SystemProvider Id="SP_CPU-Lean" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="SampledProfile" />
+      </Keywords>
+    </SystemProvider>
+
+    <!-- CPU Sampling (1 KHz) and Dispatch/Scheduling for CPU and Wait analysis with call stacks -->
+
+    <SystemProvider Id="SP_CPU-Dispatch" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="SampledProfile" />
+        <Keyword Value="CSwitch" />
+        <Keyword Value="ReadyThread" />
+        <Keyword Value="DPC" />
+        <Keyword Value="Interrupt" />
+        <Keyword Value="WDFDPC" />
+        <Keyword Value="WDFInterrupt" />
+        <Keyword Value="Power" />
+        <Keyword Value="CpuConfig" />
+        <Keyword Value="ProcessCounter" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="SampledProfile" />
+        <Stack Value="CSwitch" />
+        <Stack Value="ReadyThread" />
+        <Stack Value="ThreadCreate" />
+        <Stack Value="ProcessCreate" />
+        <Stack Value="ImageLoad" />
+      </Stacks>
+    </SystemProvider>
+
+    <SystemProvider Id="SP_CPU-SampleMin" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="SampledProfile" />
+        <Keyword Value="Power" />
+        <Keyword Value="CpuConfig" />
+        <Keyword Value="ProcessCounter" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="SampledProfile" />
+        <Stack Value="ProcessCreate" />
+        <Stack Value="ImageLoad" />
+      </Stacks>
+    </SystemProvider>
+
+    <!--
+      ThreadDCStart/End provide the current execution call stack of all threads in the rundown at the start/end of the trace.
+      But this may slow the WPR trace start/stop time, sometimes by minutes when there are thousands of threads running on the system.
+      To mitigate that:
+        In this registry key: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\WMI
+        Set this DWORD value: StackCaptureTimeout (default value = 400 ms / thread; smaller = faster)
+        Then reboot the OS.
+    -->
+
+    <SystemProvider Id="SP_CPU-DispatchEx" Base="SP_CPU-Dispatch">
+      <Stacks Operation="Add">
+        <Stack Value="ThreadDCStart" />
+        <Stack Value="ThreadDCEnd" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Thread Rundown / Stackwalk Only -->
+
+    <SystemProvider Id="SP_ThreadRundown" Base="SP_Base">
+      <Stacks Operation="Add">
+        <Stack Value="ThreadDCStart" /> <!-- Rundown at Start -->
+        <Stack Value="ThreadDCEnd" />   <!-- Rundown at End -->
+        <Stack Value="ProcessCreate" /> <!-- CreateProcess*() -->
+        <Stack Value="ThreadCreate" />  <!-- CreateThread*() -->
+      </Stacks>
+    </SystemProvider>
+
+    <!-- UI Delays and Windows in Focus -->
+
+    <!-- Overlaps with same-named EventProvider in WindowsProviders*.wprp to facilitate merging by WPRP. -->
+    <EventProvider Id="EP_Windows_UIEvents" Name="8c416c79-d49b-4f01-a467-e56d3aa8234c" NonPagedMemory="true" Stack="true"> <!-- Microsoft-Windows-Win32k -->
+      <Keywords Operation="Add">
+        <Keyword Value="0x00002000" /> <!-- Focus -->
+        <Keyword Value="0x00020000" /> <!-- UserActivity -->
+        <Keyword Value="0x00040000" /> <!-- UIUnresponsiveness -->
+      </Keywords>
+    </EventProvider>
+    <EventProvider Id="EP_Windows_UIEvents_Lean" Name="8c416c79-d49b-4f01-a467-e56d3aa8234c" Base="EP_Windows_UIEvents" Stack="false" /> <!-- Microsoft-Windows-Win32k -->
+
+    <EventProvider Id="EP_Windows_Info" Name="487d6e37-1b9d-46d3-a8fd-54ce8bdf8a53" Level="5" NonPagedMemory="true" Stack="true"> <!-- Microsoft.Windows.Win32k.TraceLogging / Win32kTraceLogging -->
+      <Keywords>
+        <Keyword Value="0x0000000000000002" /> <!-- WIN32K_KEYWORD_BROADCAST_MESSAGE -->
+        <Keyword Value="0x0000000000040000" /> <!-- MessageCheckDelayEvent -->
+        <Keyword Value="0x0000000010000000" /> <!-- UserCritInfo -->
+        <Keyword Value="0x0000400000000000" /> <!-- AppUsageAndDisplayInfoOnExit -->
+        <Keyword Value="0x0000800000000000" /> <!-- AppInteractivitySummary -->
+      </Keywords>
+    </EventProvider>
+    <EventProvider Id="EP_Windows_Info_Lean" Name="487d6e37-1b9d-46d3-a8fd-54ce8bdf8a53" Base="EP_Windows_Info" Stack="false" /> <!-- Win32kTraceLogging -->
+
+    <!-- User click app-launch event -->
+
+    <EventProvider Id="EP_AppLifeCycle-UI" Name="ee97cdc4-b095-5c70-6e37-a541eb74c2b5" Level="5" /> <!-- Microsoft.Windows.AppLifeCycle.UI -->
+
+    <!-- C2RX/Helium -->
+
+    <EventProvider Id="EP_Helium_C2RX"     Name="5526aed1-f6e5-5896-cbf0-27d9f59b6be7" /> <!-- Microsoft.Windows.ApplicationModel.DesktopAppx -->
+
+    <!-- Very early app-launch events -->
+
+    <EventProvider Id="EP_Windows_Kernel_Process" Name="22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716" NonPagedMemory="true">   <!-- Microsoft-Windows-Kernel-Process -->
+      <Keywords>
+        <Keyword Value="0x0010" /> <!-- ProcessStart/Stop -->
+        <Keyword Value="0x0200" /> <!-- ProcessFreeze.Start/Stop -->
+      </Keywords>
+    </EventProvider>
+
+    <!-- Additional Module/Load info -->
+
+    <EventProvider Id="EP_ImageLoad" Name="2cb15d1d-5fc1-11d2-abe1-00a0c911f518"> <!-- Microsoft-Windows-ImageLoad -->
+      <Keywords Operation="Add">
+        <Keyword Value="0x10" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- Microsoft-Office-Events - Office Code Markers -->
+
+    <EventProvider Id="EP_OLog_CodeMarkers" Name="8736922D-E8B2-47eb-8564-23E77E728CF3">
+      <Keywords Operation="Add">
+        <Keyword Value="4" />
+      </Keywords>
+    </EventProvider>
+    <EventProvider Id="EP_OLog_CodeMarkers_Stack" Name="8736922D-E8B2-47eb-8564-23E77E728CF3" Stack="true" >
+      <Keywords Operation="Add">
+        <Keyword Value="4" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- Microsoft.Office.Common -->
+
+    <EventProvider Id="EP_OCommon_HVA" Name="8A3A9FD4-21D3-470B-B1D6-838B9FC8637B" Level="4" Stack="true" />
+    <EventProvider Id="EP_OCommon_HVA_Lean" Name="8A3A9FD4-21D3-470B-B1D6-838B9FC8637B" Base="EP_OCommon_HVA" Stack="false" />
+
+    <!-- Microsoft.Office.Measurements -->
+
+    <EventProvider Id="EP_OLog_Measurements" Name="a380209f-f500-586f-d5aa-1f15e23cefa5" Level="4" Stack="true" /> <!-- Microsoft.Office.Measurements -->
+    <EventProvider Id="EP_OLog_Measurements_Lean" Name="a380209f-f500-586f-d5aa-1f15e23cefa5" Base="EP_OLog_Measurements" Stack="false" /> <!-- Microsoft.Office.Measurements -->
+
+    <!-- Special Office Providers (low traffic) -->
+
+    <EventProvider Id="EP_Excel"         Name="6FD91573-4ABC-43A5-84EE-ACB8DC42888F" Level="4" Stack="true" /> <!-- Microsoft.Office.Excel [OpenDocumentBegin/Success/Error] -->
+    <EventProvider Id="EP_PowerPoint"    Name="71B8AC9B-04B7-4216-82C0-DD54FEE06D2C" Level="4" Stack="true" /> <!-- Microsoft.Office.PowerPoint [OpenDocumentBegin/Success/Error, SaveDocumentProtocolBegin/Success] -->
+    <EventProvider Id="EP_Extensibility" Name="1972DB93-8AB1-47A6-8FF5-F37744FDB721" Level="4" Stack="true" /> <!-- Microsoft.Office.Extensibility [AgaveActivationStart/Stop/Info] -->
+    <EventProvider Id="EP_OSessionId"    Name="e6aec961-a5e0-5560-a860-15edd6b70f6c" /> <!-- Microsoft.Office.SessionIdProvider -->
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <!-- CPU-Dispatch (Verbose) -->
+
+    <Profile Name="CPU-Dispatch" Description="CPU Samples / Dispatch / Wait / Code Markers"
+     DetailLevel="Verbose" LoggingMode="File" Id="CPU-Dispatch.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_768-MB">
+          <SystemProviderId Value="SP_CPU-Dispatch" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_4-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_ImageLoad" />
+            <EventProviderId Value="EP_Windows_Kernel_Process" />
+            <EventProviderId Value="EP_Windows_UIEvents" />
+            <EventProviderId Value="EP_Windows_Info" />
+            <EventProviderId Value="EP_AppLifeCycle-UI" />
+            <EventProviderId Value="EP_Helium_C2RX" />
+            <EventProviderId Value="EP_OCommon_HVA" />
+            <EventProviderId Value="EP_OLog_CodeMarkers_Stack" />
+            <EventProviderId Value="EP_OLog_Measurements" />
+            <EventProviderId Value="EP_Excel" />
+            <EventProviderId Value="EP_PowerPoint" />
+            <EventProviderId Value="EP_Extensibility" />
+            <EventProviderId Value="EP_OSessionId" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="CPU-Dispatch" Description="CPU Samples / Dispatch / Wait / Code Markers"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="CPU-Dispatch.Verbose.File" Id="CPU-Dispatch.Verbose.Memory" />
+
+    <!-- CPU-DispatchEx (Verbose) -->
+
+    <!-- Thread rundown stacks are valuable in some cases,
+         but they can dramatically slow down "WPR -Start ..." when there are 1000s of threads running on the system.
+    -->
+
+    <Profile Name="CPU-DispatchEx" Description="+ Thread Rundown Stacks"
+     DetailLevel="Verbose" LoggingMode="File" Id="CPU-DispatchEx.Verbose.File" Base="CPU-Dispatch.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_768-MB">
+          <SystemProviderId Value="SP_CPU-DispatchEx" />
+        </SystemCollectorId>
+
+        <!-- EventCollectorId Inherited -->
+
+      </Collectors>
+    </Profile>
+
+    <!-- No LoggingMode="Memory" for this profile. WPR doesn't do rundown in Memory mode (circular buffer). -->
+
+    <!-- CPU-SampleOnly (Verbose) -->
+
+    <Profile Name="CPU-SampleOnly" Description="CPU Samples with StackWalk / Process/ThreadCreate / Code Markers"
+     DetailLevel="Light" LoggingMode="File" Id="CPU-SampleOnly.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_512-MB">
+          <SystemProviderId Value="SP_CPU-SampleMin" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_4-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Windows_Kernel_Process" />
+            <EventProviderId Value="EP_AppLifeCycle-UI" />
+            <EventProviderId Value="EP_Helium_C2RX" />
+            <EventProviderId Value="EP_OCommon_HVA" />
+            <EventProviderId Value="EP_OLog_CodeMarkers_Stack" />
+            <EventProviderId Value="EP_OSessionId" />
+
+            <EventProviderId Value="EP_ImageLoad" />
+            <EventProviderId Value="EP_Windows_UIEvents_Lean" />
+            <EventProviderId Value="EP_Windows_Info_Lean" />
+            <EventProviderId Value="EP_OLog_Measurements_Lean" />
+            <EventProviderId Value="EP_Excel" />
+            <EventProviderId Value="EP_PowerPoint" />
+            <EventProviderId Value="EP_Extensibility" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="CPU-SampleOnly" Description="CPU Samples with StackWalk / Process/ThreadCreate / Code Markers"
+     DetailLevel="Light" LoggingMode="Memory" Base="CPU-SampleOnly.Light.File" Id="CPU-SampleOnly.Light.Memory" />
+
+    <!-- CPU-Lean (Light) -->
+    <!-- Sampled Module, Function, Source, Line, Address, but no stackwalk -->
+
+    <Profile Name="CPU-Lean" Description="CPU Samples (no stacks) / Process Create / Code Markers"
+     DetailLevel="Light" LoggingMode="File" Id="CPU-Lean.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_512-MB">
+          <SystemProviderId Value="SP_CPU-Lean" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_4-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Windows_Kernel_Process" />
+            <EventProviderId Value="EP_AppLifeCycle-UI" />
+            <EventProviderId Value="EP_Helium_C2RX" />
+            <EventProviderId Value="EP_OCommon_HVA_Lean" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+            <EventProviderId Value="EP_OSessionId" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="CPU-Lean" Description="CPU Samples (no stacks) / Process Create / Code Markers"
+     DetailLevel="Light" LoggingMode="Memory" Base="CPU-Lean.Light.File" Id="CPU-Lean.Light.Memory" />
+
+    <!-- Responsiveness (Light) -->
+
+    <!-- Thread rundown stacks are valuable for capturing a hang,
+         but they can dramatically slow down "WPR -Start ..." when there are 1000s of threads running on the system.
+    -->
+
+    <Profile Name="Responsiveness" Description="Thread Rundown + Stackwalk, HVAs, CodeMarkers (slow to start/end)"
+     DetailLevel="Light" LoggingMode="File" Id="Responsiveness.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_Base">
+          <SystemProviderId Value="SP_ThreadRundown" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_4-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_ImageLoad" />
+            <EventProviderId Value="EP_Windows_Kernel_Process" />
+            <EventProviderId Value="EP_Windows_UIEvents_Lean" />
+            <EventProviderId Value="EP_Windows_Info_Lean" />
+            <EventProviderId Value="EP_AppLifeCycle-UI" />
+            <EventProviderId Value="EP_Helium_C2RX" />
+            <EventProviderId Value="EP_OCommon_HVA" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+            <EventProviderId Value="EP_OLog_Measurements_Lean" />
+            <EventProviderId Value="EP_OSessionId" />
+            <EventProviderId Value="EP_Excel" />
+            <EventProviderId Value="EP_PowerPoint" />
+            <EventProviderId Value="EP_Extensibility" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <!-- No LoggingMode="Memory" for this profile. WPR doesn't do rundown in Memory mode (circular buffer). -->
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

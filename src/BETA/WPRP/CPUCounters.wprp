@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://docs.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://docs.microsoft.com/en-us/windows-hardware/test/wpt/elements
+    https://devblogs.microsoft.com/performance-diagnostics/authoring-custom-profiles-part-1/
+    https://devblogs.microsoft.com/performance-diagnostics/authoring-custom-profiles-part-2/
+    https://devblogs.microsoft.com/performance-diagnostics/recording-hardware-performance-pmu-events-with-complete-examples/
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    Collectors with the same name get merged across Profiles and WPRP files.
+
+    https://docs.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+    https://devblogs.microsoft.com/performance-diagnostics/controlling-the-event-session-name-with-the-instance-name/#the-session-name-in-wpr
+-->
+
+    <SystemCollector Id="SC_64-MB" Name="MSO System Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="64" />
+      <StackCaching BucketCount="256" CacheSize="3072" />
+    </SystemCollector>
+
+<!--
+    Provider Declarations
+
+    https://docs.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://docs.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://docs.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+    https://docs.microsoft.com/en-us/windows-hardware/test/wpt/wprcontrolprofiles-schema
+    https://devblogs.microsoft.com/performance-diagnostics/recording-hardware-performance-pmu-events-with-complete-examples/
+-->
+
+    <!-- Base requirement for process/thread/module info and symbol resolution. -->
+
+    <SystemProvider Id="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+    </SystemProvider>
+
+    <!-- Context Switch with stackwalk -->
+
+    <SystemProvider Id="SP_CSwitch" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="CSwitch" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="CSwitch" />
+        <Stack Value="ImageLoad" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Sampling Performance Monitor Counters with stackwalk -->
+
+    <SystemProvider Id="SP_SampleCounters" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="PmcProfile" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="PmcInterrupt" />
+        <Stack Value="ImageLoad" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Strict: error 0x800700aa if any PMU events are already in use. -->
+
+    <HardwareCounter Id="HC_CPI" Strict="true">
+      <Counters>
+        <Counter Value="TotalCycles" />
+        <Counter Value="InstructionRetired" />
+      </Counters>
+      <Events>
+        <!-- CPU counters are attached to these events, which should also be in SystemProvider. -->
+        <Event Value="CSwitch" />
+      </Events>
+    </HardwareCounter>
+
+    <!-- Run: WPR.exe -pmcsources -->
+
+    <HardwareCounter Id="HC_Misses" Strict="true">
+      <SampledCounters>
+        <SampledCounter Value="CacheMisses" Interval="4096" />
+        <SampledCounter Value="BranchMispredictions" Interval="4096" />
+      </SampledCounters>
+
+<!-- https://learn.microsoft.com/en-us/answers/questions/850284/wpr-hardwarecounter-profile.html
+      <LastBranch>
+        <Events>
+          <Event Value="PmcInterrupt" />
+        </Events>
+        <LastBranchFilters>
+          <LastBranchFilterOut Value="FarBranches" />
+        </LastBranchFilters>
+      </LastBranch>
+
+      <ProcessorTrace>
+        <BufferSize Value="8" /> // 8 KB
+        <CodeMode Value="UserKernel" />
+        <Events>
+          <Event Value="PmcInterrupt" />
+        </Events>
+      </ProcessorTrace>
+-->
+    </HardwareCounter>
+
+<!--
+    Profile Declarations
+
+    https://docs.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <!-- Cycles Per Instruction (Verbose) -->
+
+    <Profile Name="CPI" Description="Context Switch / Total Cycles / Instructions Retired / Code Markers"
+     DetailLevel="Verbose" LoggingMode="File" Id="CPI.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_64-MB">
+          <SystemProviderId Value="SP_CSwitch" />
+          <HardwareCounterId Value="HC_CPI" />
+        </SystemCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="CPI" Description="Context Switch / Total Cycles / Instructions Retired / Code Markers"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="CPI.Verbose.File" Id="CPI.Verbose.Memory" />
+
+    <!-- Cache Misses / Branch Mispredicts (Verbose) -->
+
+    <Profile Name="Misses" Description="CPU Cache Misses / Branch Mispredicts / Code Markers"
+     DetailLevel="Verbose" LoggingMode="File" Id="Misses.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_64-MB">
+          <SystemProviderId Value="SP_SampleCounters" />
+          <HardwareCounterId Value="HC_Misses" />
+        </SystemCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="Misses" Description="CPU Cache Misses / Branch Mispredicts / Code Markers"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="Misses.Verbose.File" Id="Misses.Verbose.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://docs.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events related to AntiMalware
+
+    This version requires: WPR v10.15002+
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+    https://devblogs.microsoft.com/performance-diagnostics/authoring-custom-profiles-part-1/
+    https://devblogs.microsoft.com/performance-diagnostics/authoring-custom-profiles-part-2/
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    Collectors with the same name get merged across Profiles and WPRP files.
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+    https://devblogs.microsoft.com/performance-diagnostics/controlling-the-event-session-name-with-the-instance-name/#the-session-name-in-wpr
+-->
+
+    <EventCollector Id="EC_8-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="8" />
+    </EventCollector>
+
+    <EventCollector Id="EC_16-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="16" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+-->
+
+    <!-- 1st Priority -->
+
+    <!-- Microsoft-Antimalware-Engine : Defender Process -->
+    <EventProvider Id="EP_AM_Engine"     Name="0a002690-3839-4e3a-b3b6-96d8df868d99">
+      <Keywords>
+        <Keyword Value="0x00000000FFFFFFFF" /> <!-- exclude capture state and reserved keywords -->
+      </Keywords>
+      <CaptureStateOnStart>
+        <Keyword Value="0x0000040000000000" />
+      </CaptureStateOnStart>
+      <CaptureStateOnSave>
+        <Keyword Value="0x0000080000000000" />
+      </CaptureStateOnSave>
+    </EventProvider>
+
+    <!-- Microsoft-Antimalware-Engine : Defender Process -->
+    <EventProvider Id="EP_AM_Engine_Regions" Name="0a002690-3839-4e3a-b3b6-96d8df868d99" Base="EP_AM_Engine">
+      <!-- Requires WPR v10.15002+ -->
+      <EventFilters FilterIn="true">
+        <EventId Value="1" />  <!-- ScanRequest - Start -->
+        <EventId Value="2" />  <!-- ScanRequest - Stop -->
+        <EventId Value="5" />  <!-- StreamScanRequest - Start -->
+        <EventId Value="6" />  <!-- StreamScanRequest - Stop -->
+        <EventId Value="30" /> <!-- UfsScanFile - Start -->
+        <EventId Value="31" /> <!-- UfsScanFile - Stop -->
+        <EventId Value="32" /> <!-- UfsScanProc - Start -->
+        <EventId Value="33" /> <!-- UfsScanProc - Stop -->
+        <EventId Value="43" /> <!-- ExpensiveOperation - Start -->
+        <EventId Value="67" /> <!-- ExpensiveOperation - Stop -->
+      </EventFilters>
+    </EventProvider>
+
+    <!-- Microsoft-Antimalware-Engine-Instrumentation : Defender Process (Very Expensive!) -->
+    <EventProvider Id="EP_AM_Engine_Instrumentation" Name="68621c25-df8d-4a6b-aabc-19a22e296a7c" Level="4" />
+
+    <!-- Microsoft-Antimalware-Engine-Instrumentation : Defender Process (Very Expensive!) -->
+    <EventProvider Id="EP_AM_Engine_Instr_Regions" Name="68621c25-df8d-4a6b-aabc-19a22e296a7c">
+      <!-- Requires WPR v10.15002+ -->
+      <EventFilters FilterIn="true">
+        <EventId Value="1" /> <!-- DataDrivenSignature - Start -->
+        <EventId Value="2" /> <!-- DataDrivenSignature - Stop -->
+      </EventFilters>
+    </EventProvider>
+
+    <!-- Microsoft-Antimalware-Service (Network) : Defender Process -->
+    <EventProvider Id="EP_AM_Service"    Name="751ef305-6c6e-4fed-b847-02ef79d26aef" />
+
+    <!-- Microsoft-Antimalware-Service (Network) : Defender Process -->
+    <EventProvider Id="EP_AM_Service_Regions" Name="751ef305-6c6e-4fed-b847-02ef79d26aef">
+      <!-- Requires WPR v10.15002+ -->
+      <EventFilters FilterIn="true">
+        <EventId Value="1" /> <!-- ServiceOnDemand - Start -->
+        <EventId Value="2" /> <!-- ServiceOnDemand - Stop -->
+      </EventFilters>
+    </EventProvider>
+
+    <!-- 2nd Priority (Less Info) -->
+
+    <!-- Microsoft-Antimalware-RTP (RealTime Protection) : Defender Process -->
+    <EventProvider Id="EP_AM_RealTime"   Name="8e92deef-5e17-413b-b927-59b2f06a3cfc">
+      <!-- Requires WPR v10.15002+ -->
+      <EventFilters FilterIn="false">
+        <EventId Value="0x16" /> <!-- Filter out: RTPPriority -->
+      </EventFilters>
+    </EventProvider>
+
+    <!-- Microsoft-Antimalware-RTP (RealTime Protection) : Defender Process -->
+    <EventProvider Id="EP_AM_RealTime_Regions" Name="8e92deef-5e17-413b-b927-59b2f06a3cfc">
+      <!-- Requires WPR v10.15002+ -->
+      <EventFilters FilterIn="true">
+        <EventId Value="23" /> <!-- DlpPerfOperation - Start -->
+        <EventId Value="24" /> <!-- DlpPerfOperation - Stop -->
+        <EventId Value="27" /> <!-- RTPFileScanResult - Useful -->
+      </EventFilters>
+    </EventProvider>
+
+    <!-- Microsoft-Antimalware-AMFilter (Interception Stack) : In-Process via Kernel -->
+    <EventProvider Id="EP_AM_Filter"     Name="cfeb0608-330e-4410-b00d-56d8da9986e6" Stack="true" />
+
+    <!-- Microsoft-Antimalware-AMFilter : In-Process via Kernel -->
+    <EventProvider Id="EP_AM_Filter_Regions" Name="cfeb0608-330e-4410-b00d-56d8da9986e6">
+      <!-- Requires WPR v10.15002+ -->
+      <EventFilters FilterIn="true">
+        <EventId Value="9" />  <!-- FileScan - Start -->
+        <EventId Value="11" /> <!-- FileScan - Result -->
+      </EventFilters>
+    </EventProvider>
+
+    <!-- Microsoft-Antimalware-Scan-Interface : In-Process Dynamic Code -->
+    <!-- https://learn.microsoft.com/en-us/windows/win32/amsi/antimalware-scan-interface-portal -->
+    <EventProvider Id="EP_AM_Scan"       Name="2a576b87-09a7-520e-c21a-4942f0271d67" Stack="true" />
+
+    <!-- 3rd Priority (Rare) -->
+
+    <!-- Microsoft-Antimalware-UacScan (User Account Control) : Consent Process -->
+    <EventProvider Id="EP_AM_UacScan"    Name="d37e7910-79c8-57c4-da77-52bb646364cd" />
+
+    <!-- Microsoft-Antimalware-Protection -->
+    <EventProvider Id="EP_AM_Protection" Name="e4b70372-261f-4c54-8fa6-a5a7914d73da" Stack="true" />
+
+    <!-- Microsoft-Antimalware-UI -->
+    <EventProvider Id="EP_AM_UI"         Name="911F2490-C3DB-4781-94E6-7A9C404803E5" Stack="true" />
+
+    <!-- MS-Sense: Info is in the Message field. -->
+
+    <!-- Microsoft-Windows-SENSE : MSSense Process -->
+    <EventProvider Id="EP_SENSE"         Name="fae96d09-ade1-5223-0098-af7b67348531" Level="4" />
+
+    <!-- Microsoft-Windows-SenseIR : SenseIR Process -->
+    <EventProvider Id="EP_SenseIR"       Name="b6d775ef-1436-4fe6-bad3-9e436319e218" />
+
+    <!-- Microsoft.Windows.Sense.Client -->
+    <EventProvider Id="EP_Sense.Client"  Name="65a1b6fc-4c24-59c9-e3f3-ad11ac510b41">
+      <!-- WindowsSenseClient - Id=0, Opcode=1:Start, Opcode=2:Stop -->
+    </EventProvider>
+
+    <!-- Code Integrity -->
+
+    <!-- Microsoft-Windows-CodeIntegrity : In-Process via CI.dll -->
+    <EventProvider Id="EP_CodeIntegrity" Name="4ee76bd8-3cf4-44a0-a0ac-3937643e37a3" Stack="true">
+      <!-- Requires WPR v10.15002+ -->
+      <EventFilters FilterIn="true">
+        <EventId Value="3007" /> <!-- PageHashFoundInImageCertificate -->
+        <EventId Value="3011" /> <!-- LoadCatalog - Stop -->
+        <EventId Value="3012" /> <!-- LoadCatalog - Start -->
+        <EventId Value="3013" /> <!-- ReloadCatalogs - Start -->
+        <EventId Value="3014" /> <!-- ReloadCatalogs - Stop -->
+        <EventId Value="3015" /> <!-- ValidateFileHash - Start -->
+        <EventId Value="3016" /> <!-- ValidateFileHash - Stop -->
+        <EventId Value="3017" /> <!-- ValidatePageHash - Start -->
+        <EventId Value="3018" /> <!-- ValidatePageHash - Stop -->
+        <EventId Value="3038" /> <!-- ValidateImageHeader - Start -->
+        <EventId Value="3039" /> <!-- ValidateImageHeader - Stop -->
+        <EventId Value="3040" /> <!-- GetFileCache - Start -->
+        <EventId Value="3041" /> <!-- GetFileCache - Stop -->
+        <EventId Value="3042" /> <!-- SetFileCache - Start -->
+        <EventId Value="3043" /> <!-- SetFileCache - Stop -->
+      </EventFilters>
+    </EventProvider>
+
+    <!-- Microsoft-Windows-CodeIntegrity : In-Process via CI.dll -->
+    <EventProvider Id="EP_CodeIntegrity_Regions" Name="4ee76bd8-3cf4-44a0-a0ac-3937643e37a3" Base="EP_CodeIntegrity" Stack="false" />
+
+    <!-- Microsoft.Windows.Security.CodeIntegrity.NWActivity : In-Proc -->
+    <EventProvider Id="EP_NWActivity"    Name="28dcc28b-3e31-527b-efd6-b4cc4d73d158" />
+
+    <!-- Microsoft.Windows.Security.CodeIntegrity.NWActivityVerbose : In-Proc -->
+    <EventProvider Id="EP_NWActivityV"   Name="3a82f218-fcc2-4183-afe9-a0febc4416ee" />
+
+    <!-- AppLocker -->
+
+    <!-- Microsoft-Windows-AppLocker -->
+    <EventProvider Id="EP_AppLocker" Name="cbda4dbf-8d5d-4f69-9578-be14aa540d22" Level="3" />
+
+    <!-- Microsoft-Windows-AppID -->
+    <EventProvider Id="EP_AppID" Name="3cb2a168-fe19-4a4e-bdad-dcf422f13473" />
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+
+    <!-- DefenderBasic (Light) -->
+
+    <Profile Name="DefenderBasic" Description="Defender Providers: Engine, Service, RealTime, CodeIntegrity, ..."
+     DetailLevel="Light" LoggingMode="File" Id="DefenderBasic.Light.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_8-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_AM_Engine" />
+            <EventProviderId Value="EP_AM_Service" />
+            <EventProviderId Value="EP_AM_RealTime" />
+            <EventProviderId Value="EP_AM_Filter" />
+            <EventProviderId Value="EP_AM_Scan" />
+            <EventProviderId Value="EP_CodeIntegrity" />
+            <EventProviderId Value="EP_NWActivity" />
+            <EventProviderId Value="EP_NWActivityV" />
+            <EventProviderId Value="EP_AppLocker" />
+            <EventProviderId Value="EP_AppID" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="DefenderBasic" Description="Defender Providers: Engine, Service, RealTime, CodeIntegrity, ..."
+     DetailLevel="Light" LoggingMode="Memory" Base="DefenderBasic.Light.File" Id="DefenderBasic.Light.Memory" />
+
+    <!-- DefenderFull (Verbose, Base = DefenderBasic) -->
+
+    <Profile Name="DefenderFull" Description="Defender Providers: + Scan, Sense, ..."
+     DetailLevel="Verbose" LoggingMode="File" Base="DefenderBasic.Light.File" Id="DefenderFull.Verbose.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_AM_UacScan" />
+            <EventProviderId Value="EP_AM_Protection" />
+            <EventProviderId Value="EP_AM_UI" />
+            <EventProviderId Value="EP_SENSE" />
+            <EventProviderId Value="EP_SenseIR" />
+            <EventProviderId Value="EP_Sense.Client" />
+            <!--EventProviderId Value="EP_AM_Engine_Instrumentation" /--> <!-- Expensive! -->
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="DefenderFull" Description="Defender Providers: + Scan, Sense, ..."
+     DetailLevel="Verbose" LoggingMode="Memory" Base="DefenderFull.Verbose.File" Id="DefenderFull.Verbose.Memory" />
+
+    <!-- AntiMalware for Regions of Interest: AntiMalware.regions.xml -->
+
+    <!--
+      How to differentiate Light vs Verbose in Defender.wprp!AntiMalware
+     "Each profile can define either light or verbose versions, or both versions.
+      If neither option is specified, the verbose version is used unless the profile includes only a light version."
+     ".\WPRP\Defender.wprp!AntiMalware.Light"
+      https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options#start:~:text=light|verbose
+    -->
+
+    <Profile Name="AntiMalware" Description="Defender Providers for AntiMalware Regions of Interest"
+     DetailLevel="Light" LoggingMode="File" Id="AntiMalware.Light.File">
+
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_AM_Engine_Regions" />
+            <EventProviderId Value="EP_AM_Filter_Regions" />
+            <EventProviderId Value="EP_AM_Service_Regions" />
+            <EventProviderId Value="EP_AM_RealTime_Regions" />
+            <EventProviderId Value="EP_CodeIntegrity_Regions" />
+            <EventProviderId Value="EP_Sense.Client" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="AntiMalware" Description="Defender Providers for AntiMalware Regions of Interest"
+     DetailLevel="Light" LoggingMode="Memory" Base="AntiMalware.Light.File" Id="AntiMalware.Light.Memory" />
+
+    <Profile Name="AntiMalware" Description="Defender Providers for AntiMalware Regions of Interest"
+     DetailLevel="Verbose" LoggingMode="File" Base="AntiMalware.Light.File" Id="AntiMalware.Verbose.File">
+
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_AM_Engine_Instr_Regions" /> <!-- Expensive! -->
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="AntiMalware" Description="Defender Providers for AntiMalware Regions of Interest"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="AntiMalware.Verbose.File" Id="AntiMalware.Verbose.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

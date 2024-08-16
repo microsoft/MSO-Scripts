@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<!-- CREDIT: Andy Luhrs, Microsoft Corporation (c) 2022 -->
+<!-- DISCLAIMER:
+These events and regions roughly correlate to what's happening in the browser from the web page's perspective, but have been added to aid browser development, not web development.
+Before trusting what any event represents, you should look deeper into Chromium source (https://source.chromium.org/chromium) to understand the context of the event.
+-->
+<!-- https://learn.microsoft.com/en-us/windows-hardware/test/wpt/creating-a-regions-of-interest-file -->
+<InstrumentationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Instrumentation>
+        <Regions>
+            <RegionRoot Guid="{05fc6e24-a5f1-4dc9-9524-a4a1f258f89b}" Name="Edge-WV2" FriendlyName="Edge WV2">
+                <!-- 
+
+                    Navigation Timing
+
+                -->
+                <Region Guid="{49a30556-e8ad-41ad-890d-5b02e1cf1b83}" Name="Edge-WV2-Navigation-Timing" FriendlyName="Navigation Timing">
+                    <Region Guid="{b29f9086-df5d-4ec9-ba3e-cd6d91b11108}" Name="Edge-WV2-Navigation-Timing-Duration" FriendlyName="Navigation Timing Duration">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="Navigation StartToCommit" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Nestable Async Begin" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="WebContentsImpl Loading" />
+                        </Stop>
+                        <Match>
+                            <Event TID="true">
+                                <Payload FieldName="Initial URL" TargetFieldName="URL" />
+                            </Event>
+                        </Match>
+                        <Naming>
+                            <PayloadBased NameField="Initial URL" />
+                        </Naming>
+                    </Region>
+
+                    <Region Guid="{2f82007c-cc23-4246-9d8c-dcf2b626e628}" Name="Edge-WV2-Navigation-Timing-domContentLoadedEvent" FriendlyName="domContentLoadedEvent">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="domContentLoadedEventStart" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="domContentLoadedEventEnd" />
+                        </Stop>
+                        <Match>
+                            <Event TID="true">
+                                <Payload FieldName="frame" TargetFieldName="frame" />
+                            </Event>
+                        </Match>
+                        <Naming>
+                            <PayloadBased NameField="frame" />
+                        </Naming>
+                    </Region>
+
+                    <Region Guid="{23d7357c-8317-4c7d-ab42-bd2dde2b058e}" Name="Edge-WV2-Navigation-Timing-loadEvent" FriendlyName="loadEvent">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="loadEventStart" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="loadEventEnd" />
+                        </Stop>
+                        <Match>
+                            <Event TID="true">
+                                <Payload FieldName="frame" TargetFieldName="frame" />
+                            </Event>
+                        </Match>
+                        <Naming>
+                            <PayloadBased NameField="frame" />
+                        </Naming>
+                    </Region>
+
+                    <Region Guid="{f2679cfc-37b7-4893-8416-bb3cbe5c85d5}" Name="Edge-WV2-Navigation-Timing-unloadEvent" FriendlyName="unloadEvent">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="unloadEventStart" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="unloadEventEnd" />
+                        </Stop>
+                        <Match>
+                            <Event TID="true">
+                                <Payload FieldName="frame" TargetFieldName="frame" />
+                            </Event>
+                        </Match>
+                        <Naming>
+                            <PayloadBased NameField="frame" />
+                        </Naming>
+                    </Region>
+
+                    <Region Guid="{38cc3ca5-df05-4aa0-be0c-b80c0542d02b}" Name="Edge-WV2-Navigation-Timing-domComplete" FriendlyName="domComplete">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="domLoading" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="domComplete" />
+                        </Stop>
+                        <Match>
+                            <Event TID="true">
+                                <Payload FieldName="frame" TargetFieldName="frame" />
+                            </Event>
+                        </Match>
+                        <Naming>
+                            <PayloadBased NameField="frame" />
+                        </Naming>
+                    </Region>
+                </Region>
+
+                <!-- 
+
+                    Resource Timing
+
+                -->
+                <Region Guid="{976fcdbb-7ccc-4ef8-8a16-f84f9d566a8b}" Name="Edge-WV2-Resource-Timing" FriendlyName="Resource Timing">
+                    <Region Guid="{4697636a-5be9-42ab-8f58-451414a6e078}" Name="Edge-WV2-Resource-Timing-Normal" FriendlyName="Resource Timing">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="ResourceFetcher::requestResource" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="MojoURLLoaderClient::OnReceiveResponse" />
+                        </Stop>
+                        <Match>
+                            <Event TID="true">
+                                <Payload FieldName="url" TargetFieldName="url" />
+                            </Event>
+                        </Match>
+                        <Naming>
+                            <PayloadBased NameField="url" />
+                        </Naming>
+                    </Region>
+
+                    <Region Guid="{0b74dd58-3dd6-4baa-917b-41412d7729cf}" Name="Edge-WV2-Resource-Timing-Service-Worker" FriendlyName="Service Worker Resource Timing">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="ServiceWorkerSubresourceLoader::StartRequest" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="MojoURLLoaderClient::OnReceiveResponse" />
+                        </Stop>
+                        <Match>
+                            <Event>
+                                <Payload FieldName="url" TargetFieldName="url" />
+                            </Event>
+                        </Match>
+                        <Naming>
+                            <PayloadBased NameField="url" />
+                        </Naming>
+                    </Region>
+
+                    <Region Guid="{58b28710-d414-4800-8723-400ae3ee1892}" Name="Edge-WV2-Resource-Timing-File-Loading" FriendlyName="File Loading">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="MojoURLLoaderClient::OnReceiveResponse" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Complete" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="MojoURLLoaderClient::OnReceiveResponse" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Complete End" />
+                        </Stop>
+                        <Match>
+                            <Event TID="true" />
+                        </Match>
+                        <Naming>
+                            <PayloadBased NameField="url" />
+                        </Naming>
+                    </Region>
+                </Region>
+
+                <!-- 
+
+                    CSS & JS
+
+                -->
+                <Region Guid="{e935740b-dae7-42cb-a20b-b4a10d42eb1f}" Name="Edge-WV2-CSSandJS" FriendlyName="CSS and JS">
+                    <Region Guid="{80a0a06b-92ec-44f1-8f98-9dc3896cdcf9}" Name="Edge-WV2-CSSandJS-CSS" FriendlyName="CSS Parsing">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="CSSParserImpl::parseStyleSheet" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Begin" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="CSSParserImpl::parseStyleSheet" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="End" />
+                        </Stop>
+                        <Naming>
+                            <PayloadBased NameField="baseUrl" />
+                        </Naming>
+                        <Match>
+                            <Event TID="true" />
+                        </Match>
+                    </Region>
+                    <Region Guid="{1d9a4db2-f622-4c94-af55-044faaede420}" Name="Edge-WV2-CSSandJS-JS-Run" FriendlyName="JS Run">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="v8.run" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Complete" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="v8.run" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Complete End" />
+                        </Stop>
+                        <Naming>
+                            <PayloadBased NameField="fileName" />
+                        </Naming>
+                        <Match>
+                            <Event TID="true" />
+                        </Match>
+                    </Region>
+                    <Region Guid="{48f65ee9-cf9c-4ef7-acc1-103df177c811}" Name="Edge-WV2-CSSandJS-JS-Compile" FriendlyName="JS Compile">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="v8.compile" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Begin" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="v8.compile" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="End" />
+                        </Stop>
+                        <Naming>
+                            <PayloadBased NameField="fileName" />
+                        </Naming>
+                        <Match>
+                            <Event TID="true" />
+                        </Match>
+                    </Region>
+                    <Region Guid="{7c589c2c-8783-4e94-8f1a-be83d8e70436}" Name="Edge-WV2-CSSandJS-JS-Cache" FriendlyName="JS Cache">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="v8.produceCache" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Begin" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="v8.produceCache" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Complete" />
+                        </Stop>
+                        <Naming>
+                            <PayloadBased NameField="fileName" />
+                        </Naming>
+                        <Match>
+                            <Event TID="true" />
+                        </Match>
+                    </Region>
+                    <Region Guid="{0c803dad-2d68-4dc2-91af-a68bcb880bda}" Name="Edge-WV2-CSSandJS-JS-Cache-Module" FriendlyName="JS Cache Module">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="v8.produceModuleCache" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Begin" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="v8.produceModuleCache" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="End" />
+                        </Stop>
+                        <Naming>
+                            <PayloadBased NameField="fileName" />
+                        </Naming>
+                        <Match>
+                            <Event TID="true" />
+                        </Match>
+                    </Region>
+                    <Region Guid="{ace7c207-ff88-4b6e-b877-800a5bdcf7cf}" Name="Edge-WV2-CSSandJS-JS-Compile-Module" FriendlyName="JS Compile Module">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="v8.compileModule" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Begin" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="v8.compileModule" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="End" />
+                        </Stop>
+                        <Naming>
+                            <PayloadBased NameField="fileName" />
+                        </Naming>
+                        <Match>
+                            <Event TID="true" />
+                        </Match>
+                    </Region>
+                </Region>
+
+                <!-- 
+
+                    Responsiveness
+
+                -->
+                <Region Guid="{c951f600-b417-4426-868d-7c29c15792f1}" Name="Edge-WV2-Responsiveness" FriendlyName="Responsiveness">
+
+                    <Region Guid="{ac481373-9168-42bd-9ed1-31efc8d48831}" Name="Edge-WV2-Responsiveness-Long-Task" FriendlyName="Long Task (duration = name)">
+                        <Start>
+                            <!-- The "duration" field is a decimal fraction of a second, which WPA doesn't yet parse. -->
+                            <Duration Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="LongTask" Duration="duration" Multiplier="1000000000" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="LongTask" />
+                        </Stop>
+                        <Naming>
+                           <!-- Reveal the duration as the name. -->
+                           <PayloadBased NameField="duration" />
+                        </Naming>
+                    </Region>
+
+                    <Region Guid="{a0205f36-c87e-4a38-b3a8-e1924283cb40}" Name="Edge-WV2-Responsiveness-Long-Draw-Interval" FriendlyName="Long Draw Interval">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="Long Draw Interval" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Nestable Async Begin" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="Long Draw Interval" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Nestable Async End" />
+                        </Stop>
+                        <Match>
+                            <Event TID="true" />
+                        </Match>
+                    </Region>
+
+                    <Region Guid="{18890d1e-53d8-4dcd-8bf2-657594566f16}" Name="Edge-WV2-Responsiveness-Jank" FriendlyName="Jank">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="Jank" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Nestable Async Begin" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="Jank" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Nestable Async End" />
+                        </Stop>
+                        <Match>
+                            <Event TID="true" />
+                        </Match>
+                    </Region>
+
+                    <!-- outdated -->
+                    <Region Guid="{fe33c0dc-3e5e-45d0-b4a2-44229cc18a94}" Name="Edge-WV2-Responsiveness-Janky-Interval" FriendlyName="Janky Interval">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="JankyInterval" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Nestable Async Begin" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="JankyInterval" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Nestable Async End" />
+                        </Stop>
+                        <Match>
+                            <Event TID="true" />
+                        </Match>
+                    </Region>
+
+                </Region>
+
+                <!-- 
+
+                    WebView2
+
+                -->
+                <Region Guid="{d9ff402d-cf54-43f7-b8e8-d35da5c01fca}" Name="Edge-WV2-WebView2" FriendlyName="WebView2">
+                    <Region Guid="{d4d71bbc-8be3-4265-9c23-2340fb4801ae}" Name="Edge-WV2-WebView2-Creation" FriendlyName="WebView2 Creation">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="FindRunningChromeWindow" />
+                            <PayloadIdentifier FieldName="Phase" FieldValue="Complete" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="WebView2_CreationTime" />
+                        </Stop>
+                    </Region>
+
+                    <Region Guid="{331cd373-c7f3-4b1d-b52c-d055121fd586}" Name="Edge-WV2-WebView2-Lifetime" FriendlyName="WebView2 Lifetime">
+                        <Start>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="WebView2_APICalled" />
+                            <PayloadIdentifier FieldName="API" FieldValue="7" />
+                        </Start>
+                        <Stop>
+                            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="WebView2_APICalled" />
+                            <PayloadIdentifier FieldName="API" FieldValue="109" />
+                        </Stop>
+                        <Match>
+                            <Event TID="true" />
+                        </Match>
+                    </Region>
+                </Region>
+            </RegionRoot>
+        </Regions>
+    </Instrumentation>
+</InstrumentationManifest> 

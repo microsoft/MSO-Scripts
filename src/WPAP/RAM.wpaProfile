@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences>
+<!--
+  DISCLAIMER: Stack tags are based on module and function names, which are subject to change.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-tags
+-->
+          <FileReference FileName="OfficeBasic.stacktags" ServiceMoniker="StackFrameTag.{67F56EBD-2E82-493B-BF4F-712A1D0F018B}" />
+        </FileReferences>
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="13f53988-7e7b-412f-9026-60ea9e58b5e9" IsVisible="true" Title="RAM: File">
+        <Graphs>
+          <Graph Guid="bc4f0890-4a76-4fe7-b014-6ae70677f8f5" LayoutStyle="All" Color="#FF0000FF" GraphHeight="128" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Modules and Files" GraphChartType="StackedLine" BarGraphIntervalCount="50" AggregationOverTime="OutstandingPeak" IsThreadActivityTable="false" GraphColumnCount="15" KeyColumnCount="12" LeftFrozenColumnCount="13" RightFrozenColumnCount="14" InitialFilterQuery="[Process]:&lt;&gt;&quot;Unknown&quot; [Category Class]:=&quot;File&quot;" InitialFilterShouldKeep="true" GraphFilterColumnGuid="daea3e94-6a23-42cd-83fc-72fe695018b5" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="25731f8c-96b6-4dd4-b279-451bee5b38a2" Name="Access Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="fc96be34-cd0d-4613-98e9-fcf128170c6f" Name="Release Time (Mark Adjusted)" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries>
+                <HighlightEntry StartTimeColumnGuid="953f3733-3f8e-469f-b6d7-6e37898d1a08" StartTimeColumnName="Mark End Time" HighlightColor="#FFFF0000" />
+              </HighlightEntries>
+              <Columns>
+                <Column Guid="a9a21162-25a5-4da7-ba03-f4f4f5f9f580" Name="Process Name" SortPriority="13" Width="150" IsVisible="true" />
+                <Column Guid="f0de418a-efcc-41fc-b193-44257fb9cc04" Name="Service Display Name" SortPriority="12" Width="200" IsVisible="false" HelpText="System Services" />
+                <Column Guid="c80413d0-4bd8-4396-98d5-19e083cda74b" Name="Process" SortPriority="11" Width="137" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="16415fd3-fb10-407a-80e4-fad3232b998f" Name="Category Class" SortPriority="10" Width="120" IsVisible="false" />
+                <Column Guid="accde649-ca35-462e-ac5d-fd751bcd3ff5" Name="Page Category" SortPriority="9" Width="92" IsVisible="true" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="8" Width="80" IsVisible="false" />
+                <Column Guid="fa2db657-c240-4ab8-8e21-38d295678761" Name="Path Tree" SortPriority="7" Width="200" IsVisible="false" />
+                <Column Guid="66f6bb0a-7c9c-4027-b818-88d4300d96c3" Name="Access Stack" SortPriority="-1" Width="160" IsVisible="false" HelpText="RAM Access Stack Tags">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="6cae6dc0-c9e5-4ebc-a220-682ad95cd549" Name="Description" AggregationMode="UniqueCount" SortPriority="6" Width="317" IsVisible="true" HelpText="File Paths" />
+                <Column Guid="46f58d7a-91a9-4719-bd02-a509d8d576b3" Name="Section Name" SortPriority="5" Width="140" IsVisible="false" HelpText="Module Section" />
+                <Column Guid="72811011-7140-4763-8341-8efe90963ec8" Name="COFF Group" SortPriority="4" Width="87" IsVisible="false" HelpText="Module Sub-section" />
+                <Column Guid="66f6bb0a-7c9c-4027-b818-88d4300d96c3" Name="Access Stack" SortPriority="3" Width="300" IsVisible="true" HelpText="RAM Access Call Stacks">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="8554acf2-d92b-40c0-9d1c-cb038776cc45" Name="Impact Size (System View)" AggregationMode="Sum" SortOrder="Descending" SortPriority="1" TextAlignment="Right" Width="182" CellFormat="MB" IsVisible="false" HelpText="Shared RAM Usage" />
+                <Column Guid="daea3e94-6a23-42cd-83fc-72fe695018b5" Name="Impact Size (Process View)" AggregationMode="Sum" SortOrder="Descending" SortPriority="0" TextAlignment="Right" Width="182" CellFormat="MB" IsVisible="true" HelpText="Process RAM Usage" />
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+      <View Guid="03069f3c-d171-4bff-b886-e3a1c335a602" IsVisible="true" Title="RAM: Allocated">
+        <Graphs>
+          <Graph Guid="bc4f0890-4a76-4fe7-b014-6ae70677f8f5" LayoutStyle="All" Color="#FF0000FF" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Dynamic Allocations" GraphChartType="StackedLine" BarGraphIntervalCount="50" AggregationOverTime="OutstandingPeak" IsThreadActivityTable="false" GraphColumnCount="17" KeyColumnCount="10" LeftFrozenColumnCount="11" RightFrozenColumnCount="16" InitialFilterQuery="[Process]:&lt;&gt;&quot;Unknown&quot; [Category Class]:=&quot;Dynamic&quot;" InitialFilterShouldKeep="true" GraphFilterColumnGuid="daea3e94-6a23-42cd-83fc-72fe695018b5" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="25731f8c-96b6-4dd4-b279-451bee5b38a2" Name="Access Time" ColumnMetadata="StartTime" />
+                <MetadataEntry Guid="fc96be34-cd0d-4613-98e9-fcf128170c6f" Name="Release Time (Mark Adjusted)" ColumnMetadata="EndTime" />
+              </MetadataEntries>
+              <HighlightEntries>
+                <HighlightEntry StartTimeColumnGuid="953f3733-3f8e-469f-b6d7-6e37898d1a08" StartTimeColumnName="Mark End Time" HighlightColor="#FFFF0000" />
+              </HighlightEntries>
+              <Columns>
+                <Column Guid="a9a21162-25a5-4da7-ba03-f4f4f5f9f580" Name="Process Name" SortPriority="14" Width="135" IsVisible="true" />
+                <Column Guid="f0de418a-efcc-41fc-b193-44257fb9cc04" Name="Service Display Name" SortPriority="15" Width="200" IsVisible="false" HelpText="System Services" />
+                <Column Guid="c80413d0-4bd8-4396-98d5-19e083cda74b" Name="Process" SortPriority="13" Width="154" IsVisible="true">
+                  <ProcessOptionsParameter />
+                </Column>
+                <Column Guid="16415fd3-fb10-407a-80e4-fad3232b998f" Name="Category Class" SortPriority="12" Width="96" IsVisible="false" />
+                <Column Guid="accde649-ca35-462e-ac5d-fd751bcd3ff5" Name="Page Category" SortPriority="11" Width="119" IsVisible="true" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="10" Width="80" IsVisible="false" />
+                <Column Guid="ab6e4fb4-2574-4171-be05-98c981c70f70" Name="Allocation Stack" SortPriority="9" Width="160" IsVisible="false" HelpText="Virtual Allocation Stack Tags">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="ab6e4fb4-2574-4171-be05-98c981c70f70" Name="Allocation Stack" SortPriority="8" Width="254" IsVisible="false" HelpText="Virtual Allocation Call Stacks">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="66f6bb0a-7c9c-4027-b818-88d4300d96c3" Name="Access Stack" SortPriority="7" Width="160" IsVisible="false" HelpText="RAM Access Stack Tags">
+                  <StackOptionsParameter Mode="StackTag" />
+                </Column>
+                <Column Guid="66f6bb0a-7c9c-4027-b818-88d4300d96c3" Name="Access Stack" SortPriority="6" Width="262" IsVisible="true" HelpText="RAM Access Call Stacks">
+                  <StackOptionsParameter />
+                </Column>
+                <Column Guid="5788391e-cb6b-44fd-a5a7-1c5124d1265a" Name="Size (System View)" AggregationMode="Sum" SortPriority="5" TextAlignment="Right" Width="152" IsVisible="false" HelpText="Sum Shared Allocation Size" />
+                <Column Guid="5788391e-cb6b-44fd-a5a7-1c5124d1265a" Name="Size (System View)" AggregationMode="Peak" SortPriority="4" TextAlignment="Center" Width="158" IsVisible="false" HelpText="Peak Shared Allocation Size" />
+                <Column Guid="e2184e32-2380-46c0-a3cf-b26c4bf06910" Name="Size (Process View)" AggregationMode="Sum" SortPriority="3" TextAlignment="Right" Width="157" IsVisible="true" HelpText="Sum Process Allocation Size" />
+                <Column Guid="e2184e32-2380-46c0-a3cf-b26c4bf06910" Name="Size (Process View)" AggregationMode="Peak" SortPriority="2" TextAlignment="Center" Width="165" CellFormat="N3" IsVisible="true" HelpText="Peak Process Allocation Size" />
+                <Column Guid="8554acf2-d92b-40c0-9d1c-cb038776cc45" Name="Impact Size (System View)" AggregationMode="Sum" SortOrder="Descending" SortPriority="1" TextAlignment="Right" Width="182" CellFormat="N3" IsVisible="false" HelpText="Shared RAM Usage" />
+                <Column Guid="daea3e94-6a23-42cd-83fc-72fe695018b5" Name="Impact Size (Process View)" AggregationMode="Sum" SortOrder="Descending" SortPriority="0" TextAlignment="Right" Width="182" CellFormat="N3" IsVisible="true" HelpText="Process RAM Usage" />
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>

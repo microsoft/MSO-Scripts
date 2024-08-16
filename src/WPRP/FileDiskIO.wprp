@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    WPR Profile Definitions for Enabling ETW Events
+
+    To see a definitive list of profiles available from this file, run:
+        wpr -profiles <ThisFile>.wprp
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/elements
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Fundamentals Performance Team" >
+  <Profiles>
+
+<!--
+    Collector Declarations
+
+    Collectors with the same name get merged across Profiles and WPRP files.
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/1-collector-definitions
+-->
+
+    <SystemCollector Id="SC_Base" Name="NT Kernel Logger">
+      <BufferSize Value="1024" />
+      <Buffers Value="8" />
+      <StackCaching BucketCount="128" CacheSize="2048" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_48-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="48" />
+    </SystemCollector>
+
+    <SystemCollector Id="SC_96-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="96" />
+    </SystemCollector>
+
+    <EventCollector Id="EC_4-MB" Name="MSO Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="4" />
+    </EventCollector>
+
+<!--
+    Provider Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/2-system-and-event-provider-definitions
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/keyword-%2Din-systemprovider%2D
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/stack-wpa
+-->
+
+    <!-- Base requirement for process/thread/module info and symbol resolution. -->
+
+    <SystemProvider Id="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="ProcessCreate" />
+        <Stack Value="ThreadCreate" />
+        <Stack Value="ImageLoad" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- FileIO events with/without call stacks -->
+    <!-- FileIO is at the higher, application level. -->
+
+    <SystemProvider Id="SP_FileIO_Lean" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="FileIOInit" />
+        <Keyword Value="FileIO" />
+        <Keyword Value="Filename" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="FileCreate" />
+      </Stacks>
+    </SystemProvider>
+
+    <SystemProvider Id="SP_FileIO" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="FileIOInit" />
+        <Keyword Value="FileIO" />
+        <Keyword Value="Filename" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="FileCreate" />
+        <Stack Value="FileCleanup" />
+        <Stack Value="FileClose" />
+        <Stack Value="FileRead" />
+        <Stack Value="FileWrite" />
+        <Stack Value="FileRename" />
+        <Stack Value="FileDelete" />
+        <Stack Value="FileDirEnum" />
+        <Stack Value="FileDirNotify" />
+        <Stack Value="FileFlush" />
+        <Stack Value="FileQueryInformation" />
+        <Stack Value="FileSetInformation" />
+        <Stack Value="FileFSCTL" />
+        <!--Stack Value="FileOpEnd" /--> <!-- Expensive! -->
+      </Stacks>
+    </SystemProvider>
+
+    <!-- DiskIO events with call stacks -->
+    <!-- DiskIO is at the lower, hardware level. -->
+
+    <SystemProvider Id="SP_DiskIO_Lean" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="DiskIOInit" />
+        <Keyword Value="DiskIO" />
+        <Keyword Value="Filename" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="DiskReadInit" />
+        <Stack Value="DiskWriteInit" />
+        <Stack Value="DiskFlushInit" />
+      </Stacks>
+    </SystemProvider>
+
+    <SystemProvider Id="SP_DiskIO" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="DiskIOInit" />
+        <Keyword Value="DiskIO" />
+        <Keyword Value="Filename" />
+        <!-- Mini-Filter Delays -->
+        <Keyword Value="FilterIO" />
+        <Keyword Value="FilterIOInit" />
+        <Keyword Value="FilterIOFastIO" />
+        <Keyword Value="FilterIOFailure"/>
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="DiskReadInit" />
+        <Stack Value="DiskWriteInit" />
+        <Stack Value="DiskFlushInit" />
+        <!-- Mini-Filter Delays -->
+        <Stack Value="MiniFilterPreOpInit" />
+        <Stack Value="MiniFilterPostOpInit" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- FileIO and DiskIO events -->
+
+    <SystemProvider Id="SP_FileAndDiskIO_Lean" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="FileIOInit" />
+        <Keyword Value="FileIO" />
+        <Keyword Value="DiskIOInit" />
+        <Keyword Value="DiskIO" />
+        <Keyword Value="Filename" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="FileCreate" />
+        <Stack Value="DiskReadInit" />
+        <Stack Value="DiskWriteInit" />
+        <Stack Value="DiskFlushInit" />
+      </Stacks>
+    </SystemProvider>
+
+    <SystemProvider Id="SP_FileAndDiskIO" Base="SP_Base">
+      <Keywords Operation="Add">
+        <Keyword Value="FileIOInit" />
+        <Keyword Value="FileIO" />
+        <Keyword Value="DiskIOInit" />
+        <Keyword Value="DiskIO" />
+        <Keyword Value="Filename" />
+        <!-- Mini-Filter Delays -->
+        <Keyword Value="FilterIO" />
+        <Keyword Value="FilterIOInit" />
+        <Keyword Value="FilterIOFastIO" />
+        <Keyword Value="FilterIOFailure"/>
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="FileCreate" />
+        <Stack Value="FileCleanup" />
+        <Stack Value="FileClose" />
+        <Stack Value="FileRead" />
+        <Stack Value="FileWrite" />
+        <Stack Value="FileRename" />
+        <Stack Value="FileDelete" />
+        <Stack Value="FileDirEnum" />
+        <Stack Value="FileDirNotify" />
+        <Stack Value="FileFlush" />
+        <Stack Value="FileQueryInformation" />
+        <Stack Value="FileSetInformation" />
+        <Stack Value="FileFSCTL" />
+        <!--Stack Value="FileOpEnd" /--> <!-- Expensive! -->
+        <Stack Value="DiskReadInit" />
+        <Stack Value="DiskWriteInit" />
+        <Stack Value="DiskFlushInit" />
+        <!-- Mini-Filter Delays -->
+        <Stack Value="MiniFilterPreOpInit" />
+        <Stack Value="MiniFilterPostOpInit" />
+      </Stacks>
+    </SystemProvider>
+
+    <!-- Additional Module/Load info -->
+
+    <EventProvider Id="EP_Microsoft-Windows-ImageLoad" Name="2cb15d1d-5fc1-11d2-abe1-00a0c911f518">
+      <Keywords Operation="Add">
+        <Keyword Value="0x10" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- Microsoft-Office-Events - Office Code Markers -->
+
+    <EventProvider Id="EP_OLog_CodeMarkers" Name="8736922D-E8B2-47eb-8564-23E77E728CF3">
+      <Keywords Operation="Add">
+        <Keyword Value="4" />
+      </Keywords>
+    </EventProvider>
+
+<!--
+    Profile Declarations
+
+    https://learn.microsoft.com/en-us/windows-hardware/test/wpt/3-profile-definitions
+-->
+    <!-- FileIO-Lean (Light) -->
+
+    <Profile Name="FileIO-Lean" Description="FileIO Events, Limited StackWalk"
+     DetailLevel="Light" LoggingMode="File" Id="FileIO-Lean.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_48-MB">
+          <SystemProviderId Value="SP_FileIO_Lean" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_4-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="FileIO-Lean" Description="FileIO Events, Limited StackWalk"
+     DetailLevel="Light" LoggingMode="Memory" Base="FileIO-Lean.Light.File" Id="FileIO-Lean.Light.Memory" />
+
+    <!-- FileIO (Verbose) -->
+
+    <Profile Name="FileIO" Description="FileIO Events (App Level) with StackWalk"
+     DetailLevel="Verbose" LoggingMode="File" Id="FileIO.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_96-MB">
+          <SystemProviderId Value="SP_FileIO" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_4-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="FileIO" Description="FileIO Events (App Level) with StackWalk"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="FileIO.Verbose.File" Id="FileIO.Verbose.Memory" />
+
+    <!-- DiskIO-Lean (Light) -->
+
+    <Profile Name="DiskIO-Lean" Description="DiskIO Events (Device Level) with StackWalk"
+     DetailLevel="Light" LoggingMode="File" Id="DiskIO-Lean.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_48-MB">
+          <SystemProviderId Value="SP_DiskIO_Lean" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_4-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="DiskIO-Lean" Description="DiskIO Events (Device Level) with StackWalk"
+     DetailLevel="Light" LoggingMode="Memory" Base="DiskIO-Lean.Light.File" Id="DiskIO-Lean.Light.Memory" />
+
+    <!-- DiskIO (Verbose) -->
+
+    <Profile Name="DiskIO" Description="DiskIO &amp; Mini-Filter Events with StackWalk"
+     DetailLevel="Verbose" LoggingMode="File" Id="DiskIO.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_48-MB">
+          <SystemProviderId Value="SP_DiskIO" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_4-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="DiskIO" Description="DiskIO &amp; Mini-Filter Events with StackWalk"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="DiskIO.Verbose.File" Id="DiskIO.Verbose.Memory" />
+
+    <!-- FileAndDiskIO-Lean (Light) -->
+
+    <Profile Name="FileAndDiskIO-Lean" Description="FileIO &amp; DiskIO Events, Limited StackWalk"
+     DetailLevel="Light" LoggingMode="File" Id="FileAndDiskIO-Lean.Light.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_48-MB">
+            <SystemProviderId Value="SP_FileAndDiskIO_Lean" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_4-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="FileAndDiskIO-Lean" Description="FileIO &amp; DiskIO Events, Limited StackWalk"
+     DetailLevel="Light" LoggingMode="Memory" Base="FileAndDiskIO-Lean.Light.File" Id="FileAndDiskIO-Lean.Light.Memory" />
+
+    <!-- FileAndDiskIO (Verbose) -->
+
+    <Profile Name="FileAndDiskIO" Description="FileIO &amp; DiskIO, Mini-Filter with StackWalk"
+     DetailLevel="Verbose" LoggingMode="File" Id="FileAndDiskIO.Verbose.File">
+      <Collectors Operation="Add">
+
+        <SystemCollectorId Value="SC_96-MB">
+            <SystemProviderId Value="SP_FileAndDiskIO" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_4-MB">
+          <EventProviders Operation="Add">
+
+            <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />
+            <EventProviderId Value="EP_OLog_CodeMarkers" />
+
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="FileAndDiskIO" Description="FileIO &amp; DiskIO, Mini-Filter with StackWalk"
+     DetailLevel="Verbose" LoggingMode="Memory" Base="FileAndDiskIO.Verbose.File" Id="FileAndDiskIO.Verbose.Memory" />
+
+  </Profiles>
+
+<!--
+  Trace Properties
+
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/customevent
+-->
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="TraceMerge_Default" Name="TraceMerge_Default">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata"/>
+        <CustomEvent Value="WinSAT"/>
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+
+</WindowsPerformanceRecorder>

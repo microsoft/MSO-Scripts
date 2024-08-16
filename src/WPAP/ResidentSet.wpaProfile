@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<!-- NOTE: Resident Set view does not work in WPA when launched with: -cliprundown -->
+<WpaProfileContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="2" xmlns="http://tempuri.org/SerializableElement.xsd">
+  <Content xsi:type="WpaProfile2">
+    <Sessions>
+      <Session Index="0">
+        <FileReferences />
+      </Session>
+    </Sessions>
+    <Views>
+      <View Guid="9713807c-1fcf-48ea-81a3-fd9b1a43fe5e" IsVisible="true" Title="Resident Set">
+        <Graphs>
+          <Graph Guid="00c2282d-6788-482d-8528-36c079eabbd5" LayoutStyle="DataTable" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Resident Set by Process" GraphChartType="StackedBars" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="15" KeyColumnCount="8" LeftFrozenColumnCount="0" RightFrozenColumnCount="14" InitialFilterShouldKeep="true" GraphFilterColumnGuid="5af4cb99-abdf-4ced-b092-440160c940c2" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="178499e0-0b63-50e3-a0eb-069a4f238b50" Name="Snapshot Time" ColumnMetadata="StartTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="12a20458-b588-5d3f-a154-c23d2902d52f" Name="Process Name" SortOrder="Ascending" SortPriority="0" Width="150" IsVisible="true" />
+                <Column Guid="60269832-0d29-5f0f-a9b2-c65ee9d0b1cf" Name="Process" SortPriority="1" Width="150" IsVisible="true" />
+                <Column Guid="681c68ba-3371-59d2-d155-641aa268d2a9" Name="Page Category" SortPriority="2" Width="150" IsVisible="true" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="3" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="15a3f76b-6dc3-5d57-4b45-39f86b2c4314" Name="MMList" SortPriority="4" Width="66" IsVisible="true" />
+                <Column Guid="c7de38ec-9f55-55ef-e8f9-8a031772672e" Name="Description" SortPriority="5" Width="289" IsVisible="true" />
+                <Column Guid="42df8dc9-60e7-59c2-ecae-fda0952dd2f1" Name="Path Tree" SortPriority="6" Width="163" IsVisible="false" />
+                <Column Guid="0763aa32-188b-58b3-4e4c-d04cc8df47eb" Name="Thread Id" SortPriority="8" TextAlignment="Right" Width="67" IsVisible="false" HelpText="Thread Id" />
+                <Column Guid="3034dcdd-0329-58bc-61f2-115fcd84fe55" Name="Page Priority" SortPriority="9" TextAlignment="Right" Width="67" IsVisible="true" />
+                <Column Guid="c398ca4c-ed67-5897-3a88-ff8ed176f82b" Name="Pinned" SortPriority="10" TextAlignment="Right" Width="50" IsVisible="true" />
+                <Column Guid="f4f584e0-33bc-5517-77bd-dae2f940ac00" Name="Virtual Address" SortPriority="7" TextAlignment="Right" Width="126" CellFormat="x" IsVisible="true" />
+                <Column Guid="c872a259-e76f-5ab5-5ebb-72d4f61304ad" Name="Page Frame Number" SortPriority="11" TextAlignment="Right" Width="91" CellFormat="x" IsVisible="false" />
+                <Column Guid="5af4cb99-abdf-4ced-b092-440160c940c2" Name="Size" AggregationMode="Sum" SortPriority="13" TextAlignment="Right" Width="75" CellFormat="MB" IsVisible="true" />
+                <Column Guid="6e63a987-cd12-5a9a-5e70-9088e2257c22" Name="Page Count" AggregationMode="Count" SortPriority="12" TextAlignment="Right" Width="66" IsVisible="false" />
+              </Columns>
+            </Preset>
+          </Graph>
+          <Graph Guid="00c2282d-6788-482d-8528-36c079eabbd5" LayoutStyle="DataTable" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false">
+            <Preset Name="Resident Set by Category" GraphChartType="StackedBars" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="15" KeyColumnCount="8" LeftFrozenColumnCount="0" RightFrozenColumnCount="14" InitialFilterShouldKeep="true" GraphFilterColumnGuid="5af4cb99-abdf-4ced-b092-440160c940c2" GraphFilterTopValue="0" GraphFilterThresholdValue="0">
+              <MetadataEntries>
+                <MetadataEntry Guid="178499e0-0b63-50e3-a0eb-069a4f238b50" Name="Snapshot Time" ColumnMetadata="StartTime" />
+              </MetadataEntries>
+              <HighlightEntries />
+              <Columns>
+                <Column Guid="15a3f76b-6dc3-5d57-4b45-39f86b2c4314" Name="MMList" SortPriority="4" Width="80" IsVisible="true" />
+                <Column Guid="681c68ba-3371-59d2-d155-641aa268d2a9" Name="Page Category" SortPriority="2" Width="150" IsVisible="true" />
+                <Column Guid="12a20458-b588-5d3f-a154-c23d2902d52f" Name="Process Name" SortOrder="Ascending" SortPriority="0" Width="150" IsVisible="true" />
+                <Column Guid="60269832-0d29-5f0f-a9b2-c65ee9d0b1cf" Name="Process" SortPriority="1" Width="150" IsVisible="true" />
+                <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="3" Width="80" IsVisible="false">
+                  <AnnotationsOptionsParameter>
+                    <AnnotationQueryEntries />
+                  </AnnotationsOptionsParameter>
+                </Column>
+                <Column Guid="c7de38ec-9f55-55ef-e8f9-8a031772672e" Name="Description" SortPriority="5" Width="289" IsVisible="true" />
+                <Column Guid="42df8dc9-60e7-59c2-ecae-fda0952dd2f1" Name="Path Tree" SortPriority="6" Width="163" IsVisible="false" />
+                <Column Guid="0763aa32-188b-58b3-4e4c-d04cc8df47eb" Name="Thread Id" SortPriority="8" TextAlignment="Right" Width="67" IsVisible="false" HelpText="Thread Id" />
+                <Column Guid="3034dcdd-0329-58bc-61f2-115fcd84fe55" Name="Page Priority" SortPriority="9" TextAlignment="Right" Width="67" IsVisible="true" />
+                <Column Guid="c398ca4c-ed67-5897-3a88-ff8ed176f82b" Name="Pinned" SortPriority="10" TextAlignment="Right" Width="50" IsVisible="true" />
+                <Column Guid="f4f584e0-33bc-5517-77bd-dae2f940ac00" Name="Virtual Address" SortPriority="7" TextAlignment="Right" Width="126" CellFormat="x" IsVisible="true" />
+                <Column Guid="c872a259-e76f-5ab5-5ebb-72d4f61304ad" Name="Page Frame Number" SortPriority="11" TextAlignment="Right" Width="91" CellFormat="x" IsVisible="false" />
+                <Column Guid="5af4cb99-abdf-4ced-b092-440160c940c2" Name="Size" AggregationMode="Sum" SortPriority="13" TextAlignment="Right" Width="75" CellFormat="MB" IsVisible="true" />
+                <Column Guid="6e63a987-cd12-5a9a-5e70-9088e2257c22" Name="Page Count" AggregationMode="Count" SortPriority="12" TextAlignment="Right" Width="66" IsVisible="false" />
+              </Columns>
+            </Preset>
+          </Graph>
+        </Graphs>
+        <SessionIndices>
+          <SessionIndex>0</SessionIndex>
+        </SessionIndices>
+      </View>
+    </Views>
+    <ModifiedGraphs>
+    </ModifiedGraphs>
+  </Content>
+</WpaProfileContainer>
