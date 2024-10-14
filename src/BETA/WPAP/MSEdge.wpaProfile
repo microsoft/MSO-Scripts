@@ -139,7 +139,7 @@
             </Preset>
           </Graph>
           <Graph Guid="1ce7fd53-2344-4ea8-acd6-1a0722a51427" LayoutStyle="All" Color="#FF005DE0" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Lets the application apply user-friendly labels to portions of the trace.}\li0\ri0\sa0\sb0\fi0\ql\par}">
-            <Preset Name="Chrome Timelines" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="20" KeyColumnCount="4" LeftFrozenColumnCount="5" RightFrozenColumnCount="19" InitialFilterQuery="[Provider]:~&lt;&quot;Chrome&quot; OR [Provider]:~&lt;&quot;Google.Chrome&quot; OR [Provider]:~&lt;&quot;Microsoft.Windows&quot; OR [Provider]:~&lt;&quot;Kernel&quot;" InitialFilterShouldKeep="true" GraphFilterTopValue="0" GraphFilterThresholdValue="0" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Uses a Regions of Interest file to apply additional markup to an open trace in WPA. These labels are applied by finding events that define the start and stop of a given region. The XML file contains these regions as well as their events.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;}&#xD;&#xA;}">
+            <Preset Name="Chrome Timelines" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="21" KeyColumnCount="5" LeftFrozenColumnCount="6" RightFrozenColumnCount="20" InitialFilterQuery="[ManifestFullPath]:&lt;&gt;&quot;&quot; AND [Provider]:~&lt;&quot;Chrome&quot; OR [Provider]:~&lt;&quot;Google.Chrome&quot; OR [Provider]:~&lt;&quot;Microsoft.Windows&quot; OR [Provider]:~&lt;&quot;Kernel&quot;" InitialFilterShouldKeep="true" GraphFilterTopValue="0" GraphFilterThresholdValue="0" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Uses a Regions of Interest file to apply additional markup to an open trace in WPA. These labels are applied by finding events that define the start and stop of a given region. The XML file contains these regions as well as their events.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;}&#xD;&#xA;}">
               <MetadataEntries>
                 <MetadataEntry Guid="052aa8a8-ce86-486b-8cc9-158ac7d27113" Name="Stop Thread" ColumnMetadata="EndThreadId" />
                 <MetadataEntry Guid="93b276b8-d183-41b7-a16e-19eb9373dbf3" Name="Start Time" ColumnMetadata="StartTime" />
@@ -147,6 +147,7 @@
               </MetadataEntries>
               <HighlightEntries />
               <Columns>
+                <Column Guid="328f22af-2e8a-4abc-8a19-bfefe367bf7c" Name="ManifestFullPath" SortPriority="0" Width="50" IsVisible="false" HelpText="ManifestFullPath" />
                 <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="6" Width="80" IsVisible="false">
                   <AnnotationsOptionsParameter>
                     <AnnotationQueryEntries />
@@ -257,10 +258,10 @@
                 <Column Guid="edf01e5d-3644-4dbc-ab9d-f8954e6db6ea" Name="ThreadId" SortPriority="9" TextAlignment="Right" Width="66" IsVisible="false" />
                 <Column Guid="90fe0b49-e3bb-440f-b829-5813c42108a1" Name="Event Name" SortPriority="10" Width="148" IsVisible="true" />
                 <Column Guid="704a10b2-3e2d-40e9-98c8-7f22e09f6d95" Name="Keyword" SortPriority="11" TextAlignment="Right" Width="134" CellFormat="x" IsVisible="false" HelpText="Keyword" />
-                <Column Guid="0c5cf8cd-9b9e-5798-1a5d-09d429f7fa3c" Name="Field 1" SortPriority="12" Width="124" IsVisible="true" HelpText="Field 1" />
-                <Column Guid="71badd11-26e5-56bc-44ec-12f4cc6a8f3e" Name="Field 2" SortPriority="13" Width="104" IsVisible="true" HelpText="Field 2" />
-                <Column Guid="411dba2d-5d6e-5272-8287-636d0841768c" Name="Field 3" SortPriority="14" Width="80" IsVisible="true" HelpText="Field 3" />
-                <Column Guid="048f5050-1f17-59b3-fa22-4b0781ee630b" Name="Field 4" SortPriority="15" Width="80" IsVisible="false" HelpText="Field 4" />
+                <Column Guid="0c5cf8cd-9b9e-5798-1a5d-09d429f7fa3c" Name="Field 1" SortPriority="12" Width="124" IsVisible="true" HelpText="Phase" />
+                <Column Guid="71badd11-26e5-56bc-44ec-12f4cc6a8f3e" Name="Field 2" SortPriority="13" Width="86" IsVisible="true" HelpText="Timestamp" />
+                <Column Guid="411dba2d-5d6e-5272-8287-636d0841768c" Name="Field 3" SortPriority="14" Width="200" IsVisible="true" HelpText="URL or Site ID" />
+                <Column Guid="048f5050-1f17-59b3-fa22-4b0781ee630b" Name="Field 4" SortPriority="15" Width="200" IsVisible="true" HelpText="URL or misc." />
                 <Column Guid="94e48f22-d499-5227-bb04-be011b4159b0" Name="Field 5" SortPriority="16" Width="80" IsVisible="false" HelpText="Field 5" />
                 <Column Guid="c1054028-424a-59ba-e760-6d30abbd69c5" Name="Field 6" SortPriority="17" Width="80" IsVisible="false" HelpText="Field 6" />
                 <Column Guid="5cbc4b58-2de1-5449-55b2-4651d4edf90a" Name="Field 7" SortPriority="18" Width="80" IsVisible="false" HelpText="Field 7" />
@@ -299,7 +300,7 @@
             </Preset>
           </Graph>
           <Graph Guid="1ce7fd53-2344-4ea8-acd6-1a0722a51427" LayoutStyle="All" Color="#FF005DE0" GraphHeight="125" IsMinimized="false" IsShown="true" IsExpanded="false" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Lets the application apply user-friendly labels to portions of the trace.}\li0\ri0\sa0\sb0\fi0\ql\par}">
-            <Preset Name="Edge Timelines" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="20" KeyColumnCount="4" LeftFrozenColumnCount="5" RightFrozenColumnCount="19" InitialFilterQuery="([Event Name]:&lt;&gt;&quot;&quot; AND [Provider]:~&lt;&quot;Microsoft.MSEdge&quot;) OR [Provider]:~&lt;&quot;Microsoft.Windows&quot; OR [Provider]:~&lt;&quot;Kernel&quot;" InitialFilterShouldKeep="true" GraphFilterTopValue="0" GraphFilterThresholdValue="0" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Uses a Regions of Interest file to apply additional markup to an open trace in WPA. These labels are applied by finding events that define the start and stop of a given region. The XML file contains these regions as well as their events.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;}&#xD;&#xA;}">
+            <Preset Name="Edge Timelines" BarGraphIntervalCount="50" IsThreadActivityTable="false" GraphColumnCount="21" KeyColumnCount="5" LeftFrozenColumnCount="6" RightFrozenColumnCount="20" InitialFilterQuery="[ManifestFullPath]:&lt;&gt;&quot;&quot; AND ([Event Name]:&lt;&gt;&quot;&quot; AND [Provider]:~&lt;&quot;Microsoft.MSEdge&quot;) OR [Provider]:~&lt;&quot;Microsoft.Windows&quot; OR [Provider]:~&lt;&quot;Kernel&quot;" InitialFilterShouldKeep="true" GraphFilterTopValue="0" GraphFilterThresholdValue="0" HelpText="{}{\rtf1\ansi\ansicpg1252\uc1\htmautsp\deff2{\fonttbl{\f0\fcharset0 Times New Roman;}{\f2\fcharset0 Segoe UI;}}{\colortbl\red0\green0\blue0;\red255\green255\blue255;}\loch\hich\dbch\pard\plain\ltrpar\itap0{\lang1033\fs18\f2\cf0 \cf0\ql{\f2 {\ltrch Uses a Regions of Interest file to apply additional markup to an open trace in WPA. These labels are applied by finding events that define the start and stop of a given region. The XML file contains these regions as well as their events.}\li0\ri0\sa0\sb0\fi0\ql\par}&#xD;&#xA;}&#xD;&#xA;}">
               <MetadataEntries>
                 <MetadataEntry Guid="052aa8a8-ce86-486b-8cc9-158ac7d27113" Name="Stop Thread" ColumnMetadata="EndThreadId" />
                 <MetadataEntry Guid="93b276b8-d183-41b7-a16e-19eb9373dbf3" Name="Start Time" ColumnMetadata="StartTime" />
@@ -307,6 +308,7 @@
               </MetadataEntries>
               <HighlightEntries />
               <Columns>
+                <Column Guid="328f22af-2e8a-4abc-8a19-bfefe367bf7c" Name="ManifestFullPath" SortPriority="0" Width="50" IsVisible="false" HelpText="Manifest Full Path" />
                 <Column Guid="2818954f-2d30-5569-4510-dade0a5a605c" Name="Annotation" SortPriority="7" Width="80" IsVisible="false">
                   <AnnotationsOptionsParameter>
                     <AnnotationQueryEntries>
