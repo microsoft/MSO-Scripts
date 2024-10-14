@@ -22,7 +22,7 @@
 	.\TraceHeapEx Cancel
 	    -EXE:  Trace Windows Heap allocations in a future process: Name.exe
 	    -ProcessID: Trace Windows Heap allocations in a running process with this PID.
-	    -Lean: Trace committed memory allocated via VirtualAlloc. (Windows Heap is built on VirtualAlloc).
+	    -Lean: Trace Committed Virtual Memory allocated via VirtualAlloc. (Windows Heap is built on VirtualAlloc).
 	    -Loop: Record only the last few minutes of activity (circular memory buffer). 
 	    -CLR:  Resolve call stacks for C# (Common Language Runtime).
 	    -JS:   Resolve call stacks for JavaScript.
@@ -184,7 +184,7 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 
 	if (!$Lean)
 	{
-		$Result = PrepareHeapTraceCommand $Command -TraceParams:$TraceParams -ProcessID:$ProcessID -EXE:([ref]$EXE)
+		$Result = PrepareHeapTraceCommand $Command -TraceParams:$TraceParams -ProcessID:$ProcessID -EXEs:([ref]$EXE)
 	}
 
 	if ($Result -eq [ResultValue]::Success)
@@ -196,10 +196,10 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 	{
 	Started
 		{
-		if ($Lean) { Write-Msg "To trace handles and committed memory allocations, exercise your scenario.`nThen run: $(GetScriptCommand) Stop [-WPA]`n" }
-		elseif ($ProcessID) { Write-Msg "Now tracing ETW Heap allocations for: $EXE`nExercise the application, then run: $(GetScriptCommand) Stop [-WPA]`n" }
-		elseif ($EXE) { Write-Msg "To trace heap allocations, launch and exercise: $EXE`nThen run: $(GetScriptCommand) Stop [-WPA]`n" }
-		else { Write-Err "Unrecognized command!" }
+		if ($Lean) { Write-Action "To trace Windows Handles and Virtual Memory allocations, exercise your scenario.`nThen run: $(GetScriptCommand) Stop [-WPA]`n" }
+		elseif ($ProcessID) { Write-Action "Now tracing Windows Handles and Heap allocations for: $EXE`nExercise the application, then run: $(GetScriptCommand) Stop [-WPA]`n" }
+		elseif ($EXE) { Write-Action "To trace heap allocations, launch and exercise: $EXE`nThen run: $(GetScriptCommand) Stop [-WPA]`n" }
+		else { Write-Err "Unrecognized command!"; exit 1 }
 		}
 	Error     { PrepareHeapTraceCommand "Cancel" >$Null; exit 1 }
 	Collected { WriteTraceCollected $TraceParams.InstanceName } # $WPA switch

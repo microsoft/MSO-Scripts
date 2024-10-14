@@ -159,7 +159,7 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 			$EXE = $Null # for [ref]$EXE in PSv2
 		}
 
-		$Result = PrepareHeapTraceCommand $Command -TraceParams:$TraceParams -ProcessID:$ProcessID -EXE:([ref]$EXE)
+		$Result = PrepareHeapTraceCommand $Command -TraceParams:$TraceParams -ProcessID:$ProcessID -EXEs:([ref]$EXE)
 		ValidateResult "PrepareTraceHeapCommand" $Result
 	}
 

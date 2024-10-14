@@ -22,7 +22,7 @@
 	    -EXE:  Trace Windows Heap allocations in a future process: Name.exe
 	    -ProcessID: Trace Windows Heap allocations in a running process with this PID.
 	    -Snap: Capture a Windows Heap Snapshot every 5 seconds, or every 5 minutes (-Lean).
-	    -Lean: Trace committed memory allocated via VirtualAlloc. (Windows Heap is built on VirtualAlloc).
+	    -Lean: Trace Committed Virtual Memory allocated via VirtualAlloc. (Windows Heap is built on VirtualAlloc).
 	    -Loop: Record only the last few minutes of activity (circular memory buffer). 
 	    -CLR:  Resolve call stacks for C# (Common Language Runtime).
 	    -JS:   Resolve call stacks for JavaScript.
@@ -183,6 +183,7 @@ if (!$EXE) { $EXE = $Null } # PSv2
 	# Only show the "Heap" tabs when they might have data.
 	if ($Snap) { $ViewerParams.ViewerConfig = ".\WPAP\BasicInfo.wpaProfile", ".\WPAP\HeapSnapshot.wpaProfile" }
 	elseif (!$Lean) { $ViewerParams.ViewerConfig += ".\WPAP\Heap.wpaProfile" }
+	elseif ($ProcessID -or $EXE) { $Lean = $False; Write-Warning "Ignoring -Lean when a process is specified." }
 
 # ===== END CUSTOMIZE ====
 
@@ -204,7 +205,14 @@ if ($Snap)
 
 	if ($Result -eq [ResultValue]::Success)
 	{
-		$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -CLR:$CLR -JS:$JS
+		# WPA (v11.7, etc.) doesn't work with Heap Snapshots in memory mode / circular buffer.
+		if ($Loop)
+		{
+			Write-Warn "Ignoring -Loop for this Heap Snapshot trace."
+			if (!$Lean) { Write-Warn "Consider using -Lean instead to reduce the snapshot frequency." }
+		}
+
+		$Result = ProcessTraceCommand $Command @TraceParams -CLR:$CLR -JS:$JS # -Loop:$Loop
 	}
 
 	switch ($Result)
@@ -216,7 +224,7 @@ if ($Snap)
 		$PostResult = PostProcessSnapshotCommand $Command -ProcessID:([ref]$ProcessID) -EXEs:$EXE $Interval $TraceParams.InstanceName
 		switch ($PostResult)
 		{
-		Started { Write-Action "Now capturing Windows Heap snapshots every $Interval seconds via ETW for: $EXE [$ProcessID]`nExercise the application." }
+		Started { Write-Action "Exercise the application: $EXE" }
 		Success { Write-Action "To capture Windows Heap snapshots, launch and exercise: $EXE" }
 		Error   { Write-Err "Unrecognized command!"; exit 1 }
 		}
@@ -237,10 +245,8 @@ if ($Snap)
 		LaunchViewer @ViewerParams -FastSym:$FastSym
 	}	
 }
-else
+else # !Snap
 {
-	# Use Windows Performance Recorder.  It's much simpler, but requires Admin privileges.
-
 	$Result = [ResultValue]::Success
 
 	if (!$Lean)
@@ -257,7 +263,7 @@ else
 	{
 	Started
 		{
-		if ($Lean) { Write-Action "To trace committed memory allocations, exercise your scenario.`nThen run: $(GetScriptCommand) Stop [-WPA]`n" }
+		if ($Lean) { Write-Action "To trace Committed Virtual Memory allocations, exercise your scenario.`nThen run: $(GetScriptCommand) Stop [-WPA]`n" }
 		elseif ($ProcessID) { Write-Action "Now tracing Windows Heap allocations via ETW for: $EXE`nExercise the application, then run: $(GetScriptCommand) Stop [-WPA]`n" }
 		elseif ($EXE) { Write-Action "To trace heap allocations, launch and exercise: $EXE`nThen run: $(GetScriptCommand) Stop [-WPA]`n" }
 		else { Write-Err "Unrecognized command!"; exit 1 }
