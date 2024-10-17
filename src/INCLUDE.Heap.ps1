@@ -34,8 +34,8 @@ function TestEnterKey
 {
 	if ($Host.UI.RawUI.KeyAvailable)
 	{
-		$Key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-		if ($Key -and ($Key.Character -eq "`r")) { return $True }
+		$Key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp,IncludeKeyDown")
+		if ($Key -and $Key.KeyDown -and ($Key.Character -eq "`r")) { return $True }
 	}
 	return $False
 }
@@ -47,7 +47,7 @@ Param (
 	[System.Diagnostics.Process[]]$Processes
 )
 	Write-Msg
-	Write-Msg "Tracked processes:"
+	Write-Msg "Currently tracked processes:"
 	foreach ($Process in $Processes)
 	{
 		Write-Msg "`t$($Process.ProcessName) [$($Process.ID)]"
@@ -377,7 +377,7 @@ Param (
 
 <#
 	Disable heap snapshots with the previously given PID and/or ProcessName.exe
-	Optionally do one last snapshot now.
+	Optionally do one final snapshot now ($Snap).
 #>
 function DisableSnapshots
 {
@@ -392,10 +392,13 @@ Param (
 
 	if ($ProcessIDs)
 	{
+		[int[]]$PID_Snapshot = @() # empty, not null
+
 		# Limit 8 PIDs at a time
 		for ([int]$i = 0; $i -lt $ProcessIDs.Count; $i = $i + 8)
 		{
-			[int[]]$PIDs = $ProcessIDs[$i..($i+7)] # Up to the next 8 Process IDs
+			$last = [math]::min($i+7, $ProcessIDs.Count-1)
+			[int[]]$PIDs = $ProcessIDs[$i..$last] # Up to the next 8 Process IDs
 
 			# Capture one final snapshot.
 
@@ -409,19 +412,37 @@ Param (
 					Write-Warn "Retrying..."
 					InvokeWprAndWarn -SingleSnapshot Heap $PIDs -InstanceName $InstanceName
 				}
+
+				if (!$LastExitCode)
+				{
+					$PID_Snapshot += $PIDs
+				}
 			}
 
 			# Stop tracking heap activity in these specific processes.
-
 			InvokeWprAndWarn -SnapshotConfig Heap -PID $PIDs Disable -InstanceName $InstanceName
 		}
-	}
+
+		$Plural = "this tracked process","these tracked processes"
+
+		if ($PID_Snapshot)
+		{
+			Write-Msg "A final snapshot was captured for $($Plural[$PID_Snapshot.Count -ne 1]), by ID: $PID_Snapshot"
+		}
+
+		if ($Snap -and ($ProcessIDs.Count -gt $PID_Snapshot.Count))
+		{
+			$PID_Snapshot = $ProcessIDs | ?{$PID_Snapshot -notcontains $_} # $ProcessIDs minus $PID_Snapshot
+
+			Write-Warn "A final snapshot may not have been captured for $($Plural[$PID_Snapshot.Count -ne 1]), by ID: $PID_Snapshot"
+		}
+	} # if $ProcessIDs
 }
 
 
 <#
 	Do the extra setup required to enable heap tracing:
-	either a running process ($ProcessID) or a process to be launched ($EXE), or both.
+	either a running process ($ProcessID) or a process to be launched ($EXEs), or both.
 	On "Start" success, sets: [ref]$EXEs = "ProcessName.exe"
 #>
 function PrepareHeapTraceCommand
@@ -550,7 +571,7 @@ Param (
 
 <#
 	Do the extra setup required to enable heap snapshot capture:
-	either a running process ($ProcessID) or a process to be launched ($EXE), or both.
+	either a running process ($ProcessID) or a process to be launched ($EXEs), or both.
 	On "Start" success, sets: [ref]$EXEs = "ProcessName.exe"
 	https://learn.microsoft.com/en-us/windows-hardware/test/wpt/record-heap-snapshot
 #>
@@ -774,12 +795,19 @@ Param (
 
 		$Return = [ResultValue]::Started
 
-		if ($Names.Count -le 1) { return $Return }
+		if ($Names.Count -le 1)
+		{
+			Write-Action "Now capturing Windows Heap snapshots every $SnapshotInterval seconds via ETW for: $EXEs [$($ProcessID.Value)]"
+
+			return $Return
+		}
+
+		Write-Action "Windows Heap Snapshots are now enabled for: $EXEs"
+		Write-Action "Capturing Heap Snapshots every $SnapshotInterval seconds via ETW for: $($Processes.ProcessName) [$($Processes.Id)]"
+		Write-Msg
 
 		# Here we've waited for just one of multiple target Apps that are enabled for Heap Snapshot capture.
 		# That's the best we can do for now.
-		# Tell the user how to collect periodic or one-shot Heap Snapshots for other Apps/Processes if they want.
-		# In any case, they'll get a single Heap Snapshot at the end of tracing with the Stop command.
 	}
 	else
 	{
@@ -789,9 +817,10 @@ Param (
 		$Return = [ResultValue]::Success
 
 		# Here the user opted to not wait for the target App(s) to launch.
-		# Tell them how to collect periodic or one-shot Heap Snapshots for other Apps/Processes if they want.
-		# In any case, they'll get a single Heap Snapshot at the end of tracing with the Stop command.
 	}
+
+	# Tell the user how to collect periodic or one-shot Heap Snapshots for other Apps/Processes if they want.
+	# In any case, they'll get Heap Snapshots of all tracked processes at the end of tracing with the Stop command.
 
 	Write-Msg "You can manually capture individual Heap snapshots by Process ID by running:"
 	Write-Msg "`tWPR -SingleSnapshot Heap <PIDs> -InstanceName $InstanceName"
