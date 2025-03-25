@@ -11,20 +11,30 @@
 
 	.DESCRIPTION
 
-	.\TraceMondo Start [-Loop] [-Lean] [-CLR] [-JS]
-	.\TraceMondo Stop [-WPA [-Lean] [-FastSym]]
-	.\TraceMondo View [-Path <path>\MSO-Trace-Mondo.etl|.wpapk] [-Lean] [-FastSym]
-	.\TraceMondo Status
-	.\TraceMondo Cancel
-	  -Loop: Record only the last few minutes of activity (circular memory buffer).
+	Trace system activity: CPU, File, Disk, Handles, Network, Antivirus, ...
+	  TraceMondo Start [-Lean] [Start_Options]
+	  TraceMondo Stop  [-WPA [-Lean] [-FastSym]]
+
+	Trace Windows Restart: system activity.
+	  TraceMondo Start  -Boot [-Lean] [Start_Options]
+	  TraceMondo Stop   -Boot [-WPA [-Lean] [-FastSym]]
+
+	  TraceMondo View   [-Lean] [-Path <path>\MSO-Trace-Mondo.etl|.wpapk] [-FastSym]
+	  TraceMondo Status [-Boot]
+	  TraceMondo Cancel [-Boot]
+
 	  -Lean: Reduced provider set; fewer view profiles.
-	  -CLR:  Resolve call stacks for C# (Common Language Runtime).
-	  -JS:   Resolve call stacks for JavaScript.
-	  -WPA:  Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
+	  -Boot: Trace system activity during the next Windows Restart.
+	  -WPA : Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
 	  -Path: Optional path to a previously collected trace.
 	  -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
 	            See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
 	  -Verbose
+
+	Start_Options
+	  -Loop: Record only the last few minutes of activity (circular memory buffer).
+	  -CLR : Resolve symbolic stackwalks for C# (Common Language Runtime).
+	  -JS  : Resolve symbolic stackwalks for JavaScript.
 
 	.LINK
 
@@ -42,9 +52,12 @@ Param(
 	[Parameter(Position=0)]
 	[string]$Command,
 
-	# Record only the last few minutes of activity (circular memory buffer).
+	# "Record only the last few minutes of activity (circular memory buffer)."
 	[Parameter(ParameterSetName="Start")]
 	[switch]$Loop,
+
+	# "Trace system activity during the next Windows Restart."
+	[switch]$Boot,
 
 	# "Support Common Language Runtime / C#"
 	[Parameter(ParameterSetName="Start")]
@@ -58,7 +71,7 @@ Param(
 	[Parameter(ParameterSetName="Stop")]
 	[switch]$WPA,
 
-	# Reduced provider set
+	# "Reduced provider set"
 	[switch]$Lean,
 
 	# "Optional path to a previously collected trace: MSO-Trace-Mondo.etl"
@@ -184,7 +197,7 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 
 	# Use Windows Performance Recorder.  It's much simpler, but requires Admin privileges.
 
-	$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -CLR:$CLR -JS:$JS
+	$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -Boot:$Boot -CLR:$CLR -JS:$JS
 
 	switch ($Result)
 	{
@@ -205,8 +218,9 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 			Write-Warn "This is especially true when there is substantial Registry or File I/O traffic."
 			Write-Warn "To expose the ETW Overhead within WPA's CPU Samples, enable the `"Stack Tag`" column."
 
+			if (!$Path) { $Path = $(GetTraceFilePathString $TraceParams.InstanceName) }
 			Write-Info "`nAlso view network activity with:"
-			Write-Info "BETA\TraceNetwork View -Path `"$(GetTraceFilePathString $TraceParams.InstanceName)`""
+			Write-Info "BETA\TraceNetwork View -Path `"$Path`""
 		}
 	}
 
