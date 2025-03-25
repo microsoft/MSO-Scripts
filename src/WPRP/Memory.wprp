@@ -77,9 +77,10 @@
 
     <SystemProvider Id="SP_ReferenceSet" Base="SP_Base">
       <Keywords Operation="Add">
+	<!-- ReferenceSet also requires Memory keyword; incompatible with Memory mode tracing. -->
         <Keyword Value="ReferenceSet" />
-        <Keyword Value="VirtualAllocation" />
         <Keyword Value="Memory" />
+        <Keyword Value="VirtualAllocation" />
         <Keyword Value="MemoryInfo" />
         <Keyword Value="MemoryInfoWS" />
         <Keyword Value="HardFaults" />
@@ -221,9 +222,10 @@
       </Collectors>
     </Profile>
 
+<!-- Reference Set tracing is incompatible with Memory mode.
     <Profile Name="ReferenceSet" Description="Reference Set (RAM Usage) / VirtualAlloc / Memory Stats every 0.5 sec"
      DetailLevel="Verbose" LoggingMode="Memory" Base="ReferenceSet.Verbose.File" Id="ReferenceSet.Verbose.Memory" />
-
+-->
     <!-- LeanReferenceSet (Light) -->
 
     <Profile Name="LeanReferenceSet" Description="Lean Reference Set (RAM Usage), no stackwalks"
@@ -247,9 +249,10 @@
       </Collectors>
     </Profile>
 
+<!-- Reference Set tracing is incompatible with Memory mode.
     <Profile Name="LeanReferenceSet" Description="Lean Reference Set (RAM Usage), no stackwalks"
      DetailLevel="Light" LoggingMode="Memory" Base="LeanReferenceSet.Light.File" Id="LeanReferenceSet.Light.Memory" />
-
+-->
     <!-- MemoryStats (Light) -->
 
     <Profile Name="MemoryStats" Description="Memory Stats Per Process Every 1/2 Second"
