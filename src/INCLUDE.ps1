@@ -534,7 +534,7 @@ Param (
 	{
 		# $Name = <ScriptName> or <ScriptName>#<Switch>
 
-		$IsBoot = $Name.EndsWith('#Boot')
+		$IsBoot = ($Name -like '*[#.]Boot')
 
 		$StartTime = GetProfileStartDateTimeByName $Name -XSession:$IsBoot
 
