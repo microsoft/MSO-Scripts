@@ -12,25 +12,51 @@
 
 	.DESCRIPTION
 
-	.\TraceHeap Start -EXE Name.exe[,Name2.exe...] [-Loop] [-Snap [-Lean]] [-CLR] [-JS]
-	.\TraceHeap Start -ProcessID 1234 [-Loop] [-Snap [-Lean]] [-CLR] [-JS]
-	.\TraceHeap Start -Lean [-Loop] [-CLR] [-JS]
-	.\TraceHeap Stop [-Snap] [-WPA [-FastSym] [-Lean]]
-	.\TraceHeap View [-Path <path>\MSO-Trace-Heap.etl|.wpapk] [-Snap] [-Lean] [-FastSym]
-	.\TraceHeap Status [-Snap]
-	.\TraceHeap Cancel [-Snap]
-	    -EXE:  Trace Windows Heap allocations in a future process: Name.exe
-	    -ProcessID: Trace Windows Heap allocations in a running process with this PID.
-	    -Snap: Capture a Windows Heap Snapshot every 5 seconds, or every 5 minutes (-Lean).
-	    -Lean: Trace Committed Virtual Memory allocated via VirtualAlloc. (Windows Heap is built on VirtualAlloc).
-	    -Loop: Record only the last few minutes of activity (circular memory buffer). 
-	    -CLR:  Resolve call stacks for C# (Common Language Runtime).
-	    -JS:   Resolve call stacks for JavaScript.
-	    -WPA:  Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
-	    -Path: Optional path to a previously collected trace.
-	    -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
-	              See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
-	    -Verbose
+	Trace Heap Activity by Process Name or by Process ID.
+	  TraceHeap Start -EXE Name.exe[,Name2.exe...] [Start_Options]
+	  TraceHeap Start -ProcessID 1234 [Start_Options]
+	  TraceHeap Stop [-WPA [-FastSym]]
+	  TraceHeap View [-Path <path>\MSO-Trace-Heap.etl|.wpapk] [-FastSym]
+
+	Trace Heap Snapshots by Process Name or by Process ID.
+	  TraceHeap Start -Snap [-Lean] -EXE Name.exe[,Name2.exe...] [Start_Options]
+	  TraceHeap Start -Snap [-Lean] -ProcessID 1234 [Start_Options]
+	  TraceHeap Stop  -Snap [-WPA [-Lean] [-FastSym]]
+	  TraceHeap View  -Snap [-Lean] [-Path <path>\MSO-Trace-Heap.etl|.wpapk] [-FastSym]
+
+	Trace Virtual Memory / Windows Heap allocations via VirtualAlloc.
+	  TraceHeap Start -Lean [Start_Options]
+	  TraceHeap Stop [-WPA -Lean [-FastSym]]
+	  TraceHeap View  -Lean [-Path <path>\MSO-Trace-Heap.etl|.wpapk] [-FastSym]
+
+	Trace Windows Restart: Heap Activity by Process Name.
+	  TraceHeap Start -Boot -EXE Name.exe[,Name2.exe...] [Start_Options]
+	  TraceHeap Stop  -Boot [-WPA [-FastSym]]
+	  TraceHeap View [-Path <path>\MSO-Trace-Heap.etl|.wpapk] [-FastSym]
+
+	Trace Windows Restart: Virtual Memory / Windows Heap allocations via VirtualAlloc.
+	  TraceHeap Start -Boot -Lean [Start_Options]
+	  TraceHeap Stop  -Boot [-WPA -Lean [-FastSym]]
+	  TraceHeap View  -Lean [-Path <path>\MSO-Trace-Heap.etl|.wpapk] [-FastSym]
+
+	  TraceHeap Status [-Snap] [-Boot]
+	  TraceHeap Cancel [-Snap] [-Boot]
+
+	  -EXE:  Trace Windows Heap allocations in a future process: Name.exe
+	  -ProcessID: Trace Windows Heap allocations in a running process with this PID.
+	  -Snap: Capture a Windows Heap Snapshot every 5 seconds, or every 5 minutes (-Lean).
+	  -Lean: Trace Committed Virtual Memory allocated via VirtualAlloc. (Windows Heap is built on VirtualAlloc).
+	  -Boot: Trace CPU activity during the next Windows Restart.
+	  -WPA : Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
+	  -Path: Optional path to a previously collected trace.
+	  -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
+	            See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
+	  -Verbose
+
+	Start_Options
+	  -Loop: Record only the last few minutes of activity (circular memory buffer).
+	  -CLR : Resolve symbolic stackwalks for C# (Common Language Runtime).
+	  -JS  : Resolve symbolic stackwalks for JavaScript.
 
 	.LINK
 
@@ -77,13 +103,16 @@ Param(
 	[Parameter(ParameterSetName="StartEXE")]
 	[switch]$Loop,
 
-	# Resove call stacks for C# / Common Language Runtime
+	# Trace CPU activity during the next Windows Restart.
+	[switch]$Boot,
+
+	# Resove symbolic stackwalks for C# / Common Language Runtime
 	[Parameter(ParameterSetName="StartLean")]
 	[Parameter(ParameterSetName="StartPID")]
 	[Parameter(ParameterSetName="StartEXE")]
 	[switch]$CLR,
 
-	# Resolve calls tacks for JavaScript
+	# Resolve symbolic stackwalks for JavaScript
 	[Parameter(ParameterSetName="StartLean")]
 	[Parameter(ParameterSetName="StartPID")]
 	[Parameter(ParameterSetName="StartEXE")]
@@ -199,20 +228,38 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 
 if ($Snap)
 {
+	if ($Boot)
+	{
+		Write-Err "-Boot and -Snap are incompatible."
+		Write-Err "Run: $(GetScriptCommand) -?"
+		exit 1
+	}
+
 	$Result = [ResultValue]::Success
 
 	$Result = PrepareHeapSnapshotCommand $Command -ProcessId:$ProcessID -EXEs:([ref]$EXE) -InstanceName:$TraceParams.InstanceName
 
 	if ($Result -eq [ResultValue]::Success)
 	{
-		# WPA (v11.7, etc.) doesn't work with Heap Snapshots in memory mode / circular buffer.
 		if ($Loop)
 		{
-			Write-Warn "Ignoring -Loop for this Heap Snapshot trace."
-			if (!$Lean) { Write-Warn "Consider using -Lean instead to reduce the snapshot frequency." }
+			# WPA before v11.8.186 doesn't work with Heap Snapshots in memory mode / circular buffer.
+			$VersionLoop = [Version]'11.8.186'
+
+			$WpaPath = GetWptExePath "WPA.exe" -Silent
+			$VersionWPA = GetFileVersion $WpaPath # $Null is okay
+
+			Write-Status "WARNING: A memory trace captured with `"-Snap -Loop`" may not work in versions of WPA earlier than: $VersionLoop"
+			Write-Status "Current version of WPA: $VersionWPA"
+
+			if ($VersionWPA -lt $VersionLoop)
+			{
+				Write-Warn "Ignoring -Loop for this Heap Snapshot trace."
+				if (!$Lean) { Write-Warn "Consider using -Lean instead to reduce the snapshot frequency." }
+			}
 		}
 
-		$Result = ProcessTraceCommand $Command @TraceParams -CLR:$CLR -JS:$JS # -Loop:$Loop
+		$Result = ProcessTraceCommand $Command @TraceParams -Boot:$Boot -CLR:$CLR -JS:$JS # -Loop:$Loop
 	}
 
 	switch ($Result)
@@ -247,16 +294,23 @@ if ($Snap)
 }
 else # !Snap
 {
+	if ($Boot -and $ProcessID)
+	{
+		Write-Err "-Boot and -ProcessID are incompatible."
+		Write-Err "Run: $(GetScriptCommand) -?"
+		exit 1
+	}
+
 	$Result = [ResultValue]::Success
 
 	if (!$Lean)
 	{
-		$Result = PrepareHeapTraceCommand $Command -TraceParams:$TraceParams -ProcessID:$ProcessID -EXEs:([ref]$EXE)
+		$Result = PrepareHeapTraceCommand $Command -TraceParams:$TraceParams -ProcessID:$ProcessID -EXEs:([ref]$EXE) -Boot:$Boot
 	}
 
 	if ($Result -eq [ResultValue]::Success)
 	{
-		$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -CLR:$CLR -JS:$JS
+		$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -Boot:$Boot -CLR:$CLR -JS:$JS
 	}
 
 	switch ($Result)
