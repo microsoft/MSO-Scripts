@@ -11,23 +11,35 @@
 
 	.DESCRIPTION
 
-	.\TraceMemory Start  [-Lean | -Lite | -Stats | -Snap] [-Loop] [-CLR] [-JS]
-	.\TraceMemory Stop   [-Lean | -Lite | -Stats | -Snap] [-WPA [-FastSym]]
-	.\TraceMemory View   [-Lean | -Lite | -Stats | -Snap] [-Path <path>\MSO-Trace-Memory.etl|.wpapk] [-FastSym]
-	.\TraceMemory Status [-Lean | -Lite | -Stats | -Snap]
-	.\TraceMemory Cancel [-Lean | -Lite | -Stats | -Snap]
-	    -Lean:   Reduced data collection: Reference Set (RAM Impact), no stackwalks.
-	    -Lite:   Reduced data collection: Private Commit Charge (Committed VMem Charged to Pagefile)
-	    -Stats:  Reduced data collection: Memory stats every 0.5 sec.
-	    -Snap:   Reduced data collection: Resident Set memory snapshot
-	    -Loop:   Record only the last few minutes of activity (circular memory buffer). 
-	    -CLR:    Resolve call stacks for C# (Common Language Runtime).
-	    -JS:     Resolve call stacks for JavaScript.
-	    -WPA:    Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
-	    -Path:   Optional path to a previously collected trace.
-	    -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
-	              See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
-	    -Verbose
+	Trace memory activity.
+	  TraceMemory Start  [-Lean | -Lite | -Stats | -Snap] [Start_Options]
+	  TraceMemory Stop   [-Lean | -Lite | -Stats | -Snap] [-WPA [-FastSym]]
+	  TraceMemory View   [-Lean | -Lite | -Stats | -Snap] [-Path <path>\MSO-Trace-Memory.etl|.wpapk] [-FastSym]
+	  TraceMemory Status [-Lean | -Lite | -Stats | -Snap]
+	  TraceMemory Cancel [-Lean | -Lite | -Stats | -Snap]
+
+	Trace Windows Restart: memory activity.
+	  TraceMemory Start  -Boot [-Lean | -Lite | -Stats | -Snap] [Start_Options]
+	  TraceMemory Stop   -Boot [-Lean | -Lite | -Stats | -Snap] [-WPA [-FastSym]]
+	  TraceMemory View         [-Lean | -Lite | -Stats | -Snap] [-Path <path>\MSO-Trace-Memory.etl|.wpapk] [-FastSym]
+	  TraceMemory Status -Boot [-Lean | -Lite | -Stats | -Snap]
+	  TraceMemory Cancel -Boot [-Lean | -Lite | -Stats | -Snap]
+
+	  -Lean : Reduced data collection: Reference Set (RAM Impact), no stackwalks.
+	  -Lite : Reduced data collection: Private Commit Charge (Committed VMem Charged to Pagefile)
+	  -Stats: Reduced data collection: Memory stats every 0.5 sec.
+	  -Snap : Reduced data collection: Resident Set memory snapshot
+	  -Boot : Trace Memory activity during the next Windows Restart.
+	  -WPA  : Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
+	  -Path : Optional path to a previously collected trace.
+	  -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
+	            See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
+	  -Verbose
+
+	Start_Options
+	  -Loop:   Record only the last few minutes of activity (circular memory buffer).
+	  -CLR :   Resolve symbolic stackwalks for C# (Common Language Runtime).
+	  -JS  :   Resolve symbolic stackwalks for JavaScript.
 
 	.LINK
 
@@ -55,9 +67,12 @@ Param(
 	# "Capture Resident Set snapshot"
 	[switch]$Snap,
 
-	# Record only the last few minutes of activity (circular memory buffer).
+	# "Record only the last few minutes of activity (circular memory buffer)."
 	[Parameter(ParameterSetName="Start")]
 	[switch]$Loop,
+
+	# "Trace Memory activity during the next Windows Restart."
+	[switch]$Boot,
 
 	# "Support Common Language Runtime / C#"
 	[Parameter(ParameterSetName="Start")]
@@ -96,7 +111,7 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 	@{
 		RecordingProfiles =
 		@(
-			# Capture Memory Info (Reference Set, etc.) with call stacks for all processes.
+			# Capture Memory Info (Reference Set, etc.) with stackwalks for all processes.
 			# To see the available profiles, run: wpr -profiles .\WPRP\Memory.wprp
 			".\WPRP\Memory.wprp!ReferenceSet"
 			".\WPRP\OfficeProviders.wprp!CodeMarkers" # Code Markers, HVAs, other light logging
@@ -178,7 +193,7 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 	{
 		if ($Option) { Write-Err "Ignoring: -$Option" }
 		$Option = 'Snap'
-		$TraceParams.RecordingProfiles[0] = ".\Wprp\Memory.wprp!ReferenceSet"
+		$TraceParams.RecordingProfiles[0] = ".\WPRP\Memory.wprp!ResidentSet"
 		$ViewerParams.ViewerConfig = ".\WPAP\BasicInfo.wpaProfile", ".\WPAP\VirtualAlloc.wpaProfile", ".\WPAP\ResidentSet.wpaProfile"
 	}
 	if ($Option)
@@ -188,12 +203,18 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 		$Option = " -$Option"
 	}
 
+	if ($Loop -and (!$Option -or $Lean))
+	{
+		Write-Warn "Reference Set memory tracing is incompatible with memory mode. Ignoring: -LOOP"
+		$Loop = $False
+	}
+
 # ===== END CUSTOMIZE ====
 
 # Main
 
 	# Use Windows Performance Recorder.  It's much simpler, but requires Admin privileges.
-	$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -CLR:$CLR -JS:$JS
+	$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -Boot:$Boot -CLR:$CLR -JS:$JS
 
 	switch ($Result)
 	{
