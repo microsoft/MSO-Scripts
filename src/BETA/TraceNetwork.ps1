@@ -6,24 +6,34 @@
 
 	.SYNOPSIS
 
-	Capture and View an ETW trace:
-	Network Activity
+	Capture an ETW trace of Network Activity
+	and view it using the NetBlame WPA Add-in.
 
 	.DESCRIPTION
 
-	.\TraceNetwork Start [-Loop] [-CLR] [-JS]
-	.\TraceNetwork Stop [-WPA [-FastSym]]
-	.\TraceNetwork View [-Path <path>\MSO-Trace-Network.etl|.wpapk] [-FastSym]
-	.\TraceNetwork Status
-	.\TraceNetwork Cancel
-	    -Loop: Record only the last few minutes of activity (circular memory buffer).
-	    -CLR:  Resolve call stacks for C# (Common Language Runtime).
-	    -JS:   Resolve call stacks for JavaScript.
-	    -WPA:  Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
-	    -Path: Optional path to a previously collected trace.
-	    -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
-	              See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
-	    -Verbose
+	Trace Network activity.
+	  TraceNetwork Start [Start_Options]
+	  TraceNetwork Stop  [-WPA [-FastSym]]
+
+	Trace Windows Restart: Network activity.
+	  TraceNetwork Start -Boot [Start_Options]
+	  TraceNetwork Stop  -Boot [-WPA [-FastSym]]
+
+	  TraceNetwork View   [-Path <path>\MSO-Trace-Network.etl|.wpapk] [-FastSym]
+	  TraceNetwork Status [-Boot]
+	  TraceNetwork Cancel [-Boot]
+
+	  -Boot: Trace Network activity during the next Windows Restart.
+	  -WPA:  Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
+	  -Path: Optional path to a previously collected trace.
+	  -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
+	            See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
+	  -Verbose
+
+	Start_Options
+	  -Loop: Record only the last few minutes of activity (circular memory buffer).
+	  -CLR : Resolve call stacks for C# (Common Language Runtime).
+	  -JS  : Resolve call stacks for JavaScript.
 
 	.LINK
 
@@ -42,6 +52,9 @@ Param(
 	[Parameter(ParameterSetName="Start")]
 	[switch]$Loop,
 
+	# Trace Network activity during the next Windows Restart.
+	[switch]$Boot,
+
 	# "Support Common Language Runtime / C#"
 	[Parameter(ParameterSetName="Start")]
 	[switch]$CLR,
@@ -58,7 +71,7 @@ Param(
 	[Parameter(ParameterSetName="View")]
 	[string]$Path = $Null,
 
-	# "Load symbols via SymCache only, not PDB."
+	# "Faster symbol resolution by loading only from SymCache, not PDB"
 	[Parameter(ParameterSetName="Stop")]
 	[Parameter(ParameterSetName="View")]
 	[switch]$FastSym
@@ -136,8 +149,10 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 . "$ScriptRootPath\INCLUDE.ps1"
 
 $VersionMinForAddin = [Version]'11.0.7' # This version and later use SDK v1.0.7+
+$VersionForProcessors = [Version]'11.8.0' # Version 11.8.262 and later requires: -Processors (Earlier versions allow it.)
 
 $AddInPath = "$script:ScriptHomePath\ADDIN" # Uses SDK v1.0.7+
+$Processors = '"Event Tracing for Windows","Office_NetBlame"'
 
 <#
 	Setup and launch the Windows Performance Analyzer.
@@ -210,11 +225,15 @@ Param ( # $ViewerParams 'parameter splat'
 	Write-Msg "Opening trace:" (ReplaceEnv $TraceFilePath)
 	Write-Msg "Using the NetBlame Add-in."
 
-	# Now load LaunchViewerCommand and related.
+	# The add-in resolves symbols. Don't also enable the main WPA symbol resolution mechanism.
 
-	. "$ScriptRootPath\INCLUDE.WPA.ps1"
+	$ExtraParams = GetArgs -addsearchdir $AddInPath -NoSymbols
 
-	$ExtraParams = GetArgs -addsearchdir $AddInPath
+	if (!$Version -or ($Version -ge $VersionForProcessors))
+	{
+		# Required for WPA.bat or WPA.exe v11.8+ to bypass the New WPA Launcher
+		$ExtraParams = GetArgs -processors $Processors -addsearchdir $AddInPath -NoSymbols
+	}
 
 	if ($FastSym)
 	{
@@ -225,7 +244,9 @@ Param ( # $ViewerParams 'parameter splat'
 		$Env:_NT_SYMBOL_PATH = $Null
 	}
 
-	$ExtraParams += GetArgs -NoSymbols # The add-in resolves symbols. Don't also enable the main WPA symbol resolution mechanism.
+	# Now load LaunchViewerCommand and related.
+
+	. "$ScriptRootPath\INCLUDE.WPA.ps1"
 
 	$Result = LaunchViewerCommand $WpaPath $TraceFilePath $ViewerConfig $Version -FastSym:$FastSym $ExtraParams
 
@@ -234,9 +255,7 @@ Param ( # $ViewerParams 'parameter splat'
 
 # Main
 
-# Use Windows Performance Recorder (WPR).
-
-$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -CLR:$CLR -JS:$JS
+$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -Boot:$Boot -CLR:$CLR -JS:$JS
 
 switch ($Result)
 {
