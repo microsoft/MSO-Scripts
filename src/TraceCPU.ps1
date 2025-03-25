@@ -35,7 +35,7 @@
 	            See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
 	  -Verbose
 
-	Start Options
+	Start_Options
 	  -Loop: Record only the last few minutes of activity (circular memory buffer).
 	  -CLR : Resolve symbolic stackwalks for C# (Common Language Runtime).
 	  -JS  : Resolve symbolic stackwalks for JavaScript.
@@ -225,7 +225,7 @@ Param (
 # Main
 
 	# Change the base recording profile: Capture only 'Lean' or 'Lite' CPU Samples.
-	# Or if there are LOTS of threads on the system, disable the thread stackwalk rundown.
+	# Or if there are LOTS of threads on the system, disable the thread rundown with stackwalk.
 
 	if ($Command -eq "Start")
 	{
@@ -258,7 +258,7 @@ Param (
 				exit 1
 			}
 
-			Write-Warn "-Loop: Disabling thread stackwalk rundown."
+			Write-Warn "-Loop: Disabling thread rundown with stackwalk."
 
 			$TraceParams.RecordingProfiles[0] = $RecordingProfileFaster
 		}
@@ -270,7 +270,7 @@ Param (
 
 			if (CheckSystemThreadCount $ThreadCount)
 			{
-				Write-Warn "There are $($ThreadCount.Sum) threads on the system. Thread stackwalk rundown may be slow."
+				Write-Warn "There are $($ThreadCount.Sum) threads on the system. Thread rundown `& stackwalk may be slow."
 			}
 		}
 		else # (!$Lean -and !$Lite -and !$Loop -and !$Hang -and !Boot)
@@ -286,7 +286,7 @@ Param (
 			}
 			else
 			{
-				Write-Status "Enabling thread stackwalk rundown."
+				Write-Status "Enabling thread rundown with stackwalk."
 
 				# Already set: $TraceParams.RecordingProfiles
 			}
