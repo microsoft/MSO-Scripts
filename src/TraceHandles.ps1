@@ -11,19 +11,29 @@
 
 	.DESCRIPTION
 
-	.\TraceHandles Start [-Loop] [-CLR] [-JS]
-	.\TraceHandles Stop [-WPA [-FastSym]]
-	.\TraceHandles View [-Path <path>\MSO-Trace-Handles.etl|.wpapk] [-FastSym]
-	.\TraceHandles Status
-	.\TraceHandles Cancel
-	    -Loop: Record only the last few minutes of activity (circular memory buffer). 
-	    -CLR:  Resolve call stacks for C# (Common Language Runtime).
-	    -JS:   Resolve call stacks for JavaScript.
-	    -WPA:  Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
-	    -Path: Optional path to a previously collected trace.
-	    -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
-	              See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
-	    -Verbose
+	Trace system handle activity.
+	  TraceHandles Start [Start_Options]
+	  TraceHandles Stop  [-WPA [-FastSym]]
+
+	Trace Windows Restart: system handle activity.
+	  TraceHandles Start -Boot [Start_Options]
+	  TraceHandles Stop  -Boot [-WPA [-FastSym]]
+
+	  TraceHandles View   [-Path <path>\MSO-Trace-Handles.etl|.wpapk] [-FastSym]
+	  TraceHandles Status [-Boot]
+	  TraceHandles Cancel [-Boot]
+
+	  -Boot: Trace Handle activity during the next Windows Restart.
+	  -WPA : Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
+	  -Path: Optional path to a previously collected trace.
+	  -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
+	            See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
+	  -Verbose
+
+	Start_Options
+	  -Loop: Record only the last few minutes of activity (circular memory buffer).
+	  -CLR : Resolve symbolic stackwalks for C# (Common Language Runtime).
+	  -JS  : Resolve symbolic stackwalks for JavaScript.
 
 	.LINK
 
@@ -39,9 +49,12 @@ Param(
 	[Parameter(Position=0)]
 	[string]$Command,
 
-	# Record only the last few minutes of activity (circular memory buffer).
+	# "Record only the last few minutes of activity (circular memory buffer)."
 	[Parameter(ParameterSetName="Start")]
 	[switch]$Loop,
+
+	# "Trace Handle activity during the next Windows Restart."
+	[switch]$Boot,
 
 	# "Support Common Language Runtime / C#"
 	[Parameter(ParameterSetName="Start")]
@@ -186,7 +199,7 @@ function WarnViewerForHandles
 
 	# Tracing GDI / User handles is available in Windows 10.0.18315 and above.
 
-	$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -CLR:$CLR -JS:$JS
+	$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -Boot:$Boot -CLR:$CLR -JS:$JS
 
 	switch ($Result)
 	{

@@ -11,23 +11,34 @@
 
 	.DESCRIPTION
 
-	.\TraceCPU Start [-Lean|-Lite|-Hang] [-Loop] [-CLR] [-JS]
-	.\TraceCPU Stop [-WPA [-FastSym]] [-Hang]
-	.\TraceCPU View [-Path <path>\MSO-Trace-CPU.etl|.wpapk] [-FastSym] [-Hang]
-	.\TraceCPU Status
-	.\TraceCPU Cancel
-	  -Lean: Reduced data collection: CPU samples only, no stackwalk.
+	Trace CPU and Thread Activity
+	  TraceCPU Start [-Hang|-Lean|-Lite] [Start_Options]
+	  TraceCPU Stop  [-WPA [-Hang] [-FastSym]]
+	  TraceCPU View  [-Hang] [-Path <path>\MSO-Trace-CPU.etl|.wpapk] [-FastSym]
+
+	Trace Windows Restart: CPU and Thread Activity
+	  TraceCPU Start  -Boot [-Lean|-Lite] [Start_Options]
+	  TraceCPU Stop   -Boot [-WPA [-FastSym]]
+	  TraceCPU View  [-Path <path>\MSO-Trace-CPU.etl|.wpapk] [-FastSym]
+
+	  TraceCPU Status [-Boot]
+	  TraceCPU Cancel [-Boot]
+
+	  -Lean: Restricted data collection: CPU samples only, no stackwalk.
 	  -Lite: Reduced data collection: CPU samples only, with stackwalk.
 	  -Hang: Reduced data collection: Stackwalk all threads at Start and Stop.
 	         (May be slow to Start and to Stop with high system thread count.)
-	  -Loop: Record only the last few minutes of activity (circular memory buffer). 
-	  -CLR:  Resolve call stacks for C# (Common Language Runtime).
-	  -JS:   Resolve call stacks for JavaScript.
-	  -WPA:  Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
+	  -Boot: Trace CPU activity during the next Windows Restart.
+	  -WPA : Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
 	  -Path: Optional path to a previously collected trace.
 	  -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
 	            See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
 	  -Verbose
+
+	Start Options
+	  -Loop: Record only the last few minutes of activity (circular memory buffer).
+	  -CLR : Resolve symbolic stackwalks for C# (Common Language Runtime).
+	  -JS  : Resolve symbolic stackwalks for JavaScript.
 
 	.LINK
 
@@ -56,9 +67,12 @@ Param(
 	[Parameter(ParameterSetName="View")]
 	[switch]$Hang,
 
-	# Record only the last few minutes of activity (circular memory buffer).
+	# "Record only the last few minutes of activity (circular memory buffer)."
 	[Parameter(ParameterSetName="Start")]
 	[switch]$Loop,
+
+	# "Trace CPU activity during the next Windows Restart."
+	[switch]$Boot,
 
 	# "Support Common Language Runtime / C#"
 	[Parameter(ParameterSetName="Start")]
@@ -90,7 +104,7 @@ Param(
 	@{
 		RecordingProfiles =
 		@(
-			# Capture CPU Samples and Dispatcher Info with call stacks for all processes.
+			# Capture CPU Samples and Dispatcher Info with symbolic stackwalks for all processes.
 			".\WPRP\CPU.wprp!CPU-DispatchEx" # Includes: Code Markers, HVAs, other light logging
 			".\WPRP\Defender.wprp!AntiMalware.Light"
 
@@ -223,8 +237,18 @@ Param (
 		{
 			$TraceParams.RecordingProfiles = $RecordingProfileLite
 		}
+		elseif ($Boot)
+		{
+			if ($Hang)
+			{
+				Write-Err "-Boot and -Hang are incompatible."
+				exit 1
+			}
 
-		if ($Loop)
+			# No thread rundown during Windows restart.
+			$TraceParams.RecordingProfiles[0] = $RecordingProfileFaster
+		}
+		elseif ($Loop)
 		{
 			# WPR doesn't do rundown in Memory mode. It would tend to age out of the circular buffer anyway.
 
@@ -249,7 +273,7 @@ Param (
 				Write-Warn "There are $($ThreadCount.Sum) threads on the system. Thread stackwalk rundown may be slow."
 			}
 		}
-		elseif (!$Lean -and !$Lite) # (!$Lean -and !$Lite -and !$Loop -and !$Hang)
+		else # (!$Lean -and !$Lite -and !$Loop -and !$Hang -and !Boot)
 		{
 			$ThreadCount = SystemThreadCount
 
@@ -262,7 +286,7 @@ Param (
 			}
 			else
 			{
-				Write-Status "Enabling thread call stack rundown."
+				Write-Status "Enabling thread stackwalk rundown."
 
 				# Already set: $TraceParams.RecordingProfiles
 			}
@@ -271,7 +295,7 @@ Param (
 
 	# Use Windows Performance Recorder (WPR).  It's much simpler, but requires Admin privileges.
 
-	$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -CLR:$CLR -JS:$JS
+	$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -Boot:$Boot -CLR:$CLR -JS:$JS
 
 	switch ($Result)
 	{
@@ -291,7 +315,7 @@ Param (
 		$HangSwitch = Ternary $Hang "-WPA -Hang" "-WPA"
 		Write-Msg "Exercise the application, then run: $(GetScriptCommand) Stop [$HangSwitch]"
 	}
-	Collected { $Null = _WriteTraceCollectedExtra $TraceParams.InstanceName $(Ternary $Hang "-Hang" $Null) } # $WPA switch
+	Collected { $Null = _WriteTraceCollectedExtra $ViewerParams.TraceName $(Ternary $Hang "-Hang" $Null) } # $WPA switch
 	View      { $WPA = $True }
 	Success   { $WPA = $False }
 	Error     { exit 1 }

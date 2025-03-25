@@ -13,24 +13,44 @@
 
 	.DESCRIPTION
 
-	.\TraceHeapEx Start -EXE Name.exe[,Name2.exe...] [-Loop] [-CLR] [-JS]
-	.\TraceHeapEx Start -ProcessID 1234 [-Loop] [-CLR] [-JS]
-	.\TraceHeapEx Start -Lean [-Loop] [-CLR] [-JS]
-	.\TraceHeapEx Stop [-WPA [-FastSym] [-Lean]]
-	.\TraceHeapEx View [-Path <path>\MSO-Trace-HeapX.etl|.wpapk] [-Lean] [-FastSym]
-	.\TraceHeapEx Status
-	.\TraceHeapEx Cancel
-	    -EXE:  Trace Windows Heap allocations in a future process: Name.exe
-	    -ProcessID: Trace Windows Heap allocations in a running process with this PID.
-	    -Lean: Trace Committed Virtual Memory allocated via VirtualAlloc. (Windows Heap is built on VirtualAlloc).
-	    -Loop: Record only the last few minutes of activity (circular memory buffer). 
-	    -CLR:  Resolve call stacks for C# (Common Language Runtime).
-	    -JS:   Resolve call stacks for JavaScript.
-	    -WPA:  Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
-	    -Path: Optional path to a previously collected trace.
-	    -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
+	Trace Heap Activity by Process Name or by Process ID.
+	  TraceHeapEx Start -EXE Name.exe[,Name2.exe...] [Start_Options]
+	  TraceHeapEx Start -ProcessID 1234 [Start_Options]
+	  TraceHeapEx Stop [-WPA [-FastSym]]
+	  TraceHeapEx View [-Path <path>\MSO-Trace-Heap.etl|.wpapk] [-FastSym]
+
+	Trace Virtual Memory / Windows Heap allocations via VirtualAlloc.
+	  TraceHeapEx Start -Lean [Start_Options]
+	  TraceHeapEx Stop [-WPA -Lean [-FastSym]]
+	  TraceHeapEx View  -Lean [-Path <path>\MSO-Trace-Heap.etl|.wpapk] [-FastSym]
+
+	Trace Windows Restart: Heap Activity by Process Name.
+	  TraceHeapEx Start -Boot -EXE Name.exe[,Name2.exe...] [Start_Options]
+	  TraceHeapEx Stop  -Boot [-WPA [-FastSym]]
+	  TraceHeapEx View        [-Path <path>\MSO-Trace-Heap.etl|.wpapk] [-FastSym]
+
+	Trace Windows Restart: Virtual Memory / Windows Heap allocations via VirtualAlloc.
+	  TraceHeapEx Start -Boot -Lean [Start_Options]
+	  TraceHeapEx Stop  -Boot [-WPA -Lean [-FastSym]]
+	  TraceHeapEx View        -Lean [-Path <path>\MSO-Trace-Heap.etl|.wpapk] [-FastSym]
+
+	  TraceHeapEx Status [-Snap] [-Boot]
+	  TraceHeapEx Cancel [-Snap] [-Boot]
+
+	  -EXE : Trace Windows Heap allocations in a future process: Name.exe
+	  -ProcessID: Trace Windows Heap allocations in a running process with this PID.
+	  -Lean: Trace Committed Virtual Memory allocated via VirtualAlloc. (Windows Heap is built on VirtualAlloc).
+	  -Boot: Trace CPU activity during the next Windows Restart.
+	  -WPA : Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
+	  -Path: Optional path to a previously collected trace.
+	  -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
 	              See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
-	    -Verbose
+	  -Verbose
+
+	Start_Options
+	  -Loop: Record only the last few minutes of activity (circular memory buffer).
+	  -CLR : Resolve symbolic stackwalks for C# (Common Language Runtime).
+	  -JS  : Resolve symbolic stackwalks for JavaScript.
 
 	.LINK
 
@@ -68,13 +88,16 @@ Param(
 	[Parameter(ParameterSetName="StartLean")]
 	[switch]$Loop,
 
-	# Resove call stacks for C# / Common Language Runtime
+	# Trace CPU activity during the next Windows Restart.
+	[switch]$Boot,
+
+	# Resove symbolic stackwalks for C# / Common Language Runtime
 	[Parameter(ParameterSetName="StartPID")]
 	[Parameter(ParameterSetName="StartEXE")]
 	[Parameter(ParameterSetName="StartLean")]
 	[switch]$CLR,
 
-	# Resolve calls tacks for JavaScript
+	# Resolve symbolic stackwalks for JavaScript
 	[Parameter(ParameterSetName="StartPID")]
 	[Parameter(ParameterSetName="StartEXE")]
 	[Parameter(ParameterSetName="StartLean")]
@@ -180,16 +203,23 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 
 # Main
 
+	if ($Boot -and $ProcessID)
+	{
+		Write-Err "-Boot and -ProcessID are incompatible."
+		Write-Err "Run: $(GetScriptCommand) -?"
+		exit 1
+	}
+
 	$Result = [ResultValue]::Success
 
 	if (!$Lean)
 	{
-		$Result = PrepareHeapTraceCommand $Command -TraceParams:$TraceParams -ProcessID:$ProcessID -EXEs:([ref]$EXE)
+		$Result = PrepareHeapTraceCommand $Command -TraceParams:$TraceParams -ProcessID:$ProcessID -EXEs:([ref]$EXE) -Boot:$Boot
 	}
 
 	if ($Result -eq [ResultValue]::Success)
 	{
-		$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -CLR:$CLR -JS:$JS
+		$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -Boot:$Boot -CLR:$CLR -JS:$JS
 	}
 
 	switch ($Result)

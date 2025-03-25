@@ -11,20 +11,30 @@
 
 	.DESCRIPTION
 
-	.\TraceFileDiskIO Start [-Lean] [-Loop] [-CLR] [-JS]
-	.\TraceFileDiskIO Stop [-WPA [-FastSym]]
-	.\TraceFileDiskIO View [-Path <path>\MSO-Trace-FileDiskIO.etl|.wpapk] [-FastSym]
-	.\TraceFileDiskIO Status
-	.\TraceFileDiskIO Cancel
-	    -Lean: Reduced data collection: no mini-filter tracing, reduced stackwalking
-	    -Loop: Record only the last few minutes of activity (circular memory buffer). 
-	    -CLR:  Resolve call stacks for C# (Common Language Runtime).
-	    -JS:   Resolve call stacks for JavaScript.
-	    -WPA:  Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
-	    -Path: Optional path to a previously collected trace.
-	    -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
-	              See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
-	    -Verbose
+	Trace File/Disk activity.
+	  TraceFileDiskIO Start [-Lean] [Start_Options]
+	  TraceFileDiskIO Stop  [-WPA [-FastSym]]
+
+	Trace Windows Restart: File/Disk activity.
+	  TraceFileDiskIO Start -Boot [-Lean] [Start_Options]
+	  TraceFileDiskIO Stop  -Boot [-WPA [-FastSym]]
+
+	  TraceFileDiskIO View   [-Path <path>\MSO-Trace-FileDiskIO.etl|.wpapk] [-FastSym]
+	  TraceFileDiskIO Status [-Boot]
+	  TraceFileDiskIO Cancel [-Boot]
+
+	  -Lean: Reduced data collection: no mini-filter tracing, reduced stackwalking.
+	  -Boot: Trace File/Disk activity during the next Windows Restart.
+	  -WPA : Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
+	  -Path: Optional path to a previously collected trace.
+	  -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
+	            See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
+	  -Verbose
+
+	Start_Options
+	  -Loop: Record only the last few minutes of activity (circular memory buffer).
+	  -CLR : Resolve symbolic stackwalks for C# (Common Language Runtime).
+	  -JS  : Resolve symbolic stackwalks for JavaScript.
 
 	.LINK
 
@@ -43,9 +53,12 @@ Param(
 	[Parameter(ParameterSetName="Start")]
 	[switch]$Lean,
 
-	# Record only the last few minutes of activity (circular memory buffer).
+	# "Record only the last few minutes of activity (circular memory buffer)."
 	[Parameter(ParameterSetName="Start")]
 	[switch]$Loop,
+
+	# "Trace File/Disk activity during the next Windows Restart."
+	[switch]$Boot,
 
 	# "Support Common Language Runtime / C#"
 	[Parameter(ParameterSetName="Start")]
@@ -77,7 +90,7 @@ Param(
 	@{
 		RecordingProfiles =
 		@(
-			# Capture FileIO and DiskIO events with call stacks for all processes.
+			# Capture FileIO and DiskIO events with stackwalks for all processes.
 			# To see the available profiles, run: wpr -profiles .\WPRP\FileDiskIO.wprp
 			".\WPRP\FileDiskIO.wprp!FileAndDiskIO"
 			".\WPRP\OfficeProviders.wprp!CodeMarkers" # Code Markers, HVAs, other light logging
@@ -143,7 +156,7 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 
 	# Use Windows Performance Recorder.  It's much simpler, but requires Admin privileges.
 
-	$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -CLR:$CLR -JS:$JS
+	$Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -Boot:$Boot -CLR:$CLR -JS:$JS
 
 	switch ($Result)
 	{
