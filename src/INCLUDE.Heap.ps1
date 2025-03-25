@@ -238,7 +238,6 @@ function InvokeWprAndWarn
 
 <#
 	Return $False if any string doesn't look like valid: NAME.exe
-	Warn if any string represents a process already running.
 #>
 function TestExeList
 {
@@ -254,7 +253,18 @@ Param (
 			return $False
 		}
 	}
+	return $True
+}
 
+
+<#
+	Warn if any string represents a process already running.
+#>
+function WarnExeList
+{
+Param (
+	[string[]]$ExeList
+)
 	$ProcList = Get-Process -Name ($ExeList -replace '\.exe$') -ErrorAction:SilentlyContinue
 	if ($ProcList)
 	{
@@ -265,8 +275,6 @@ Param (
 			Write-Warn "`t$($Proc.ProcessName).exe ($($Proc.id)) Running since:" $Proc.StartTime
 		}
 	}
-
-	return $True
 }
 
 
@@ -451,7 +459,8 @@ Param (
 	[string]$Command,
 	[HashTable]$TraceParams, # mutable
 	[int]$ProcessID, # can be $Null in PSv2
-	[ref]$EXEs
+	[ref]$EXEs,
+	[switch]$Boot
 )
 	if ($Command -eq "View") { return [ResultValue]::View }
 
@@ -533,6 +542,8 @@ Param (
 		if ($ExeList)
 		{
 			if (!(TestExeList $ExeList)) { return [ResultValue]::Error }
+
+			if (!$Boot) { WarnExeList $ExeList }
 
 			# Enable heap tracing of future processes which have this Name.exe
 			SetHeapTracingProcessName -SetName $ExeList
@@ -665,6 +676,8 @@ Param (
 		if ($ExeList)
 		{
 			if (!(TestExeList $ExeList)) { return [ResultValue]::Error }
+
+			WarnExeList $ExeList
 
 			# Enable heap tracing of future processes which have this/these Name.exe
 
