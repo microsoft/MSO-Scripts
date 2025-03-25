@@ -21,8 +21,14 @@ if not exist %_ETL% echo Does not exist: %_ETL% & goto :Usage
 rem Default symbol resolution paths.
 rem See: https://github.com/microsoft/MSO-Scripts/wiki/Symbol-Resolution#native
 
+set SYMSVR_DFT=msdl.microsoft.com
+set SYMLINK_DFT=https://msdl.microsoft.com/download/symbols
+
+ping -n 1 %SYMSVR_DFT% >nul
+if errorlevel 1 echo WARNING: Not able to contact %SYMSVR_DFT% & echo:
+
 set SYMDIR_DFT=%SystemDrive%\Symbols
-set SYMPATH_DFT=cache*%SYMDIR_DFT%;srv*https://msdl.microsoft.com/download/symbols
+set SYMPATH_DFT=cache*%SYMDIR_DFT%;srv*%SYMLINK_DFT%
 set SYMCACHE_DFT=%SystemDrive%\symcache
 
 if defined _NT_SYMBOL_PATH call :SetSymDir
@@ -66,7 +72,7 @@ if defined OVerbose echo Running: %_cmd% 1^>%_tempfile%
 
 %_cmd% 1>%_tempfile%
 
-if not errorlevel==0 echo Failed with error %ERRORLEVEL%: %_cmd% & exit /b errorlevel
+if not %ERRORLEVEL%==0 goto :Finished
 
 set _Verbose=
 set _Modules=
@@ -112,15 +118,22 @@ if defined OVerbose echo Running: %_cmd%
 
 :Finished
 
-if not errorlevel==0 (
+if not %ERRORLEVEL%==0 (
 	echo Failed with %ERRORLEVEL%:
 	echo %_cmd%
 
 	REM 0xC0000409 ... suspicious, but intermittent.
-	if [%ERRORLEVEL%]==[-1073740791] echo Please try again.
+	if %ERRORLEVEL%==-1073740791 echo Please try again.
 
 	REM 0xC0000005 ... intermittent access violation.
-	if [%ERRORLEVEL%]==[-1073741819] echo Please try again.
+	if %ERRORLEVEL%==-1073741819 echo Please try again.
+
+	REM 9009 ... MSG_DIR_BAD_COMMAND_OR_FILE
+	if %ERRORLEVEL%==9009 (
+		echo XPerf was not found. It is often adjacent to WPA.exe, or available in the ADK ^> Windows Performance Toolkit.
+		echo WPA: https://apps.microsoft.com/detail/9n0w1b2bxgnz
+		echo ADK: https://aka.ms/adk
+	)
 ) else (
 	echo Completed without error.
 )
