@@ -331,7 +331,7 @@ foreach ($pmuConfig in $pmuConfigArray) {
 
         $eventCode = [convert]::ToInt32($eventCodes[0], 16)
         $unit = [convert]::ToInt32($pmuConfig.UMask, 16)
-        $interval = [convert]::ToInt32($pmuConfig.SampleAfterValue, 16)
+        $interval = [convert]::ToInt32($pmuConfig.SampleAfterValue, 10)
         "[$pmuRegKeyRoot\$pmuGroupName\$pmuSourceName]" >> $regKeyPath
         "`"Event`"=dword:{0:X8}" -f $eventCode >> $regKeyPath
         "`"Unit`"=dword:{0:X8}" -f $unit >> $regKeyPath
