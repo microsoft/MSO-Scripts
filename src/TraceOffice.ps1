@@ -11,21 +11,24 @@
 
 	.DESCRIPTION
 
-	.\TraceOffice Start [-All] [-Loop] [-CLR] [-JS] [-Shh]
-	.\TraceOffice Stop [-WPA [-FastSym]] [-Shh]
-	.\TraceOffice View [-Path <path>\MSO-Trace-Office.etl | <path>\<Name>.zip] [-FastSym]
-	.\TraceOffice Status
-	.\TraceOffice Cancel
-	  -All:  Capture extra ETW providers (network activity) and extra logging sources.
-	  -Loop: Record in ETW only the last few minutes of activity (circular memory buffer). 
-	  -CLR:  Resolve call stacks for C# (Common Language Runtime).
-	  -JS:   Resolve call stacks for JavaScript.
-	  -WPA:  Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
+	TraceOffice Start [-All] [Start_Options] [-Shh]
+	TraceOffice Stop  [-WPA [-FastSym]] [-Shh]
+	TraceOffice View  [-Path <path>\MSO-Trace-Office.etl | <path>\<Name>.zip] [-FastSym]
+	TraceOffice Status
+	TraceOffice Cancel
+
+	  -All :  Capture extra ETW providers (network activity) and extra logging sources.
+	  -Shh :  Suppress explanatory output.
+	  -WPA :  Launch the WPA viewer (Windows Performance Analyzer) with the collected trace.
 	  -Path: Optional path to a previously collected trace.
 	  -FastSym: Load symbols only from cached/transcoded SymCache, not from slower PDB files.
 	            See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
-	  -Shh:  Suppress explanatory output.
 	  -Verbose
+
+	Start_Options
+	  -Loop: Record only the last few minutes of activity (circular memory buffer).
+	  -CLR : Resolve call stacks for C# (Common Language Runtime).
+	  -JS  : Resolve call stacks for JavaScript.
 
 	.LINK
 
