@@ -47,6 +47,7 @@ $script:WPR_Win10Ver = $Null
 $script:WPR_Flushable = $False
 
 [string[]]$script:Providers = $Null
+[bool]$script:fProvidersCollected = $False
 
 <#
 	Show the help/usage info.
@@ -413,7 +414,9 @@ $RegPathStatus = "HKCU:\Software\Microsoft\Office Test\MSO-Scripts"
 
 
 <#
-	TraceMemory + MSO-Trace-Memory#Lean => TraceMemory#Lean
+	TraceCPU + MSO-Trace-CPU#Lean => CPU#Lean
+	TraceCPU + MSO-Trace-CPU.Boot => TraceCPU#Boot
+	TraceCPU + MSO-Trace-CPU#Lean.Boot => TraceCPU#Lean.Boot
 #>
 function NameFromScriptInstance
 {
@@ -421,9 +424,9 @@ Param (
 	[string]$InstanceName
 )
 	$Script = GetScriptName
-	if ($InstanceName -like '*#*')
+	if ($InstanceName -like '*[#.]*')
 	{
-		return "$Script#$(($InstanceName -split '#')[-1])"
+		return "$Script#$(($InstanceName -split '[#.]',2)[-1])"
 	}
 	return $Script
 }
@@ -470,6 +473,7 @@ Param (
 
 	$StartTime = GetRegistryValue $RegPathStatus $Name
 	if ($StartTime -isnot [int64]) { return $Null }
+	if (!$StartTime) { return $Null }
 
 	# Sanity checks
 
@@ -530,15 +534,22 @@ Param (
 	{
 		# $Name = <ScriptName> or <ScriptName>#<Switch>
 
-		$StartTime = GetProfileStartDateTimeByName $Name
+		$IsBoot = $Name.EndsWith('#Boot')
+
+		$StartTime = GetProfileStartDateTimeByName $Name -XSession:$IsBoot
+
 		if ($StartTime)
 		{
 			if (!$CurrentScript -or ($Name -eq $ScriptName) -or ($Name -like "$ScriptName#*"))
 			{
 				if (!$fStarted) { Write-Msg; $fStarted = $True }
 				$Parts = $Name -split '#'
-				$Name = Ternary ($Parts.length -eq 1) "$Name Start" "$($Parts[0]) Start -$($Parts[-1])" 
-				Write-Warn "`"$Name`" began tracing at $StartTime"
+				$Name = Ternary ($Parts.length -eq 1) "$Name Start" "$($Parts[0]) Start -$($Parts[-1])"
+
+				if (!$IsBoot)
+				{ Write-Warn "`"$Name`" began tracing at $StartTime" }
+				else
+				{ Write-Warn "The ETW AutoLogger was configured with `"$Name`" at $StartTime" }
 			}
 		}
 	}
@@ -565,9 +576,13 @@ function GetRunningTraceProviders
 Param (
 	[string]$InstanceName
 )
-	if ($script:Providers) { return $script:Providers }
+	if ($script:fProvidersCollected) { return $script:Providers }
+
+	$script:fProvidersCollected = $True
 
 	$Result = (InvokeWPR -Status collectors -InstanceName $InstanceName) -split "`r`n"
+
+	if (!$Result -or $Result.Trim().EndsWith("WPR is not recording")) { return $Null }
 
 	<# Format:
 		...
@@ -612,7 +627,7 @@ Param (
 )
 	$Result = GetRunningTraceProviders $InstanceName
 
-	if (!$Result) { return $True } # default
+#	if (!$Result) { return $True } # default
 
 	return ($Result -like "*DotNETRuntime*") -or ($Result -like "*e13c0d23*")
 }
@@ -1649,10 +1664,10 @@ Param (
 function GetTraceFilePathString
 {
 Param (
-	[string]$InstanceName
+	[string]$TraceName
 )
 	if (!$script:TracePath) { EnsureTracePath; Write-Dbg "Trace path not previously initialized." }
-	return "$script:TracePath\$InstanceName.etl"
+	return "$script:TracePath\$TraceName.etl"
 }
 
 
@@ -1674,7 +1689,7 @@ Param (
 		# Relative path: x:path\filename
 		Write-Warn "Try using a full path: $($TraceFilePath.Substring(0, 2))\<Path>\$($TraceFilePath.Substring(2))"
 	}
-	Write-Msg "To collect a trace, please run: $(GetScriptCommand) Start"
+	Write-Msg "To collect a trace, please run: $(GetScriptCommand) Start [-Options]"
 	Write-Msg "To open a trace in another folder, run: $(GetScriptCommand) View -Path <Path>\<Name>.etl"
 	Write-Msg
 	exit 1
@@ -1704,15 +1719,15 @@ Param (
 function _WriteTraceCollectedExtra
 {
 Param (
-	[string]$InstanceName,
+	[string]$TraceName,
 	# Can be $Null
 	[string]$ExtraParam
 )
-	$TraceFilePath = GetTraceFilePathString $InstanceName
+	$TraceFilePath = GetTraceFilePathString $TraceName
 	if (!(Test-Path -PathType leaf -Path $TraceFilePath -ErrorAction:SilentlyContinue))
 	{
 		Write-Warn
-		Write-Warn "The trace file was not created: $InstanceName.etl"
+		Write-Warn "The trace file was not created: $TraceName.etl"
 
 		return $False
 	}
@@ -1965,7 +1980,11 @@ Param (
 
 	# When the FileVersion is not to our liking, use this default version instead.
 	$OSV = [Environment]::OSVersion.Version
-	[Version]$DefaultVersion = "$($OSV.Major).0.99999"
+	[Version]$DefaultVersion = "$($OSV.Major).$($OSV.Minor).99999"
+	if (($OSV.Major -eq 10) -and ($OSV -ge [Version]'10.0.22000'))
+	{
+		[Version]$DefaultVersion = '11.0.99999'
+	}
 
 	if ($FileInfo.FileVersion)
 	{
@@ -2646,6 +2665,7 @@ Param (
 	[Parameter(Mandatory=$true)] [string[]]$RecordingProfiles,
 
 	# Arbitrary, descriptive name for the profile instance and the ETL trace file.
+	# If it ends with a #Switch, reports '-Switch' with the WPR command.
 	[Parameter(Mandatory=$true)] [string]$InstanceName,
 
 	# Optional manifest files of ETW providers to register.
@@ -2653,6 +2673,9 @@ Param (
 
 	# Circular buffer mode uses a block of memory rather than infinite disk.
 	[switch]$Loop,
+
+	# Configure the autologger to trace System Restart.
+	[switch]$Boot,
 
 	# Enable Common Language Runtime (CLR, C#) providers for symbolic resolution.
 	[switch]$CLR,
@@ -2673,6 +2696,20 @@ Param (
 
 	CheckPrerequisites
 
+	# The name of the trace will be $TraceName.etl
+	$TraceName = $InstanceName
+	$ExtraParam = GetExtraParamFromInstance $InstanceName
+	$ExtraParam2 = $ExtraParam
+
+	[array]$WprParams = $Null
+
+	if ($Boot)
+	{
+		$WPRParams += '-BootTrace'
+		$InstanceName += '.Boot' # Distinguish a boot trace. cf. NameFromScriptInstance
+		$ExtraParam2 += Ternary (!$ExtraParam2) '-Boot' ' -Boot'
+	}
+
 	switch ($Command)
 	{
 
@@ -2680,7 +2717,7 @@ Param (
 	{
 		# Invoke only one !ProfileName from each .wprp file.
 
-		[array]$WprParams = PrepRecordingProfiles -IsBaseList $RecordingProfiles
+		$WprParams += PrepRecordingProfiles -IsBaseList $RecordingProfiles
 
 		$WprParams += PrepAuxRecordingProfiles # From optional environment variables
 
@@ -2722,6 +2759,8 @@ Param (
 		}
 		$WprParams += GetArgs -InstanceName $InstanceName
 
+		if ($Boot) { $WPRParams = $WPRParams -replace '-Start','-AddBoot' }
+
 		$Result = InvokeWPR @WprParams
 
 		switch ($LastExitCode)
@@ -2739,6 +2778,16 @@ Param (
 			{
 				Write-Info "To enable JavaScript profiling, the app may require special parameters."
 				Write-Info "See: https://github.com/microsoft/MSO-Scripts/wiki/Symbol-Resolution#javascript"
+			}
+
+			if ($Boot)
+			{
+				Write-Msg
+				Write-Msg "The ETW AutoLogger has been configured to trace the next Windows Restart."
+				Write-Action "Now restart the device."
+				Write-Action "Then run: $(GetScriptCommand) Stop $ExtraParam2 [-WPA]"
+				Write-Msg "To restart in 10 sec., you can run: shutdown -r -t 10"
+				return [ResultValue]::Success
 			}
 
 			return [ResultValue]::Started
@@ -2760,11 +2809,9 @@ Param (
 
 		0xc5583001 # The profiles are already running.
 		{
-			$ExtraParam = GetExtraParamFromInstance $InstanceName
-
 			Write-Warn "The WPR profiles are already running. (0xc5583001)"
-			Write-Warn "Run: $(GetScriptCommand) Stop" $ExtraParam
-			Write-Warn "OR:  $(GetScriptCommand) Cancel" $ExtraParam
+			Write-Warn "Run: $(GetScriptCommand) Stop $ExtraParam2"
+			Write-Warn "OR:  $(GetScriptCommand) Cancel $ExtraParam2"
 
 			ListRunningProfiles
 
@@ -2856,8 +2903,6 @@ Param (
 			EnsureETWProvider($ProviderManifest)
 		}
 
-		$TraceFilePath = GetTraceFilePathString $InstanceName
-
 		ClearProfileStartTime $InstanceName
 
 		if (DoVerbose)
@@ -2870,7 +2915,9 @@ Param (
 			}
 		}
 
-		$WprParams = GetArgs -Stop $TraceFilePath -InstanceName $InstanceName
+		$TraceFilePath = GetTraceFilePathString $TraceName
+
+		$WprParams += GetArgs -Stop $TraceFilePath -InstanceName $InstanceName
 
 		# Don't bother with CLR PDB Generation if WPR supports the switch: -skipPdbGen
 		# AND the trace doesn't contain the CLR providers, and -CLR wasn't specified.
@@ -2887,6 +2934,8 @@ Param (
 			}
 		}
 
+		if ($Boot) { $WPRParams = $WPRParams -replace '-Stop','-StopBoot' }
+
 		$Result = InvokeWPR @WprParams
 
 		switch ($LastExitCode)
@@ -2894,8 +2943,14 @@ Param (
 
 		0
 		{
+			if ($Boot -and $Result.Trim().EndsWith("Canceling the Autologger."))
+			{
+				Write-Warn $Result
+				return [ResultValue]::Success # Canceled. No problem.
+			}
+
 			# The caller should write some result text or invoke:
-			# WriteTraceCollected $InstanceName
+			# WriteTraceCollected $TraceName
 
 			return [ResultValue]::Collected
 		}
@@ -2910,7 +2965,7 @@ Param (
 			}
 			else
 			{
-				Write-Action "To view an existing trace, run: $(GetScriptCommand) View" $(GetExtraParamFromInstance $InstanceName)
+				Write-Action "To view an existing trace, run: $(GetScriptCommand) View $ExtraParam"
 			}
 
 			return [ResultValue]::Success # Already stopped. No problem.
@@ -2963,14 +3018,31 @@ Param (
 	{
 		Write-Msg "`nCanceling..."
 		ClearProfileStartTime $InstanceName
-		$Result = InvokeWPR -Cancel -InstanceName $InstanceName
-		Write-Warn (Ternary $LastExitCode $Result "`nETW tracing has been canceled.")
-		ListRunningProfiles
+		$WPRParams += GetArgs -Cancel -InstanceName $InstanceName
+		if ($Boot) { $WPRParams = $WPRParams -replace '-Cancel','-CancelBoot' }
+		$Result = InvokeWPR @WPRParams
+		if (!$LastExitCode)
+		{
+			# Success
+			Write-Warn "`nETW tracing has been canceled."
+			ListRunningProfiles
+		}
+		else
+		{
+			# Failure
+			Write-Warn $Result
+			if (TestRunningProfiles -CurrentScript)
+			{
+				Write-Warn "Run: $(GetScriptCommand) Cancel [-Option]"
+			}
+		}
 		break
 	}
 
 	"Status"
 	{
+		if ($Boot) { $InstanceName += '_boottr' } # added by WPR for the AutoLogger
+
 		if (DoVerbose)
 		{
 			$Result = InvokeWPR -Status profiles collectors -InstanceName $InstanceName
@@ -2987,11 +3059,11 @@ Param (
 
 		Write-Msg $Result
 
-		# List any/all running traces.
-		ListRunningProfiles
-
-		if ($Result -notlike '* not recording*')
+		if (($LastExitCode -ne 0xC5583000) -and ($Result -notlike '* not recording*'))
 		{
+			# List any/all running traces.
+			ListRunningProfiles
+
 			if ("$RecordingProfiles".IndexOf("CPU") -ge 0)
 			{
 				# Tracing CPU, so report the profiling interval.
@@ -3000,9 +3072,18 @@ Param (
 
 			if (!(DoVerbose))
 			{
-				Write-Action "For more information run: $(GetScriptCommand) Status -Verbose"
+				Write-Action "For more information run: $(GetScriptCommand) Status $ExtraParam2 -Verbose"
 			}
 		}
+		else
+		{
+			# Not Recording
+			if (TestRunningProfiles -CurrentScript)
+			{
+				Write-Warn "Run: $(GetScriptCommand) Status [-Option]"
+			}
+		}
+
 		break
 	}
 
