@@ -27,18 +27,18 @@
       <Buffers Value="8" />
     </SystemCollector>
 
-    <SystemCollector Id="SC_32-MB" Base="SC_Base" Name="MSO System Collector">
-      <Buffers Value="32" />
+    <SystemCollector Id="SC_256-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="256" />
       <StackCaching BucketCount="64" CacheSize="1024" />
     </SystemCollector>
 
     <EventCollector Id="EC_Base" Name="MSO Event Collector">
       <BufferSize Value="1024" />
-      <Buffers Value="4" />
+      <Buffers Value="8" />
     </EventCollector>
 
-    <EventCollector Id="EC_32-MB" Base="EC_Base" Name="MSO Event Collector">
-      <Buffers Value="32" />
+    <EventCollector Id="EC_128-MB" Base="EC_Base" Name="MSO Event Collector">
+      <Buffers Value="128" />
       <StackCaching BucketCount="64" CacheSize="1024" />
     </EventCollector>
 
@@ -109,11 +109,11 @@
      DetailLevel="Verbose" LoggingMode="File" Id="AllHandles.Verbose.File">
       <Collectors Operation="Add">
 
-        <SystemCollectorId Value="SC_32-MB">
+        <SystemCollectorId Value="SC_256-MB">
           <SystemProviderId Value="SP_KernelHandles" />
         </SystemCollectorId>
 
-        <EventCollectorId Value="EC_32-MB">
+        <EventCollectorId Value="EC_128-MB">
           <EventProviders Operation="Add">
 
             <EventProviderId Value="EP_Microsoft-Windows-Win32k_Handles" />
@@ -135,11 +135,11 @@
      DetailLevel="Light" LoggingMode="File" Id="KernelHandles.Light.File">
       <Collectors Operation="Add">
 
-        <SystemCollectorId Value="SC_32-MB">
+        <SystemCollectorId Value="SC_256-MB">
           <SystemProviderId Value="SP_KernelHandles" />
         </SystemCollectorId>
 
-        <EventCollectorId Value="EC_32-MB">
+        <EventCollectorId Value="EC_Base">
           <EventProviders Operation="Add">
 
             <EventProviderId Value="EP_Microsoft-Windows-ImageLoad" />

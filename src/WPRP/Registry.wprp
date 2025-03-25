@@ -30,8 +30,8 @@
       <StackCaching BucketCount="256" CacheSize="3072" />
     </SystemCollector>
 
-    <SystemCollector Id="SC_64-MB" Base="SC_Base" Name="MSO System Collector">
-      <Buffers Value="64" />
+    <SystemCollector Id="SC_128-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="128" />
     </SystemCollector>
 
     <EventCollector Id="EC_4-MB" Name="MSO Event Collector">
@@ -131,7 +131,7 @@
      DetailLevel="Verbose" LoggingMode="File" Id="Registry.Verbose.File">
       <Collectors Operation="Add">
 
-        <SystemCollectorId Value="SC_64-MB">
+        <SystemCollectorId Value="SC_128-MB">
           <SystemProviderId Value="SP_Registry" />
         </SystemCollectorId>
 

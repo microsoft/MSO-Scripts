@@ -36,7 +36,11 @@
       <Buffers Value="96" />
     </SystemCollector>
 
-    <EventCollector Id="EC_4-MB" Name="MSO Event Collector">
+     <SystemCollector Id="SC_256-MB" Base="SC_Base" Name="MSO System Collector">
+      <Buffers Value="256" />
+    </SystemCollector>
+
+   <EventCollector Id="EC_4-MB" Name="MSO Event Collector">
       <BufferSize Value="1024" />
       <Buffers Value="4" />
     </EventCollector>
@@ -295,7 +299,7 @@
      DetailLevel="Verbose" LoggingMode="File" Id="DiskIO.Verbose.File">
       <Collectors Operation="Add">
 
-        <SystemCollectorId Value="SC_48-MB">
+        <SystemCollectorId Value="SC_96-MB">
           <SystemProviderId Value="SP_DiskIO" />
         </SystemCollectorId>
 
@@ -320,7 +324,7 @@
      DetailLevel="Light" LoggingMode="File" Id="FileAndDiskIO-Lean.Light.File">
       <Collectors Operation="Add">
 
-        <SystemCollectorId Value="SC_48-MB">
+        <SystemCollectorId Value="SC_96-MB">
             <SystemProviderId Value="SP_FileAndDiskIO_Lean" />
         </SystemCollectorId>
 
@@ -345,7 +349,7 @@
      DetailLevel="Verbose" LoggingMode="File" Id="FileAndDiskIO.Verbose.File">
       <Collectors Operation="Add">
 
-        <SystemCollectorId Value="SC_96-MB">
+        <SystemCollectorId Value="SC_256-MB">
             <SystemProviderId Value="SP_FileAndDiskIO" />
         </SystemCollectorId>
 
