@@ -43,6 +43,7 @@
 	.LINK
 
 	https://github.com/microsoft/MSO-Scripts/wiki/CPU-and-Threads
+	https://github.com/microsoft/MSO-Scripts/wiki/Analyze-Windows-Boot
 	https://learn.microsoft.com/en-us/windows-hardware/test/wpt/event-tracing-for-windows
 	https://learn.microsoft.com/en-us/shows/defrag-tools/39-windows-performance-toolkit
 #>

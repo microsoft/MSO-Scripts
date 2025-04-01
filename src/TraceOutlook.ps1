@@ -784,6 +784,7 @@ Param (
 	}
 	}
 
-	if ($WPA) { LaunchViewer @ViewerParams -FastSym:$FastSym }
+	# Tolerate Lost Events (-TLE): A few lost events are common in Outlook traces, for some reason.
+	if ($WPA) { LaunchViewer @ViewerParams -FastSym:$FastSym -ExtraParams:'-tle' }
 
 exit 0 # Success

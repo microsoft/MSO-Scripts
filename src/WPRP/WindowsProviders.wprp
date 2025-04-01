@@ -114,6 +114,7 @@
     <EventProvider Id="EP_Windows_Shell" Name="30336ed4-e327-447c-9de0-51b652c86108"> <!-- Microsoft-Windows-Shell-Core -->
       <Keywords>
         <Keyword Value="0x04000000" /> <!-- StartupPerf -->
+        <Keyword Value="0x0000000200000000" />
       </Keywords>
     </EventProvider>
 
@@ -210,7 +211,7 @@
 
     <!-- PerfTrack -->
     <EventProvider Id="EP_PerfTrack-Meta"     NonPagedMemory="true" Name="8c493695-3df4-40cb-b11d-9edc41d5d2ab" /> <!-- Meta-provider for all PerfTrack providers installed on the system -->
-    <EventProvider Id="EP_PerfTrack-Windows"  NonPagedMemory="true" Name="030f2f57-abd0-4427-bcf1-3a3587d7dc7d" Stack="true" /> <!-- Microsoft-Windows-Diagnostics-PerfTrack -->
+    <EventProvider Id="EP_PerfTrack-Windows"  NonPagedMemory="true" Name="030f2f57-abd0-4427-bcf1-3a3587d7dc7d" Level="4" /> <!-- Microsoft-Windows-Diagnostics-PerfTrack -->
     <EventProvider Id="EP_PerfTrack-Counters" NonPagedMemory="true" Name="c06ed57a-a7bd-42d7-b5ff-77a9dec5732d" /> <!-- Microsoft-Windows-Diagnostics-PerfTrack-Counters -->
 
     <!-- DiagTrack -->
@@ -248,6 +249,16 @@
     </EventProvider>
 
     <EventProvider Id="EP_Microsoft-Windows-RPCSS" Name="d8975f88-7ddb-4ed0-91bf-3adf48c48e0c" Level="4" /> <!-- Microsoft-Windows-RPCSS -->
+
+    <EventProvider Id="EP_Microsoft-Windows-Kernel-PnP" Name="9c205a39-1250-487d-abd7-e831c6290539" Level="4"> <!-- Microsoft-Windows-Kernel-PnP -->
+      <Keywords>
+        <Keyword Value="0x200000000001B000" />
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="EP_Microsoft-Windows-Subsys-SMSS" Name="43e63da5-41d1-4fbf-aded-1bbed98fdd1d" Level="4" /> <!-- Microsoft-Windows-Subsys-SMSS -->
+
+    <EventProvider Id="EP_Microsoft-Windows-Winlogon" Name="dbe9b383-7cf3-4331-91cc-a3cb16a3b538" Level="4" /> <!-- Microsoft-Windows-Winlogon -->
 
 <!--
     Profile Declarations
@@ -287,12 +298,11 @@
 
         <EventCollectorId Value="EC_4-MB">
           <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Windows_Kernel_Process" />
             <EventProviderId Value="EP_Windows_UIEvents" />
             <EventProviderId Value="EP_Windows_Info" />
-            <EventProviderId Value="EP_Windows_Shell" />
             <EventProviderId Value="EP_AppLifeCycle-UI" />
             <EventProviderId Value="EP_Helium_C2RX" />
-            <EventProviderId Value="EP_PerfTrack-Windows" />
             <EventProviderId Value="EP_PerfTrack-Counters" />
             <EventProviderId Value="EP_ETW-MetaData" />
           </EventProviders>
@@ -304,10 +314,10 @@
     <Profile Name="Basic" Description="Basic Windows providers of interest to Office"
      DetailLevel="Light" LoggingMode="Memory" Base="Basic.Light.File" Id="Basic.Light.Memory" />
 
-    <!-- Tutti Frutti (may stand-alone) -->
+    <!-- Windows Start-up (may stand alone) -->
 
-    <Profile Name="TuttiFrutti" Description="All Windows providers of interest to Office"
-     DetailLevel="Verbose" LoggingMode="File" Base="Basic.Light.File" Id="TuttiFrutti.Verbose.File">
+    <Profile Name="WindowsStart" Description="Standalone Windows Providers for OS Startup"
+     DetailLevel="Light" LoggingMode="File" Base="Basic.Light.File" Id="WindowsStart.Light.File">
       <Collectors Operation="Add">
 
         <!-- Stand-alone profile: bare minimum -->
@@ -317,8 +327,29 @@
 
         <EventCollectorId Value="EC_16-MB">
           <EventProviders Operation="Add">
+             <EventProviderId Value="EP_Windows_Shell" />
+            <EventProviderId Value="EP_PerfTrack-Windows" />
+            <EventProviderId Value="EP_Microsoft-Windows-Kernel-PnP" />
+            <EventProviderId Value="EP_Microsoft-Windows-Subsys-SMSS" />
+            <EventProviderId Value="EP_Microsoft-Windows-Winlogon" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="WindowsStart" Description="Standalone Windows Providers for OS Startup"
+     DetailLevel="Light" LoggingMode="Memory" Base="WindowsStart.Light.File" Id="WindowsStart.Light.Memory" />
+
+    <!-- Tutti Frutti (may stand-alone) -->
+
+    <Profile Name="TuttiFrutti" Description="All Windows providers of interest to Office"
+     DetailLevel="Verbose" LoggingMode="File" Base="WindowsStart.Light.File" Id="TuttiFrutti.Verbose.File">
+      <Collectors Operation="Add">
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
             <EventProviderId Value="EP_KernelProcess" />
-            <EventProviderId Value="EP_Windows_Kernel_Process" />
             <EventProviderId Value="EP_ProcessStateManager" />
             <EventProviderId Value="EP_BrokerInfrastructure" />
             <EventProviderId Value="EP_Windows_AssessmentExecutionEngine" />
