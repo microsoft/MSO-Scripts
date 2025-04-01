@@ -89,7 +89,7 @@ function Write-Msg    { Write-Host @Args }
 
 function Write-Info   { Write-Host -Fore:$InfoColor @Args }
 
-function Write-Warn   { Write-Host -Fore:$WarnColor @Args }
+function Write-Warn   { if (!(DoNoWarn)) { Write-Host -Fore:$WarnColor @Args }}
 
 function Write-Err    { Write-Host -Fore:$ErrorColor @Args }
 
@@ -134,6 +134,14 @@ function Write-Vars
 	Verbose mode enabled!
 #>
 function DoVerbose { return $VerbosePreference -ne 'SilentlyContinue' }
+
+
+<#
+	NoWarn mode enabled!
+	Script invoked with: -WarningAction:Silent[lyContinue]
+	https://github.com/microsoft/MSO-Scripts/wiki/Troubleshooting#tti
+#>
+function DoNoWarn { return $WarningPreference -eq 'SilentlyContinue' }
 
 
 <#
@@ -2286,8 +2294,8 @@ Param (
 )
 	if (!$Profile) { return $Null } # PSv2
 
-	$ProfileOrig = $Profile
-	$Profile = MakeFullPath $Profile
+	$ProfileOrig = $Profile.Trim()
+	$Profile = MakeFullPath $ProfileOrig
 
 	if (IsNotBuiltinProfile $Profile)
 	{
@@ -2296,7 +2304,7 @@ Param (
 		# It has a valid path?
 		if (!(Test-Path -PathType leaf -Path $ProfilePath -ErrorAction:SilentlyContinue))
 		{
-			Write-Warn "Warning: Cannot find: $ProfilePath"
+			Write-Warn "Warning: Cannot find: `"$ProfilePath`""
 			Write-Warn "Ignoring this recording profile."
 			Write-Msg
 			return $Null
@@ -2552,7 +2560,7 @@ function PrepAuxRecordingProfiles
 			}
 			else
 			{
-				Write-Warn "Ignoring WPT_WPRP = $Profile"
+				Write-Warn "Ignoring WPT_WPRP = `"$Profile`""
 			}
 		}
 
@@ -2724,12 +2732,18 @@ Param (
 		if ($WPR_PreWin10)
 		{
 			if ($CLR) { $WprParams += PrepRecordingProfiles ".\WPRP\CLR.wprp" } # MSO-Scripts\PreWin10\WPRP\CLR.wprp
-			if ($JS)  { $WprParams += PrepRecordingProfiles ".\WPRP\JS.wprp"   }
+			if ($JS)  { $WprParams += PrepRecordingProfiles ".\WPRP\JS.wprp"  }
 		}
 		else
 		{
 			if ($CLR) { $WprParams += PrepRecordingProfiles "..\WPRP\CLR.wprp!CLR" } # MSO-Scripts\WPRP\CLR.wprp!CLR
 			if ($JS)  { $WprParams += PrepRecordingProfiles "..\WPRP\JS.wprp!JS"   }
+
+			# Add special boot tracing providers if not already in use.
+			# https://github.com/microsoft/MSO-Scripts/wiki/Analyze-Windows-Boot#chart
+
+			if ($Boot -and !($WprParams -like "*\WindowsProviders.*"))
+			          { $WprParams += PrepRecordingProfiles "..\WPRP\WindowsProviders.wprp!WindowsStart" }
 		}
 
 		if ($Loop)
@@ -3207,6 +3221,12 @@ Param ( # $ViewerParams 'parameter splat'
 		{
 			Write-Status "Does not exist: $CustomProfilePath"
 		}
+	}
+
+	if (DoNoWarn)
+	{
+		$ExtraParams += GetArgs -tti -tle
+		Write-Status "WarningAction:Silent : Adding -TTI -TLE (Tolerate Time Inversions & Lost Events)"
 	}
 
 	# Now load LaunchViewerCommand and related.
