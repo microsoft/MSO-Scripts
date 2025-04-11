@@ -5,6 +5,7 @@ REM Licensed under the MIT License.
 
 REM Download symbols based on those referenced in the given ETW log file (.etl).
 REM Optionally limit downloads to the given modules (faster).
+REM EnvVar OVerbose=1 : report commands executed
 
 setlocal
 
@@ -31,9 +32,9 @@ set SYMDIR_DFT=%SystemDrive%\Symbols
 set SYMPATH_DFT=cache*%SYMDIR_DFT%;srv*%SYMLINK_DFT%
 set SYMCACHE_DFT=%SystemDrive%\symcache
 
-if defined _NT_SYMBOL_PATH call :SetSymDir
+call :SetSymDir
 
-if not defined _NT_SYMBOL_PATH set _NT_SYMBOL_PATH=%SYMPATH_DFT%& set _SYMDIR=%SYMDIR_DFT%
+if not defined _NT_SYMBOL_PATH set _NT_SYMBOL_PATH=%SYMPATH_DFT%
 if not defined _NT_SYMCACHE_PATH set _NT_SYMCACHE_PATH=%SYMCACHE_DFT%
 
 REM Older versions of XPerf.exe copy PDB files to the current directory, which will be _SYMDIR.
@@ -41,22 +42,41 @@ REM Older versions of XPerf.exe copy PDB files to the current directory, which w
 pushd "%_SYMDIR%"
 if defined OVerbose echo Current Working Directory: %CD%
 
-if not [%2]==[] goto :Specific
-
 echo Downloading and transcoding symbols referenced in: %_ETL%
 echo Using: _NT_SYMBOL_PATH=%_NT_SYMBOL_PATH%
 echo Using: _NT_SYMCACHE_PATH=%_NT_SYMCACHE_PATH%
 echo This could take a while!
+echo:
 
 rem XPerf.exe is often adjacent to WPA.exe, or available in the ADK / Windows Performance Toolkit: https://aka.ms/adk
 
-set _cmd=xperf -tle -tti -i %_ETL% -symbols -a symcache -build
+set _filter=findstr /r "bytes.*SYMSRV.*RESULT..0x00000000"
+set _filter1=2^>^&1 ^| %_filter%
+set _filter2=2^^^>^^^&1 ^^^| %_filter%
 
-if defined OVerbose echo Running: %_cmd% 2^>nul
+if not [%2]==[] if /i not [%2]==[-v] goto :Specific
 
-%_cmd% 2>nul
+REM Output:
+REM -v : filtered verbose xperf output, else none
 
-goto :Finished
+set _verbose=verbose
+if /i not [%2]==[-v] set _filter1=2^>nul& set _filter2=2^^^>nul& set _verbose=
+
+REM OVerbose and -v removes ALL filters?
+REM if defined OVerbose if defined _verbose set _filter1=& set _filter2=
+
+set _cmd=xperf -tle -tti -i %_ETL% -symbols %_verbose% -a symcache -build
+
+if defined OVerbose echo Running: %_cmd% %_filter2%
+
+%_cmd% %_filter1%
+
+REM If _verbose then the errorlevel is from findsym, else it is from xperf.
+if not defined _verbose goto :Finished
+
+popd
+echo Finished
+exit /b 0
 
 
 :Specific
@@ -68,9 +88,9 @@ shift
 set _tempfile="%temp%\_imageid.txt"
 set _cmd=xperf -tle -tti -i %_ETL% -a symcache -imageid
 
-if defined OVerbose echo Running: %_cmd% 1^>%_tempfile%
+if defined OVerbose echo Running: %_cmd% 1^>%_tempfile% 2^>nul
 
-%_cmd% 1>%_tempfile%
+%_cmd% 1>%_tempfile% 2>nul
 
 if not %ERRORLEVEL%==0 goto :Finished
 
@@ -89,6 +109,7 @@ if errorlevel 1 (
 	echo:
 	echo Not found in the trace file: "%~1"
 	echo See the list: %_tempfile%
+	popd
 	exit /b 1
 )
 
@@ -110,11 +131,24 @@ del %_tempfile% 1>nul 2>nul
 
 rem XPerf.exe is often adjacent to WPA.exe, or available in the ADK / Windows Performance Toolkit: https://aka.ms/adk
 
-set _cmd=xperf -tle -tti -i %_ETL% -symbols %_Verbose% -a symcache -build -image %_Modules%
+REM Output:
+REM -v : verbose xperf output, else filtered
 
-if defined OVerbose echo Running: %_cmd%
+if defined _Verbose set _filter1=& set _filter2=
 
-%_cmd%
+set _cmd=xperf -tle -tti -i %_ETL% -symbols verbose -a symcache -build -image %_Modules%
+
+if defined OVerbose echo Running: %_cmd% %_filter2%
+
+%_cmd% %_filter1%
+
+REM If not defined _Verbose then the errorlevel is from findsym, else it is from xperf.
+if defined _Verbose goto :Finished
+
+popd
+echo Finished
+exit /b 0
+
 
 :Finished
 
@@ -149,6 +183,8 @@ REM Set _SYMDIR = the cache folder using _NT_SYMBOL_PATH, which is:
 REM   CASE 1: cache*<cachefolder>;sym*http://downloads;...
 REM   CASE 2: srv*<cachefolder>*http://downloads;...
 REM   CASE 3: <symfolder>;...
+
+if not defined _NT_SYMBOL_PATH goto :FallBack
 
 set _SYMDIR=
 
@@ -186,10 +222,11 @@ exit /b 1
 
 
 :Usage
-echo Usage:   %_this% ^<path^>\^<name^>.etl [Module1 [Module2] ... [-v]]
+echo Usage:   %_this% ^<path^>\^<name^>.etl [Module1 [Module2] ... ] [-v]
 echo Example: %_this% c:\mypath\mytrace.etl Excel.exe MSO.dll
+echo Example: %_this% c:\mypath\mytrace.etl -v
 echo Download symbols for modules referenced by the given ETW trace (.etl), and transcode to SymCache format for WPA.
-echo Either download all referenced modules, or (faster) only the modules listed: Module1 Module2 ... (-v = verbose)
+echo Download all referenced modules, or (faster) the modules listed and dependents: Module1 Module2 ... (-v = verbose)
 echo See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#deeper
 echo See: https://github.com/microsoft/MSO-Scripts/wiki/Symbol-Resolution#native
 echo See: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/xperf/symbols
