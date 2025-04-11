@@ -75,7 +75,6 @@ Param (
 function SetupSymbolPaths
 {
 Param (
-	[bool]$IsModern,
 	[bool]$SymCacheOnly
 )
 	$NT_SYMBOL_PATH = $env:_NT_SYMBOL_PATH
@@ -291,7 +290,7 @@ function LaunchAsStandardUser
 		FilePath = "RunAs.exe"
 		ArgumentList = $ArgList
 		WorkingDirectory = $WorkingDir
-		WindowStyle = "Minimized" # RunAs minimized
+		NoNewWindow = $True # No new window for RunAs
 		PassThru = $True
 		Wait = $False # Would wait for child processes, too.
 	}
@@ -354,8 +353,8 @@ Param(
 		Wait = $False
 	}
 
-	# If the viewer command is WPA.bat or something other than WPA.exe, don't maximize that window.
-	if ($Viewer -notlike "*.exe") { $ProcessCommand.WindowStyle = "Minimized" }
+	# If the viewer command is WPA.bat or something other than WPA.exe or "WPA.exe", don't maximize that window.
+	if ($Viewer.TrimEnd('"') -notlike '*.exe') { $ProcessCommand.WindowStyle = "Minimized" }
 
 	# WriteCmdVerbose $Viewer $Args # Done by the caller.
 
@@ -381,6 +380,100 @@ Param(
 
 	return $Null # no error
 } # LaunchAsCurrentUser
+
+
+<#
+	Launch a background process, xperf.exe (if it can be found on the machine),
+	to download in the background symbols referenced by the ETW log file: $ETL
+	See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#deeper
+#>
+function BackgroundResolveSymbols
+{
+Param (
+	[string]$ETL
+)
+	$XPerfPath = GetWptExePath 'XPerf.exe' -silent
+
+	if (!$XPerfPath)
+	{
+		Write-Status "Not downloading symbols in the background. Did not find: XPerf.exe"
+		return $False
+	}
+
+	# Limit background symbol downloads to one window.
+
+	$Downloading = Get-Process | Where-Object {$_.ProcessName -eq "xperf"}
+	if ($Downloading)
+	{
+		Write-Status "Symbols are already downloading in another window."
+		return $False
+	}  
+
+	$File = split-path -leaf -path $ETL
+
+	if (!$Env:_NT_SYMBOL_PATH -or !$Env:_NT_SYMCACHE_PATH) { Write-Dbg '_NT_SYMBOL/SYMCACHE_PATH is not set. Caller runs: SetupSymbolPaths $False' }
+
+	# Build the CMD commands to be run: CMD /c "<commands>"
+	# https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#deeper
+
+	$XPerfCmd = "`"$XPerfPath`" -tle -tti -i `"$ETL`" -symbols verbose -a symcache -build"
+
+	$XPerfFiltered = "$XPerfCmd 2>&1 | findstr /r `"bytes.*SYMSRV.*RESULT..0x00000000`""
+
+	$CmdHeader = "echo Downloading symbols for: $File & echo Symbol Path: %_NT_SYMBOL_PATH% & echo:" 
+
+	$CmdNoTitle = "$CmdHeader & $XPerfFiltered" 
+
+	$Title = "Download Symbols"
+
+	$CmdCmd = "`"title $Title & $CmdNoTitle`""
+
+	# LaunchAsStandardUser starts the process using RunAs, which always launches a non-minimized window.
+	# Launch a new window (minimized and titled), and close the one from RunAs (after a brief flash).
+	$RunAsCmd = "start `"$Title`" /min /belownormal cmd /c `"$CmdNoTitle`""
+
+	WriteCmdVerbose $XPerfFiltered
+
+	$ErrResult = $True
+	[DateTime]$PreStartTime = Get-Date
+
+	# Launch the viewer without Admin privileges, if possible.
+
+	if ((CheckAdminPrivilege) -and (CheckFileUserPrivilege $XPerfPath $ETL))
+	{
+		# XPerf and the .ETL are acccessible as Standard User.
+		$CmdArgs = GetArgs /c $RunAsCmd
+		$ErrResult = LaunchAsStandardUser "cmd" @CmdArgs
+	}
+
+	if ($ErrResult)
+	{
+		# Launches a minimized CMD window.
+		$CmdArgs = GetArgs /c $CmdCmd
+		$ErrResult = LaunchAsCurrentUser "cmd" @CmdArgs
+	}
+
+	if (!$ErrResult)
+	{
+		# We're not convinced that XPerf is running, or perhaps it ended quickly.
+		$Process = GetRunningProcess "xperf" $PreStartTime
+		if ($Process) { return $True }
+
+		Write-Err "Symbols may not have resolved in the background."
+	}
+	else
+	{
+		Write-Err (GetCmdVerbose $XPerfCmd)
+		Write-Msg
+		Write-Err "Not able to resolve symbols in the background."
+		Write-Err $ErrResult
+		Write-Msg
+	}
+
+	Write-Err "To retry, you can run:`n$script:ScriptRootPath\BETA\GetSymbols.bat $(ReplaceEnv $ETL)"
+
+	return $False
+} # BackgroundResolveSymbols
 
 
 <#
@@ -450,7 +543,7 @@ Param (
 		}
 	}
 
-	SetupSymbolPaths $IsModernWPA $SymCacheOnly
+	SetupSymbolPaths $SymCacheOnly
 
 	# Add the viewer configuration file(s): *.wpaProfile
 	# But only for .ETL, not .WPAPK
@@ -527,12 +620,6 @@ Param (
 		return $Null
 	}
 
-	if ($FastSym)
-	{
-		Write-Warn "FastSym: Loading only symbols previously cached or transcoded to SymCache."
-		Write-Warn "https://learn.microsoft.com/en-us/windows-hardware/test/wpt/loading-symbols#symcache-path"
-	}
-
 	# Get the launched WPA process. Give it a priority boost. Then return the process.
 
 	if (!$Process) { $Process = GetRunningProcess "WPA" $PreStartTime }
@@ -541,8 +628,25 @@ Param (
 	{
 		$Process.PriorityClass = 'AboveNormal'
 
-		# Warn if the -symbols switch was not used. (Pre-Win10 versions of WPA didn't accept it.)
-		if (!$IsModernWPA) { Write-Warn "`nTo resolve call stack symbols in WPA, select: Trace / Load Symbols" }
+		if (!$IsModernWPA)
+		{
+			# Warn if the -symbols switch was not used. (Pre-Win10 versions of WPA didn't accept it.)
+			Write-Warn "`nTo resolve call stack symbols in WPA, select: Trace / Load Symbols"
+		}
+		elseif ($FastSym)
+		{
+			# Launch XPerf in the background to download referenced symbols not already cached.
+
+			SetupSymbolPaths $False # NOW set up _NT_SYMBOL_PATH
+
+			Write-Warn "FastSym: WPA is loading only symbols previously cached or transcoded to SymCache."
+
+			$fResolving = BackgroundResolveSymbols $TraceFilePath
+			if ($fResolving) { Write-Warn "Referenced symbols are being downloaded in the background." }
+
+			Write-Warn "https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize:~:text=FastSym"
+
+		}
 	}
 
 	return $Process
