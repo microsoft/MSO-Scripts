@@ -164,7 +164,7 @@
     <!-- Code Integrity -->
 
     <!-- Microsoft-Windows-CodeIntegrity : In-Process via CI.dll -->
-    <EventProvider Id="EP_CodeIntegrity" Name="4ee76bd8-3cf4-44a0-a0ac-3937643e37a3" Stack="true">
+    <EventProvider Id="EP_CodeIntegrity" Name="4ee76bd8-3cf4-44a0-a0ac-3937643e37a3" NonPagedMemory="true" Stack="true">
       <!-- Requires WPR v10.15002+ -->
       <EventFilters FilterIn="true">
         <EventId Value="3007" /> <!-- PageHashFoundInImageCertificate -->

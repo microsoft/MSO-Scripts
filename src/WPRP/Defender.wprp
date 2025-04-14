@@ -132,10 +132,10 @@
     <!-- Code Integrity -->
 
     <!-- Microsoft-Windows-CodeIntegrity : In-Process via CI.dll -->
-    <EventProvider Id="EP_CodeIntegrity" Name="4ee76bd8-3cf4-44a0-a0ac-3937643e37a3" Stack="true" />
+    <EventProvider Id="EP_CodeIntegrity" Name="4ee76bd8-3cf4-44a0-a0ac-3937643e37a3" NonPagedMemory="true" Stack="true" />
 
     <!-- Microsoft-Windows-CodeIntegrity : In-Process via CI.dll -->
-    <EventProvider Id="EP_CodeIntegrity_Regions" Name="4ee76bd8-3cf4-44a0-a0ac-3937643e37a3" Level="5" />
+    <EventProvider Id="EP_CodeIntegrity_Regions" Name="4ee76bd8-3cf4-44a0-a0ac-3937643e37a3" NonPagedMemory="true" Level="5" />
 
     <!-- Microsoft.Windows.Security.CodeIntegrity.NWActivity : In-Proc -->
     <EventProvider Id="EP_NWActivity"    Name="28dcc28b-3e31-527b-efd6-b4cc4d73d158" />
