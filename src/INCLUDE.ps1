@@ -589,8 +589,8 @@ Param (
 	$script:fProvidersCollected = $True
 
 	$Result = (InvokeWPR -Status collectors -InstanceName $InstanceName) -split "`r`n"
-
-	if (!$Result -or $Result.Trim().EndsWith("WPR is not recording")) { return $Null }
+	if (!$Result) { return $Null }
+	if (($Result.Count -lt 10) -and $Result.Contains("WPR is not recording")) { return $Null }
 
 	<# Format:
 		...
@@ -598,13 +598,13 @@ Param (
 		...
 		Providers
 		System Keywords
-	        	<SYSTEM PROVIDERS>
+			<SYSTEM PROVIDERS>
 		System Stacks
-	        	...
+			...
 		Collector Name ...
 		...
 		Providers
-	        	<PROVIDERS>
+			<PROVIDERS>
 	#>
 
 	[string[]] $ProvidersT = $Null
@@ -2743,7 +2743,32 @@ Param (
 			# https://github.com/microsoft/MSO-Scripts/wiki/Analyze-Windows-Boot#chart
 
 			if ($Boot -and !($WprParams -like "*\WindowsProviders.*"))
-			          { $WprParams += PrepRecordingProfiles "..\WPRP\WindowsProviders.wprp!WindowsStart" }
+				{ $WprParams += PrepRecordingProfiles "..\WPRP\WindowsProviders.wprp!WindowsStart" }
+		}
+
+		switch ($Env:WPT_Mode)
+		{
+		$Null { break }
+
+		'Shutdown' {
+			if (!$Boot)
+			{
+				Write-Warn "WPT_Mode: Able to trace System Shutdown."
+				if ($Loop) { Write-Warn "Ignoring: -Loop"; $Loop = $False }
+				if ($WprParams -notlike "*\WindowsProviders.*")
+					{ $WprParams += PrepRecordingProfiles "..\WPRP\WindowsProviders.wprp!WindowsShutdown" }
+				$WPRParams += '-Shutdown'
+			}
+			else
+			{
+				Write-Warn "-Boot: Ignoring WPT_Mode=Shutdown"
+			}
+
+			Write-Warn "See: https://github.com/microsoft/MSO-Scripts/wiki/Analyze-Windows-Boot#shutdown"
+			break
+		}
+
+		default { Write-Warn "Unrecognized WPT_Mode: '$Env:WPT_Mode'"; break }
 		}
 
 		if ($Loop)
@@ -3062,9 +3087,9 @@ Param (
 			$Result = InvokeWPR -Status profiles collectors -InstanceName $InstanceName
 
 			# Too much info: Remove filter IDs and trailing colons: "filtered in/out  by IDs:"
-			# Replace "IDs:" with "IDs." and "<tabs>number<eol>" with ""
-			$Result = $Result -replace 'IDs:','IDs.'
-			$Result = $Result -replace '\t+\d+\r\n',''
+			# Replace "IDs:" with "IDs." and remove "<tab><tab><tab>...<eol>"
+			$Result = $Result -replace ':\r','.'
+			$Result = $Result -replace '\t\t\t.+\r\n',''
 		}
 		else
 		{
