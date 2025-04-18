@@ -397,6 +397,7 @@ Param (
 	if (!$XPerfPath)
 	{
 		Write-Status "Not downloading symbols in the background. Did not find: XPerf.exe"
+		Write-Status 'Install the Windows Performance Toolkit from: https://aka.ms/adk'
 		return $False
 	}
 
@@ -437,7 +438,7 @@ Param (
 	$ErrResult = $True
 	[DateTime]$PreStartTime = Get-Date
 
-	# Launch the viewer without Admin privileges, if possible.
+	# Launch XPerf without Admin privileges, if possible.
 
 	if ((CheckAdminPrivilege) -and (CheckFileUserPrivilege $XPerfPath $ETL))
 	{
@@ -644,8 +645,7 @@ Param (
 			$fResolving = BackgroundResolveSymbols $TraceFilePath
 			if ($fResolving) { Write-Warn "Referenced symbols are being downloaded in the background." }
 
-			Write-Warn "https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize:~:text=FastSym"
-
+			Write-Warn "https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#fastsym"
 		}
 	}
 
