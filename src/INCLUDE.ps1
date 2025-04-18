@@ -785,7 +785,7 @@ Param (
 	Write-Err (GetCmdVerbose $script:WPR_Path $WprParams)
 
 	Write-Warn "`nThis suggests that there is a problem with the WPR Recording Profile (.wprp file)."
-	Write-Warn "See: https://devblogs.microsoft.com/performance-diagnostics/authoring-custom-profile-part3/#common-failure-codes"
+	Write-Warn "See: https://devblogs.microsoft.com/performance-diagnostics/authoring-custom-profile-part3/#:~:text=Common%20Failure%20Codes"
 	Write-Warn "But it could also be due to a version of WPR.exe which is incompatible with the current OS."
 
 	$WinDir32 = "$($Env:SystemRoot)\System32"
@@ -1110,6 +1110,8 @@ function SetLoggedOnUserEnv
 }
 
 
+[string]$script:WinevtPublishers = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Publishers'
+
 <#
 	Test ETW Provider Registration
 #>
@@ -1118,11 +1120,43 @@ function TestProviderRegistration
 Param (
 	[guid]$ProviderId
 )
-	$ProviderPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Publishers\{$ProviderId}"
+	$ProviderPath = "$script:WinevtPublishers\{$ProviderId}"
 	$ResFilePath = GetRegistryValue $ProviderPath "ResourceFileName"
 	if ([string]::IsNullOrEmpty($ResFilePath)) { return $False }
 	return (Test-Path -PathType leaf -Path $ResFilePath -ErrorAction:SilentlyContinue)
 }
+
+
+<#
+	Given a GUID string or the name of a registered, manifested ETW provider,
+	return the corresponding registry key.
+#>
+function GetETWManifestRegistryKey
+{
+Param (
+	[string]$GuidOrName
+)
+	[Microsoft.Win32.RegistryKey]$key = $Null
+	[guid]$guid = [guid]::Empty
+
+	# Is $GuidOrName a GUID?
+	if (![guid]::TryParse($GuidOrName, [ref]$guid))
+	{
+		# $GuidOrName is not a GUID.
+		# Expensive: Find the ETW provider's subkey(s) whose default value is the given name.
+		[array]$rgkey = Get-ChildItem $script:WinevtPublishers | Where-Object { $_.GetValue($Null) -eq $GuidOrName }
+		if (!$rgkey) { return $Null }
+		$key = $rgKey[0]
+	}
+	else
+	{
+		# $GuidOrName is a GUID.
+		$key = Get-Item "$script:WinevtPublishers\{$guid}" -ErrorAction:SilentlyContinue
+	}
+
+	return $key
+}
+
 
 
 [string[]]$script:ManifestPathsLoaded = $Null # List of paths of manifests already registered.
@@ -1436,7 +1470,7 @@ Param (
 
 		# Get the version info for the most recently created process with the given name.
 
-		$Processes = Get-Process -name $Name -ErrorAction:SilentlyContinue | Sort-Object -Descending -Property StartTime
+		$Processes = Get-Process -name $Name -ErrorAction:SilentlyContinue | Sort-Object -Descending -Property StartTime -ErrorAction:SilentlyContinue
 
 		if ($Processes)
 		{
@@ -2370,6 +2404,52 @@ Param (
 
 
 <#
+	Make an educated guess as to whether the identified ETW Provider should trace with non-paged memory.
+	Must return only: $True, $False
+
+	NonPagedMemory:
+	"You must set this true if the provider is running in kernel such as the driver."
+	"Though the attribute is for the provider, the property applies to the whole session."
+	https://devblogs.microsoft.com/performance-diagnostics/authoring-custom-profile-part3/#:~:text=NonPagedMemory
+#>
+function UseNonPagedMemory
+{
+Param (
+	[string]$GuidOrName
+)
+	# Short Circuit Heuristics for NonPagedMemory
+	if ($GuidOrName -like '*Kernel*') { return $True }
+	if ($GuidOrName -like '*Win32K')  { return $True }
+
+	# TraceLogging providers usually have dots: Microsoft.Windows.WindowsErrorReporting
+	if ($GuidOrName -like '*.*') { return $False }
+
+	$key = GetETWManifestRegistryKey $GuidOrName
+
+	if (!$key) { return $False }
+
+	[string]$ResFilePath = $key.GetValue('ResourceFileName')
+	if ([string]::IsNullOrEmpty($ResFilePath)) { return $False }
+
+	$ResFile = Split-Path -Leaf -Path $ResFilePath
+	$Guid = $key.PSChildName # {GUID} = the key name
+	$Name = $key.GetValue($Null)
+
+	# Write: Name {GUID} Module
+	Write-Status "$Name $Guid $ResFile"
+
+	if ($ResFile -like '*.sys') { return $True } # Kernel Driver
+	if ($ResFile -like '*Windows-System*') { return $True } # Microsoft-Windows-System-Events.dll
+	if ($ResFile -like '*windows-kernel*') { return $True } # microsoft-windows-kernel-power-events.dll
+
+	if ($Name -like '*Kernel*') { return $True } # Test the registry's ETW Provider name for 'Kernel'.
+	if ($Name -like '*Integrity') { return $True } # Microsoft-Windows-CodeIntegrity operates within the Kernel.
+
+	return $False
+}
+
+
+<#
 	Transform a plus-separated ProviderString using XPerf syntax: NameOrGUID:KeywordFlags:Level:'stack'[+ ...]
 	into a simple but well-formatted WPRP file, and return $Null or: <Path>!<ProfileName>
 #>
@@ -2498,7 +2578,7 @@ Param (
 
 		$Count++
 		$Id = "EP_$Count"
-		$NPM = (($GuidOrName -like '*Kernel*') -or ($GuidOrName -like '*Win32K*')) # Heuristic for NonPagedMemory
+		$NPM = UseNonPagedMemory $GuidOrName
 
 		$_WPRP += $_Comment -replace $_PROVIDER_,$Provider
 		$_WPRP += $_Provider -replace $_NAME_,$GuidOrName -replace $_LEVEL_,[string]$Level -replace $_STACK_,$Stack.ToString().ToLower() -replace $_NPM_,$NPM.ToString().ToLower() -replace $_Id_,$Id
