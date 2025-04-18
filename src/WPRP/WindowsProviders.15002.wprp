@@ -257,7 +257,39 @@
 
     <EventProvider Id="EP_Microsoft-Windows-Subsys-SMSS" Name="43e63da5-41d1-4fbf-aded-1bbed98fdd1d" Level="4" /> <!-- Microsoft-Windows-Subsys-SMSS -->
 
-    <EventProvider Id="EP_Microsoft-Windows-Winlogon" Name="dbe9b383-7cf3-4331-91cc-a3cb16a3b538" Level="4" /> <!-- Microsoft-Windows-Winlogon -->
+    <EventProvider Id="EP_Microsoft-Windows-Subsys-Csr" Name="e8316a2d-0d94-4f52-85dd-1e15b66c5891" Level="4" /> <!-- Microsoft-Windows-Subsys-Csr -->
+
+    <EventProvider Id="EP_Microsoft-Windows-Services" Name="0063715b-eeda-4007-9429-ad526f62696e" Level="4"> <!-- Microsoft-Windows-Services -->
+      <Keywords>
+        <Keyword Value="0x00010000" />
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="EP_Microsoft-Windows-Winsrv" Name="9d55b53d-449b-4824-a637-24f9d69aa02f" Level="4"> <!-- Microsoft-Windows-Winsrv -->
+      <Keywords>
+        <Keyword Value="0x00000100" />
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="EP_Microsoft-Windows-Wininit" Name="206f6dea-d3c5-4d10-bc72-989f03c8b84b" Level="4"> <!-- Microsoft-Windows-Wininit -->
+      <Keywords>
+        <Keyword Value="0x00010000" />
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="EP_Microsoft-Windows-Winlogon" Name="dbe9b383-7cf3-4331-91cc-a3cb16a3b538" Level="4"> <!-- Microsoft-Windows-Winlogon -->
+      <Keywords>
+        <Keyword Value="0x00030000" />
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="EP_Microsoft-Windows-Kernel-Power" Name="331c3b3a-2005-44c2-ac5e-77220c37d6b4" Level="4"> <!-- Microsoft-Windows-Kernel-Power -->
+      <Keywords>
+        <Keyword Value="0x00000008" />
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="EP_Microsoft-Windows-Shell-AuthUI" Name="63d2bb1d-e39a-41b8-9a3d-52dd06677588" Level="4" /> <!-- Microsoft-Windows-Shell-AuthUI -->
 
 <!--
     Profile Declarations
@@ -339,6 +371,35 @@
 
     <Profile Name="WindowsStart" Description="Standalone Windows Providers for OS Startup"
      DetailLevel="Light" LoggingMode="Memory" Base="WindowsStart.Light.File" Id="WindowsStart.Light.Memory" />
+
+    <!-- Windows Shut-down (may stand alone) -->
+
+    <Profile Name="WindowsShutdown" Description="Standalone Windows Providers for OS Shutdown"
+     DetailLevel="Light" LoggingMode="File" Base="Basic.Light.File" Id="WindowsShutdown.Light.File">
+      <Collectors Operation="Add">
+
+        <!-- Stand-alone profile: bare minimum -->
+        <SystemCollectorId Value="SC_4-MB">
+          <SystemProviderId Value="SP_Base" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="EC_16-MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="EP_Microsoft-Windows-Wininit" />
+            <EventProviderId Value="EP_Microsoft-Windows-Winlogon" />
+            <EventProviderId Value="EP_Microsoft-Windows-Services" />
+            <EventProviderId Value="EP_Microsoft-Windows-Winsrv" />
+            <EventProviderId Value="EP_Microsoft-Windows-Subsys-Csr" />
+            <EventProviderId Value="EP_Microsoft-Windows-Kernel-Power" />
+            <EventProviderId Value="EP_Microsoft-Windows-Shell-AuthUI" />
+          </EventProviders>
+        </EventCollectorId>
+
+      </Collectors>
+    </Profile>
+
+    <Profile Name="WindowsShutdown" Description="Standalone Windows Providers for OS Shutdown"
+     DetailLevel="Light" LoggingMode="Memory" Base="WindowsShutdown.Light.File" Id="WindowsShutdown.Light.Memory" />
 
     <!-- Tutti Frutti (may stand-alone) -->
 
