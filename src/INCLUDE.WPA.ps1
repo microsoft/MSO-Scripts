@@ -508,6 +508,12 @@ Param (
 	{
 		if ($IsModernWPA)
 		{
+			# If WPA option -cliprundown needed, it must immediately follow -i file.
+			if (!$KeepRundown)
+			{
+				$ViewerCmd += GetArgs -cliprundown
+			}
+
 			if (!$NoSymbols)
 			{
 				$ViewerCmd += GetArgs -symbols
@@ -523,11 +529,6 @@ Param (
 					$ViewerCmd += GetArgs -symcacheonly
 					$SymCacheOnly = $True
 				}
-			}
-
-			if (!$KeepRundown)
-			{
-				$ViewerCmd += GetArgs -cliprundown
 			}
 		}
 	}
