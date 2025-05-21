@@ -235,15 +235,6 @@ Param ( # $ViewerParams 'parameter splat'
 		$ExtraParams = GetArgs -processors $Processors -addsearchdir $AddInPath -NoSymbols
 	}
 
-	if ($FastSym)
-	{
-	<#	When using -addsearchpath <AddIn_Folder>, WPA doesn't accept: -symbols -symcacheonly
-		Therefore, the NetBlame add-in recognizes -symcacheonly via environment variables:
-		_NT_SYMBOL_PATH=<Empty>; _NT_SYMCACHE_PATH=<Paths>
-	#>
-		$Env:_NT_SYMBOL_PATH = $Null
-	}
-
 	# Now load LaunchViewerCommand and related.
 
 	. "$ScriptRootPath\INCLUDE.WPA.ps1"

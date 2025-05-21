@@ -1420,6 +1420,8 @@ Param (
 	[string]$Cmd,
 	[string[]]$Params
 )
+	if (!$Params) { return $Cmd }
+
 	[array]$Out = ReplaceEnv $Cmd
 
 	foreach ($Param in $Params)
@@ -1483,7 +1485,7 @@ Param (
 			if (DoVerbose)
 			{
 				Write-Status "Running:" $Process.ProcessName "v$($Process.MainModule.FileVersionInfo.FileVersion)" "PID =" $Process.id "Running since:" $Process.StartTime
-				Write-Status "Path =" $Process.MainModule.FileName
+				Write-Status "Path =" (ReplaceEnv $Process.MainModule.FileName)
 			}
 			return $Process
 		}
@@ -3336,12 +3338,6 @@ Param ( # $ViewerParams 'parameter splat'
 		{
 			Write-Status "Does not exist: $CustomProfilePath"
 		}
-	}
-
-	if (DoNoWarn)
-	{
-		$ExtraParams += GetArgs -tti -tle
-		Write-Status "WarningAction:Silent : Adding -TTI -TLE (Tolerate Time Inversions & Lost Events)"
 	}
 
 	# Now load LaunchViewerCommand and related.
