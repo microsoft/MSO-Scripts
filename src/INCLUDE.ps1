@@ -1336,13 +1336,11 @@ Param (
 	$EnvVal = $ExecutionContext.InvokeCommand.ExpandString("`${Env:$EnvName}")
 	if ([string]::IsNullOrEmpty($EnvVal)) { return $False }
 
-	if (!($Param.Value -like "*$EnvVal\*")) { return $False }
+	if ($Param.Value -notlike "*$EnvVal\*") { return $False }
 
 	if (InvokedFromCMD)
 	{
 		$EnvName = "%$EnvName%"
-		$Param.Value = $Param.Value.Replace($EnvVal, $EnvName)
-		if (!($Param.Value -like "`"*")) { $Param.Value = "`"$($Param.Value)`"" }
 	}
 	else
 	{
@@ -1354,14 +1352,10 @@ Param (
 		{
 			$EnvName = "`$Env:$EnvName"
 		}
-
-		$Param.Value = $Param.Value.Replace($EnvVal, $EnvName)
-
-		if ($Param.Value -like "* *")
-		{
-			if (!($Param.Value -like "`"*")) { $Param.Value = "`"$($Param.Value)`"" }
-		}
 	}
+
+	$Param.Value = $Param.Value.Replace($EnvVal, $EnvName)
+	if ($Param.Value -notlike '"*') { $Param.Value = "`"$($Param.Value)`"" }
 
 	return $True
 } # ReplaceOneEnv
@@ -1376,8 +1370,8 @@ function ReplaceEnv
 Param (
 	[string]$Param
 )
-	# If it has a space or it's a path then quote it, if it's not already.
-	if ($Param -match "[ \\]")
+	# If it's a path then replace common environment variables.
+	if ($Param -like '*\*')
 	{
 		# Order: longest to shortest
 		if (ReplaceOneEnv ([ref]$Param) 'TEMP') { return $Param }
@@ -1387,8 +1381,7 @@ Param (
 		if (ReplaceOneEnv ([ref]$Param) 'ProgramFiles') { return $Param }
 		if (ReplaceOneEnv ([ref]$Param) 'SystemRoot') { return $Param }
 		if (ReplaceOneEnv ([ref]$Param) 'WPT_Path') { return $Param }
-		if ($Param -like '"*"') { return $Param }
-		else { return "`"$Param`"" }
+		if ($Param -notlike '"*') { return "`"$Param`"" }
 	}
 	return $Param
 }
@@ -3346,7 +3339,7 @@ Param ( # $ViewerParams 'parameter splat'
 
 	Write-Msg "Opening trace:" (ReplaceEnv $TraceFilePath)
 
-	$Process = LaunchViewerCommand "`"$WpaPath`"" $TraceFilePath $ViewerConfigs $Version -FastSym:$FastSym -ExtraParams:$ExtraParams
+	$Process = LaunchViewerCommand $WpaPath $TraceFilePath $ViewerConfigs $Version -FastSym:$FastSym -ExtraParams:$ExtraParams
 
 	# If no process launched (apparently), suggest a different path, or suggest reinstalling.
 

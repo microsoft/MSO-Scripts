@@ -295,7 +295,19 @@ function LaunchAsStandardUser
 		Wait = $False # Would wait for child processes, too.
 	}
 
-	Write-Status "Launching as StandardUser (non-Admin):`n" $ProcessCommand.FilePath $ProcessCommand.ArgumentList
+	# Create a modified execution string which can be copied and pasted.
+	if (InvokedFromCMD)
+	{
+		# Escape special DOS chars: &|<>
+		$ArgList = $ArgList -replace '([&|<>])', '^$1'
+	}
+	else
+	{
+		# Replace unescaped dbl-quote with single quote.
+		$ArgList = $ArgList -replace '(?<!\\)"', "'"
+	}
+
+	Write-Status "Launching as StandardUser (non-Admin):`n" $ProcessCommand.FilePath $ArgList
 
 	$ErrorDefault = "Failed to run: $($Args[0])"
 	$Error.Clear()
@@ -630,7 +642,7 @@ Param (
 	if ((CheckAdminPrivilege) -and (CheckFileUserPrivilege $ViewerPath @ViewerCmd))
 	{
 		# Admin, but all file paths are acccessible as Standard User.
-		$ErrResult = LaunchAsStandardUser $ViewerPath @ViewerCmd
+		$ErrResult = LaunchAsStandardUser "`"$ViewerPath`"" @ViewerCmd
 
 		if (!$ErrResult)
 		{
