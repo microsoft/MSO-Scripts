@@ -24,7 +24,7 @@
 
 	Or you can change the default $SymbolDrive here.
 #>
-$script:SymbolDrive = "c:"
+$script:SymbolDrive = $Env:SystemDrive
 
 # Symbol Files (.pdb) are stored here by default. They can be HUGE!
 $script:PdbCacheFolder = "$script:SymbolDrive\Symbols"
@@ -295,7 +295,19 @@ function LaunchAsStandardUser
 		Wait = $False # Would wait for child processes, too.
 	}
 
-	Write-Status "Launching as StandardUser (non-Admin):`n" $ProcessCommand.FilePath $ProcessCommand.ArgumentList
+	# Create a modified execution string which can be copied and pasted.
+	if (InvokedFromCMD)
+	{
+		# Escape special DOS chars: &|<>
+		$ArgList = $ArgList -replace '([&|<>])', '^$1'
+	}
+	else
+	{
+		# Replace unescaped dbl-quote with single quote.
+		$ArgList = $ArgList -replace '(?<!\\)"', "'"
+	}
+
+	Write-Status "Launching as StandardUser (non-Admin):`n" $ProcessCommand.FilePath $ArgList
 
 	$ErrorDefault = "Failed to run: $($Args[0])"
 	$Error.Clear()
@@ -418,8 +430,11 @@ Param (
 	# https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#deeper
 
 	$XPerfCmd = "`"$XPerfPath`" -tle -tti -i `"$ETL`" -symbols verbose -a symcache -build"
+	$XPerfCmdEnv = "$(ReplaceEnv $XPerfPath) -tle -tti -i $(ReplaceEnv $ETL) -symbols verbose -a symcache -build"
 
-	$XPerfFiltered = "$XPerfCmd 2>&1 | findstr /r `"bytes.*SYMSRV.*RESULT..0x00000000`""
+	$OutFilter = <# $XPerfCmd #> '2>&1 | findstr /r "bytes.*SYMSRV.*RESULT..0x00000000"'
+	$XPerfFiltered = "$XPerfCmd $OutFilter"
+	$XPerfFilterEnv = "$XPerfCmdEnv $OutFilter"
 
 	$CmdHeader = "echo Downloading symbols for: $File & echo Symbol Path: %_NT_SYMBOL_PATH% & echo:" 
 
@@ -433,7 +448,7 @@ Param (
 	# Launch a new window (minimized and titled), and close the one from RunAs (after a brief flash).
 	$RunAsCmd = "start `"$Title`" /min /belownormal cmd /c `"$CmdNoTitle`""
 
-	WriteCmdVerbose $XPerfFiltered
+	WriteCmdVerbose $XPerfFilterEnv
 
 	$ErrResult = $True
 	[DateTime]$PreStartTime = Get-Date
@@ -464,7 +479,7 @@ Param (
 	}
 	else
 	{
-		Write-Err (GetCmdVerbose $XPerfCmd)
+		Write-Err $XPerfCmdEnv
 		Write-Msg
 		Write-Err "Not able to resolve symbols in the background."
 		Write-Err $ErrResult
@@ -495,53 +510,84 @@ Param (
 	$KeepRundown = HandlePseudoParam ([ref]$ExtraParams) '-KeepRundown'
 	$NoSymbols = HandlePseudoParam ([ref]$ExtraParams) '-NoSymbols'
 
-	# Pre-v10 WPA didn't accept -symbols param, nor HTTP symcache.
-	$IsModernWPA = ($VersionInfo -ge [Version]'10.0.0')
+	# https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install#other-adk-downloads
+	# v 6.3.9600 : -TTI -ClipRundown -Profile ...
+	# v10.0.14393: -TTI -ClipRundown -Symbols -Profile ...
+	# v10.0.15063: -TTI -ClipRundown -Symbols -SymCacheOnly -Profile ...
+	# v10.5.16+  : -TTI -TLE -ClipRundown -Symbols -SymCacheOnly -Profile ...
+	# v11.0.7+   : -Processors ... -AddSearchDir ... (modern add-ins)
+
+	$IsModernWPA  = ($VersionInfo -ge [Version]'10.0.0')     # -Symbols
+	$IsSymCacheOK = ($VersionInfo -ge [Version]'10.0.15063') # -Symbols -SymCacheOnly
+	$IsFullWPA    = ($VersionInfo -ge [Version]'10.5.16')    # ADK for Server 2022, or later
+	$IsNewerWPA   = ($VersionInfo -ge [Version]'11.0.7')     # Works with modern add-ins
 
 	# Should have previously called EnsureTracePath
 	if (!$script:TracePath) { EnsureTracePath; Write-Dbg "Trace path not set for default working folder!" }
 
 	$SymCacheOnly = $False
+	$NT_SYMBOL_PATH = $Env:_NT_SYMBOL_PATH
 
 	[array]$ViewerCmd = GetArgs -i `"$TraceFilePath`"
+
 	if (!$ExtraParams)
 	{
-		if ($IsModernWPA)
+		if (DoNoWarn)
 		{
-			# If WPA option -cliprundown needed, it must immediately follow -i file.
-			if (!$KeepRundown)
+			if ($IsFullWPA)
 			{
-				$ViewerCmd += GetArgs -cliprundown
+				$ViewerCmd += GetArgs -tti -tle
+				Write-Status '-WarningAction:Silent : Adding -TTI -TLE (Tolerate Time Inversions & Lost Events)'
 			}
-
-			if (!$NoSymbols)
+			else
 			{
-				$ViewerCmd += GetArgs -symbols
+				$ViewerCmd += GetArgs -tti
+				Write-Status "-WarningAction:Silent : Adding -TTI (Tolerate Time Inversions)"
+			}
+		}
 
-				if ($FastSym)
-				{
-					# Not-well-documented -symcacheonly switch loads symbols only from .symcache files, ignoring PDBs.
-					# (Ideally we wouldn't need a special switch for fast symbol resolution, but the benefit is dramatic.)
-					# Run: wpa.exe -help "Event Tracing for Windows"
-					# https://learn.microsoft.com/en-us/windows-hardware/test/wpt/loading-symbols#symcache-path
-					# https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
+		if (!$KeepRundown)
+		{
+			$ViewerCmd += GetArgs -cliprundown
+		}
 
-					$ViewerCmd += GetArgs -symcacheonly
-					$SymCacheOnly = $True
-				}
+		if ($IsModernWPA -and !$NoSymbols)
+		{
+			$ViewerCmd += GetArgs -symbols
+
+			if ($IsSymCacheOK -and $FastSym)
+			{
+				# Not-well-documented -symcacheonly switch loads symbols only from .symcache files, ignoring PDBs.
+				# (Ideally we wouldn't need a special switch for fast symbol resolution, but the benefit is dramatic.)
+				# Run: wpa.exe -help "Event Tracing for Windows" OR wpa.exe -help XPerf
+				# https://learn.microsoft.com/en-us/windows-hardware/test/wpt/loading-symbols#symcache-path
+				# https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#optimize
+
+				$ViewerCmd += GetArgs -symcacheonly
+				$SymCacheOnly = $True
 			}
 		}
 	}
 	else
 	{
 		# if $ExtraParams are -Processor & -Addsearchdir then they come before -Profile.
-		# And other switches like -Symbols, -SymCacheOnly and -ClipRundown don't seem to work.
+		# And other switches like -tti, -tle, -Symbols, -SymCacheOnly and -ClipRundown don't seem to work.
 		$ViewerCmd += $ExtraParams
 
 		if ($FastSym)
 		{
-			if ($Env:_NT_SYMBOL_PATH) { Write-Dbg "Not taking action on -FastSym, yet _NT_SYMBOL_PATH is set." }
+			# When using -addsearchpath <AddIn_Folder>, WPA doesn't accept: -symbols -symcacheonly
+			# Therefore, an add-in (NetBlame) must recognize -symcacheonly via environment variables:
+			# _NT_SYMBOL_PATH=<Empty>; _NT_SYMCACHE_PATH=<Paths>
+
+			$Env:_NT_SYMBOL_PATH = $Null
+
 			$SymCacheOnly = $True
+		}
+
+		if (DoNoWarn)
+		{
+			Write-Status "Ignoring: -WarningAction:Silent"
 		}
 	}
 
@@ -576,6 +622,14 @@ Param (
 		}
 	}
 
+	if (!$IsNewerWPA)
+	{
+		Write-Warn "A newer Windows Performance Analizer (WPA) is available:"
+		Write-Warn "  Windows Store: https://apps.microsoft.com/detail/9n0w1b2bxgnz"
+		Write-Warn "  Windows Performance Toolkit: https://learn.microsoft.com/en-us/windows-hardware/test/wpt/"
+		Write-Warn "Or set WPT_PATH to the folder of a more recent WPA."
+	}
+
 	Write-Msg "Launching Windows Performance Analyzer (WPA) ..."
 	WriteCmdVerbose $ViewerPath $ViewerCmd
 
@@ -588,7 +642,7 @@ Param (
 	if ((CheckAdminPrivilege) -and (CheckFileUserPrivilege $ViewerPath @ViewerCmd))
 	{
 		# Admin, but all file paths are acccessible as Standard User.
-		$ErrResult = LaunchAsStandardUser $ViewerPath @ViewerCmd
+		$ErrResult = LaunchAsStandardUser "`"$ViewerPath`"" @ViewerCmd
 
 		if (!$ErrResult)
 		{
@@ -633,15 +687,18 @@ Param (
 		if (!$IsModernWPA)
 		{
 			# Warn if the -symbols switch was not used. (Pre-Win10 versions of WPA didn't accept it.)
-			Write-Warn "`nTo resolve call stack symbols in WPA, select: Trace / Load Symbols"
+			Write-Warn "`nTo resolve stack walk symbols in WPA, select: Trace / Load Symbols"
 		}
-		elseif ($FastSym)
+		elseif ($IsSymCacheOK -and $FastSym)
 		{
 			# Launch XPerf in the background to download referenced symbols not already cached.
+			# WPA's symbol resolution (with -symcacheonly) will not compete with XPerf.
 
-			SetupSymbolPaths $False # NOW set up _NT_SYMBOL_PATH
+			# NOW set up _NT_SYMBOL_PATH, using the user-provided version if available.
+			$Env:_NT_SYMBOL_PATH = $NT_SYMBOL_PATH
+			SetupSymbolPaths $False
 
-			Write-Warn "FastSym: WPA is loading only symbols previously cached or transcoded to SymCache."
+			Write-Warn "-FastSym: WPA is loading only symbols previously cached or transcoded to SymCache."
 
 			$fResolving = BackgroundResolveSymbols $TraceFilePath
 			if ($fResolving) { Write-Warn "Referenced symbols are being downloaded in the background." }
