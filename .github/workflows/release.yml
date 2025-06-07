@@ -15,11 +15,16 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Create artifacts directory
-        run: mkdir bin
+      - name: Create artifacts directory
+        run: mkdir bin
 
-      - name: Copy scripts
-        run: xcopy /s src bin
+      - name: Copy scripts
+        run: xcopy /e /i src bin
+
+      - name: Authenticate GitHub CLI
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
       - name: Publish release
-        run: gh release create v${{ inputs.version }} --title "Release v${{ inputs.version }}" bin
+        run: gh release create v${{ inputs.version }} --title "Release v${{ inputs.version }}" bin --notes "Manual release"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
