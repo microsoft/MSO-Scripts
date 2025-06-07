@@ -1,0 +1,23 @@
+name: test-release-action
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+        type: string
+jobs:
+  create-release:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Create artifacts directory
+        run: mkdir bin
+
+      - name: Copy scripts
+        run: xcopy /s src bin
+
+      - name: Publish release
+        run: gh release create v${{ inputs.version }} --title "Release v${{ inputs.version }}" bin
