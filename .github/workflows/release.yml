@@ -1,4 +1,5 @@
 name: test-release-action
+
 on:
   workflow_dispatch:
     inputs:
@@ -6,6 +7,7 @@ on:
         description: 'Release version'
         required: true
         type: string
+
 jobs:
   create-release:
     runs-on: windows-latest
