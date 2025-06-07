@@ -77,14 +77,14 @@
     <!-- TCP-IP -->
 
     <EventProvider Id="EP_Microsoft-Windows-TCPIP" Name="2f07e2ee-15db-40f1-90ef-9d7ba282188a" NonPagedMemory="true" Level="4">
-      <Keywords Operation="Add">
+      <CaptureStateOnStart Timeout="30">
         <Keyword Value="0x0000001300000080" />
-      </Keywords>
+      </CaptureStateOnStart>
     </EventProvider>
     <EventProvider Id="EP_Filtered_Microsoft-Windows-TCPIP" Name="2f07e2ee-15db-40f1-90ef-9d7ba282188a" NonPagedMemory="true" Level="4">
-      <Keywords Operation="Add">
+      <CaptureStateOnStart Timeout="30">
         <Keyword Value="0x0000001300000080" />
-      </Keywords>
+      </CaptureStateOnStart>
       <!-- Include only events required by NetBlame, WPA annotations, and related. -->
       <EventFilters FilterIn="true">
         <EventId Value="1002" /> <!-- TcpRequestConnect -->
