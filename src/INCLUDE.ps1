@@ -420,7 +420,7 @@ function GetOSRestartTime
 
 
 # Store registry values for ProfileStartTime here:
-$RegPathStatus = "HKCU:\Software\Microsoft\Office Test\MSO-Scripts"
+$script:RegPathStatus = "HKCU:\Software\Microsoft\Office Test\MSO-Scripts"
 
 
 <#
@@ -1501,25 +1501,30 @@ Param(
 
 
 <#
-	Write out the WPR params (verbose).
-	Invoke the Windows Performance Recorder (WPR.exe).
-	Returns the error or the output. Sets: $LastExitCode
+	Invoke a short-lived process, such as WPR.
+	Returns the error text or the output.
+	$global:LastExitCode =
+		  1 (ERROR_INVALID_FUNCTION): Failed to run.
+		 -1 Bad Parameters (usually).
+		258 (WAIT_TIMEOUT): The invoked process ran but timed out (not short-lived).
+		329 (ERROR_OPERATION_IN_PROGRESS): Ran a batch file process wrapper.
 #>
-function InvokeWPR
+function InvokeExe
 {
-	if (!$script:WPR_Path) { Write-Dbg "Prerequisite failure: `$script:WPR_Path = `$Null Params = $Args"; return $Null }
-
+Param (
+	[string]$ExePath
+)
 	# Quote all paths.
 	[string[]]$Params = $Args | ForEach-Object {QuotePath $_}
 
 	# $Args should be an array rather than an aggregated string, else paths didn't get quoted, etc.
-	if (($Params.Count -eq 1) -and ($Params[0] -like "* *")) { Write-Dbg "Invoking WPR with aggregated parameters:" $Params[0] }
+	if (($Params.Count -eq 1) -and ($Params[0] -like "* *")) { Write-Dbg "Invoking $([System.IO.Path]::GetFileName($ExePath)) with aggregated parameters:" $Params[0] }
 
-	WriteCmdVerbose $script:WPR_Path $Params
+	WriteCmdVerbose $ExePath $Params
 	ResetError
 
 	$psi = New-Object System.Diagnostics.ProcessStartInfo
-	$psi.FileName = $script:WPR_Path
+	$psi.FileName = $ExePath
 	# $psi.ArgumentList = $Args # Not available until .NETv5
 	$psi.Arguments = $Params
 	$psi.RedirectStandardError = $true
@@ -1530,17 +1535,57 @@ function InvokeWPR
 
 	$proc = New-Object System.Diagnostics.Process
 	$proc.StartInfo = $psi
+
 	try { $proc.Start() > $Null }
-	catch { $global:LastExitCode = 1; return "Failed to run: $script:WPR_Path" }
-	try { $proc.PriorityClass = 'High' } # Short-lived WPR process needs to act quickly.
+	catch { $global:LastExitCode = 1; $proc.Close(); return "Failed to run: $ExePath" }
+
+	if ($proc.Name -eq 'cmd')
+	{
+		# Running a batch file process wrapper, so we won't be able to capture the output.
+		$proc.Close()
+		$global:LastExitCode = 329 # ERROR_OPERATION_IN_PROGRESS
+		return $Null
+	}
+
+	try { $proc.PriorityClass = 'High' } # Short-lived process needs to act quickly.
 	catch { <# Already exited? #> }
+
 	$stdout = $proc.StandardOutput.ReadToEnd()
 	$stderr = $proc.StandardError.ReadToEnd()
-	$proc.WaitForExit()
-	$global:LastExitCode = $proc.ExitCode
 
-	if ($LastExitCode -ne 0) { return $stderr }
+	$ExitCode = 258 # WAIT_TIMEOUT
+	if ($proc.WaitForExit(20000)) { $ExitCode = $proc.ExitCode }
+
+	$proc.Close()
+
+	$global:LastExitCode = $ExitCode
+	if ($ExitCode -ne 0) { return $stderr }
 	return $stdout # "Heap tracing was successfully enabled..."
+}
+
+
+<#
+	Write out the WPR params (verbose).
+	Invoke the Windows Performance Recorder (WPR.exe).
+	Returns the error or the output. Sets: $LastExitCode
+#>
+function InvokeWPR
+{
+	if (!$script:WPR_Path) { Write-Dbg "Prerequisite failure: `$script:WPR_Path = `$Null Params = $Args"; return $Null }
+
+	$Return = InvokeExe $script:WPR_Path @Args
+
+	if ($global:LastExitCode -eq 329) # ERROR_OPERATION_IN_PROGRESS
+	{
+		Write-Warn "Wrapper script for WPR.exe may not work well: $script:WPR_Path"
+
+		if (InvokedFromCMD) { Write-Warn 'Please set WPT_PATH=<path of WPR.exe>' }
+		else { Write-Warn 'Please set $Env:WPT_PATH = "<path of WPR.exe>"' }
+
+		$global:LastExitCode = 0
+	}
+
+	return $Return
 }
 
 
@@ -1967,6 +2012,17 @@ Param (
 	# After this point we can't identify the .exe module in advance, so we can't determine its version.
 	# This affects our ability to correctly choose parameters, etc.
 	#
+
+	# Test $env:WPT_Path for *.bat, etc.
+
+	if ($env:WPT_PATH)
+	{
+		$WptPath = $env:WPT_PATH.Trim('"').TrimEnd('\')
+		$WptPath = "$WptPath\$Exe"
+		[string[]]$PathStar = ($WptPath -replace '.exe$','.bat'),($WptPath -replace '.exe$','.cmd')
+		$WptPath = Get-Command -TotalCount 1 -CommandType Application -Name $PathStar -ErrorAction:SilentlyContinue
+		if ($WptPath -and (TestExePath $WptPath.Path $TestRun ([ref]$AltPath))) { return $WptPath.Path }
+	}
 
 	# Test the system path for *.bat, etc.
 
@@ -3345,20 +3401,16 @@ Param ( # $ViewerParams 'parameter splat'
 
 	if (!$Process)
 	{
-		# Get a different path, and do a test run this time.
+		# Get a different path.
 
-		$Path2 = GetWptExePath $Exe -Silent -TestRun
-		if ($Path2 -eq $WpaPath)
-		{
-			$Path2 = GetWptExePath $Exe -Silent -TestRun -AltPath
-		}
+		$Path2 = GetWptExePath $Exe -Silent -AltPath
 
 		if ($Path2 -like "*\$Exe") # Has an alternate path?
 		{
 			Write-Warn "`nThe Windows Performance Analyzer ($Exe) apparently did not launch from:" (ReplaceEnv $WpaPath)
 			Write-Warn "Solution: Please change the WPT_PATH environment variable to another path for WPA and try again:"
 			$EnvPath = ReplaceEnv (Split-Path -Path $Path2)
-			Write-Warn (Ternary (InvokedFromCMD) "`tset WPT_PATH=$EnvPath" "`t`$Env:WPT_PATH=`"$EnvPath`"")
+			Write-Warn (Ternary (InvokedFromCMD) "`tset WPT_PATH=$EnvPath" "`t`$Env:WPT_PATH=$EnvPath")
 		}
 		else
 		{
@@ -3371,6 +3423,10 @@ Param ( # $ViewerParams 'parameter splat'
 				WriteWPTInstallMessage $Exe
 			}
 		}
+	}
+	else
+	{
+		$Process.Close()
 	}
 } # LaunchViewer
 

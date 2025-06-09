@@ -152,7 +152,114 @@ $VersionMinForAddin = [Version]'11.0.7' # This version and later use SDK v1.0.7+
 $VersionForProcessors = [Version]'11.8.0' # Version 11.8.262 and later requires: -Processors (Earlier versions allow it.)
 
 $AddInPath = "$script:ScriptHomePath\ADDIN" # Uses SDK v1.0.7+
-$Processors = '"Event Tracing for Windows","Office_NetBlame"'
+
+$WPA_Version_RegPath = "$script:RegPathStatus\WPA-Plugin" # $RegPathStatus also used for SetProfileStartTime, etc.
+
+# Most modern versions of WPA list/accept these plug-in names via: WPA -listplugins -addsearchdir MSO-Scripts\BETA\ADDIN
+$ETW_Plugins_Default = 'Event Tracing for Windows','Office_NetBlame'
+
+
+<#
+	Return a quoted, comma-separated string of WPA Plug-ins needed for this script.
+	Usually: "Event Tracing for Windows","Office_NetBlame"
+#>
+function GetPluginsList
+{
+Param (
+	[Version]$WpaVersion
+)
+	[string[]]$ETW_Plugins = GetRegistryValue $WPA_Version_RegPath $WpaVersion.ToString()
+	if (!$ETW_Plugins) { $ETW_Plugins = $ETW_Plugins_Default }
+
+	return ($ETW_Plugins | ForEach-Object { "`"$_`"" }) -join ','
+}
+
+
+<#
+	Invoke: WPA -listplugins -addsearchdir MSO-Scripts\BETA\ADDIN
+	Munge/filter the output to get its list of available plug-ins.
+	If the list has changed, return $True after storing the result in the registry for: GetPluginsList
+	On error, write out a debug string and return $False.
+#>
+function ResetPluginsList
+{
+Param (
+	[string]$WpaPath,
+	[string]$SearchDir,
+	[Version]$WpaVersion
+)
+	Write-Status "Querying WPA for a list of available plug-ins."
+
+	# Query WPA for the list of available plug-ins.
+
+	$WpaPath2 = $Null
+	$timeStart = Get-Date
+	$WpaListArgs = GetArgs -listplugins -addsearchdir $SearchDir
+	$Result = InvokeExe $WpaPath @WpaListArgs
+
+	if (!$Result -and ($global:LastExitCode -eq 329)) # ERROR_OPERATION_IN_PROGRESS
+	{
+		# Running a batch file process wrapper, so no result available.
+		# Instead, find the path of the WPA process which just now launched.
+		# Run that directly.
+
+		$proc2 = GetRunningProcess 'WPA' $timeStart
+		if ($proc2)
+		{
+			$WpaPath2 = $proc2.MainModule.FileName
+			if ($WpaPath2)
+			{
+				$Result = InvokeExe $WpaPath2 @WpaListArgs
+			}
+		}
+	}
+
+	# $Result = verbose text to filter, eg.: " * Event Tracing for Windows" ...
+
+	$Lines = $Null
+	if ($Result -and !$global:LastExitCode)
+	{
+		$Lines = $Result.Split("`r?`n", [System.StringSplitOptions]::RemoveEmptyEntries)
+		$Lines = $Lines | foreach-object { if ($_-match '\* (.*?)$') { $matches[1] } } # '  * Event Tracing for Windows', etc.
+	}
+	if (!$Lines -or !$Lines.Count) { Write-Dbg "'WPA $WpaListArgs' (v$WpaVersion) returned: `"$Result`""; return $False }
+
+	# Filter to, eg.: 'Event Tracing for Windows (Internal)' 'XPerf' 'Office_NetBlame'
+
+	$Filter = @( 'Event Tracing*', 'XPerf*', 'Office*' )
+	$Plugins = $Lines | where { $_ | select-string -pattern $Filter }
+
+	# Expecting exactly two plug-ins, similar to the default list.
+
+	$PluginList = "WPA v$WpaVersion Plug-ins:`n$($Lines | Format-Table | Out-String)"
+	if (!$Plugins -or ($Plugins.Count -ne $ETW_Plugins_Default.Count)) { Write-Dbg $PluginList; return $False }
+
+	Write-Status $PluginList
+
+	# Compare the queried plug-ins agains the default or previously registered plug-ins.
+
+	$PluginsPrev = GetPluginsList $WpaVersion
+	if ((Compare-Object -ReferenceObject $Plugins -DifferenceObject $PluginsPrev -IncludeEqual).Count -eq 0) { return $False }
+
+	# The list of plug-ins is different from the default, or what was previously registered.
+
+	SetRegistryValue $WPA_Version_RegPath $WpaVersion.ToString() 'MultiString' $Plugins
+
+	if ($WpaPath2)
+	{
+		# The default 'version' of WPA.bat got registered with the plugins (above).
+		# Now register the plugins using the _real_ version of WPA.exe, as invoked.
+
+		$WpaVersion = GetFileVersion $WpaPath2
+		if ($WpaVersion -ge $VersionForProcessors)
+		{
+			SetRegistryValue $WPA_Version_RegPath $WpaVersion.ToString() 'MultiString' $Plugins
+		}
+	}
+
+	return $True
+}
+
 
 <#
 	Setup and launch the Windows Performance Analyzer.
@@ -195,6 +302,11 @@ Param ( # $ViewerParams 'parameter splat'
 		exit 1
 	}
 
+	if (!(CheckOSVersion '10.0.0'))
+	{
+		Write-Action "`nThis network analyzer plug-in will not likely work before Windows 10.`n"
+	}
+
 	# The viewer: Windows Performance Analyzer (WPA)
 	$WpaPath = GetWptExePath "WPA.exe"
 	$Version = GetFileVersion $WpaPath
@@ -227,20 +339,47 @@ Param ( # $ViewerParams 'parameter splat'
 
 	# The add-in resolves symbols. Don't also enable the main WPA symbol resolution mechanism.
 
-	$ExtraParams = GetArgs -addsearchdir $AddInPath -NoSymbols
+	$ExtraParams = $Null
+	$Processors = $Null
 
-	if (!$Version -or ($Version -ge $VersionForProcessors))
+	if (!$Version -or ($Version -ge $VersionForProcessors) -or !$WpaPath.EndsWith('.exe'))
 	{
 		# Required for WPA.bat or WPA.exe v11.8+ to bypass the New WPA Launcher
-		$ExtraParams = GetArgs -processors $Processors -addsearchdir $AddInPath -NoSymbols
+		$Processors = GetPluginsList $Version
+		$ExtraParams += GetArgs -processors $Processors
 	}
+
+	$ExtraParams += GetArgs -addsearchdir "`"$AddInPath`"" -NoSymbols
 
 	# Now load LaunchViewerCommand and related.
 
 	. "$ScriptRootPath\INCLUDE.WPA.ps1"
 
-	$Result = LaunchViewerCommand $WpaPath $TraceFilePath $ViewerConfig $Version -FastSym:$FastSym $ExtraParams
+	$Process = LaunchViewerCommand $WpaPath $TraceFilePath $ViewerConfig $Version -FastSym:$FastSym $ExtraParams
 
+	if ($Process)
+	{
+		$Process.Close()
+
+		if ($global:LastExitCode -eq -1)
+		{
+			# Running WPA process but no main window: bad parameters!?
+
+			if ($Processors -and (ResetPluginsList $WpaPath $AddInPath $Version))
+			{
+				Write-Warn
+				Write-Warn "WPA did not launch."
+				Write-Warn "The issue has been corrected with an updated list of WPA plug-ins."
+				Write-Action "Please simply re-run the command: $(GetScriptCommand) View ..."
+			}
+			else
+			{
+				Write-Err
+				Write-Err "WPA aborted launch with these extra parameters: $ExtraParams"
+				if (!(DoVerbose)) { Write-Err "For more info, please re-run with -Verbose: $(GetScriptCommand) View -Verbose ..." }
+			}
+		}
+	}
 } # LaunchViewerWithAddIn
 
 

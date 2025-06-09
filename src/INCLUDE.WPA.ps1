@@ -255,6 +255,87 @@ function CheckFileUserPrivilege
 
 
 <#
+	Wait for the WPA process to reach: InputIdle AND MainWindow OR Exit
+	This way we know that WPA threw an error (bad parameters?) if it launched but never hit MainWindow.
+	Returns an exit code in: $global:LastExitCode
+
+	Launched with Main Window: Return $Null         / $global:LastExitCode = 0
+	Launched, but no Window  : Return error string  / $global:LastExitCode = WPA return value (below)
+	Launched, exception      : Return exception msg / $global:LastExitCode = 31 # ERROR_GEN_FAILURE
+	Launched, timed out      : Return 'timed out'   / $global:LastExitCode = 258 # WAIT_TIMEOUT
+
+	WPA.exe return values:
+	0x00000000 - No Error
+	0x00000001 - Didn't run, or killed by User
+	0x80074005 - Canceled by User
+	0xFFFFFFFF - User pressed 'Quit' (loading .ETL) to force WPA to close immediately
+	0xFFFFFFFF - Invalid arguments (-1)
+#>
+function WaitForProcessResponsive
+{
+Param (
+	[System.Diagnostics.Process]$Process
+)
+	$MaxWait = 20 # seconds
+
+	ResetError
+
+	try
+	{
+		if ($Process.Name -ne 'WPA') { Write-Dbg "Waiting for: $($Process.MainModule.ModuleName)" }
+
+		# For WPA, InputIdle happens long before the main window.
+		# Wait for idle at most $MaxWait/2, then continue in any case.
+
+		$IsIdle = $Process.WaitForInputIdle($MaxWait * 500)
+
+		if ($Host.Version.Major -lt 5)
+		{
+			if ($IsIdle) { return $Null }
+			$global:LastExitCode = 258 # WAIT_TIMEOUT
+			return 'Timed Out'
+		}
+
+		for ($i = 0; $i -lt $MaxWait; $i += 1)
+		{
+			Write-Info -NoNewline '.' # Progress
+
+			if (!$Process.WaitForExit(1000))
+			{
+				if ($Process.MainWindowHandle -eq 0) { continue }
+
+				# Success!
+				Write-Info # End Progress
+				$global:LastExitCode = 0
+				return $Null
+			}
+
+			# else quick exit
+			Write-Info # End Progress
+			$global:LastExitCode = $Process.ExitCode
+			$Code = ('{0:x}' -f $Process.ExitCode)
+			Write-Status "WPA Early Exit: $Code"
+			return "Early exit: $Code"
+		}
+	}
+	catch
+	{
+		Write-Info # End Progress
+		$global:LastExitCode = 31 # ERROR_GEN_FAILURE
+		Write-Status "WPA ($($Process.MainModule.ModuleName)): Exception while waiting"
+		return "Exception waiting for WPA ($($Process.MainModule.ModuleName)): $($_.Exception.Message)"
+	}
+
+	# Timed out!
+
+	Write-Info # End Progress
+	$global:LastExitCode = 258 # WAIT_TIMEOUT
+	Write-Status "WPA: Launch timed out"
+	return 'Timed Out'
+}
+
+
+<#
 	Launch the given command with Standard, non-Admin permissions.
 	Return an error string, or $Null.
 #>
@@ -307,10 +388,10 @@ function LaunchAsStandardUser
 		$ArgList = $ArgList -replace '(?<!\\)"', "'"
 	}
 
-	Write-Status "Launching as StandardUser (non-Admin):`n" $ProcessCommand.FilePath $ArgList
+	Write-Status "Launching WPA as Standard User (non-Admin):`n" $ProcessCommand.FilePath $ArgList
 
+	ResetError
 	$ErrorDefault = "Failed to run: $($Args[0])"
-	$Error.Clear()
 
 	try
 	{
@@ -318,31 +399,35 @@ function LaunchAsStandardUser
 	}
 	catch
 	{
-		Write-Status "Standard User:" $Error[0]
-		if ($Error[0] -ne $Null) { return $Error[0] }
+		Write-Status "Could not create process as Standard User:`n$($_.Exception.Message)"
+		$global:LastExitCode = 1 # ERROR_INVALID_FUNCTION
+		if ($Error.Count) { return $Error[0] }
 		return $ErrorDefault
 	}
 
 	# Wait for a result from RunAs.exe
-
+`
 	$HandleCache = $RunAsProcess.Handle # for PSv2 .ExitCode
 	$Finished = $RunAsProcess.WaitForExit(20000)
 
 	if ((!$Finished) -or ($RunAsProcess.ExitCode -ne 0))
 	{
 		Write-Status "As Standard User: $ErrorDefault"
+		$RunAsProcess.Close()
 		return $ErrorDefault
 	}
 
 	# The process launched, but we're not sure if it liked its arguments, configuration, etc.
 
-	return $Null # No error
+	$RunAsProcess.Close()
+	return $Null
 } # LaunchAsStandardUser
 
 
 <#
 	Launch the given command with the permissions of the current environment (possibly Admin).
-	Return an error string, or $Null.
+	Return the process, or null.  Caller should do: $Process.Close()
+	Sets $global:LastExitCode and possibly $Error
 #>
 function LaunchAsCurrentUser
 {
@@ -368,29 +453,22 @@ Param(
 	# If the viewer command is WPA.bat or something other than WPA.exe or "WPA.exe", don't maximize that window.
 	if ($Viewer.TrimEnd('"') -notlike '*.exe') { $ProcessCommand.WindowStyle = "Minimized" }
 
-	# WriteCmdVerbose $Viewer $Args # Done by the caller.
+	Write-Status "Launching WPA as Current User."
 
-	$Error.Clear()
+	ResetError
+	$Process = $Null
+
 	try
 	{
 		$Process = Start-Process @ProcessCommand
-
-		if ($Process.WaitForExit(2000) -and ($Process.ExitCode -lt 0)) { return "Early exit: " + ('{0:x}' -f $Process.ExitCode) }
 	}
 	catch
 	{
-		Write-Status "As Current User:" $Error[0]
-		if ($Error[0] -ne $Null) { return $Error[0] }
-		return "Failed to run: $($Args[0])"
+		Write-Status "Could not create process as Current User:`n$($_.Exception.Message)"
+		$global:LastExitCode = 1 # ERROR_INVALID_FUNCTION
 	}
 
-	# WPA.exe return values:
-	# 0x00000000 - No Error
-	# 0x00000001 - Didn't run, or killed by User
-	# 0x80074005 - Canceled by User
-	# 0xFFFFFFFF - User pressed 'Quit' to force WPA to close immediately
-
-	return $Null # no error
+	return $Process
 } # LaunchAsCurrentUser
 
 
@@ -459,14 +537,26 @@ Param (
 	{
 		# XPerf and the .ETL are acccessible as Standard User.
 		$CmdArgs = GetArgs /c $RunAsCmd
-		$ErrResult = LaunchAsStandardUser "cmd" @CmdArgs
+		$ErrResult = LaunchAsStandardUser 'cmd' @CmdArgs
+		if ($ErrResult) { Write-Status "XPerf as Standard User: $ErrResult" }
 	}
 
 	if ($ErrResult)
 	{
 		# Launches a minimized CMD window.
 		$CmdArgs = GetArgs /c $CmdCmd
-		$ErrResult = LaunchAsCurrentUser "cmd" @CmdArgs
+		$Process = LaunchAsCurrentUser 'cmd' @CmdArgs
+		if ($Process)
+		{
+			$Process.Close()
+			$ErrResult = $False
+		}
+		else
+		{
+			if ($Error.Count) { $ErrResult = $Error[0] }
+			else { $ErrResult = "Failed to run: $XPerfCmdEnv" }
+			Write-Status "XPerf as Current User: $ErrResult"
+		}
 	}
 
 	if (!$ErrResult)
@@ -480,10 +570,10 @@ Param (
 	else
 	{
 		Write-Err $XPerfCmdEnv
-		Write-Msg
+		Write-Err
 		Write-Err "Not able to resolve symbols in the background."
 		Write-Err $ErrResult
-		Write-Msg
+		Write-Err
 	}
 
 	Write-Err "To retry, you can run:`n$script:ScriptRootPath\BETA\GetSymbols.bat $(ReplaceEnv $ETL)"
@@ -494,7 +584,8 @@ Param (
 
 <#
 	Launch WPA on the given path using the given parameters.
-	Return the process object on success, else warn and return $Null.
+	Return the process object on success (if the caller should perhaps try again), else warn and return $Null.
+	Caller should: $Process.Close()
 #>
 function LaunchViewerCommand
 {
@@ -542,7 +633,7 @@ Param (
 			else
 			{
 				$ViewerCmd += GetArgs -tti
-				Write-Status "-WarningAction:Silent : Adding -TTI (Tolerate Time Inversions)"
+				Write-Status '-WarningAction:Silent : Adding -TTI (Tolerate Time Inversions)'
 			}
 		}
 
@@ -622,7 +713,7 @@ Param (
 		}
 	}
 
-	if (!$IsNewerWPA)
+	if (!$IsNewerWPA -and $IsModernWPA)
 	{
 		Write-Warn "A newer Windows Performance Analizer (WPA) is available:"
 		Write-Warn "  Windows Store: https://apps.microsoft.com/detail/9n0w1b2bxgnz"
@@ -639,18 +730,26 @@ Param (
 
 	$Process = $Null
 	$ErrResult = $True
+
 	if ((CheckAdminPrivilege) -and (CheckFileUserPrivilege $ViewerPath @ViewerCmd))
 	{
 		# Admin, but all file paths are acccessible as Standard User.
+
 		$ErrResult = LaunchAsStandardUser "`"$ViewerPath`"" @ViewerCmd
 
 		if (!$ErrResult)
 		{
 			# We're not convinced that WPA actually launched.
 
-			$Process = GetRunningProcess "WPA" $PreStartTime
+			$Process = GetRunningProcess 'WPA' $PreStartTime
+			if ($Process)
+			{
+				$ErrResult = WaitForProcessResponsive $Process
+				if ($ErrResult) { Write-Status "WPA as Standard User: $ErrResult" }
 
-			if (!$Process)
+				if ($global:LastExitCode -eq -1) { return $Process } # Bad Parameters, probably.
+			}
+			else
 			{
 				Write-Status "WPA apparently did not launch as StandardUser (non-Admin)."
 				Write-Status "Retrying as Current User (Admin)."
@@ -658,31 +757,59 @@ Param (
 			}
 		}
 	}
+
 	if ($ErrResult)
 	{
-		$ErrResult = LaunchAsCurrentUser $ViewerPath @ViewerCmd
+		if ($Process) { $Process.Close() }
+
+		$PreStartTime = Get-Date
+
+		$Process = LaunchAsCurrentUser $ViewerPath @ViewerCmd
+		if ($Process)
+		{
+			if ($Process.Name -ne 'WPA')
+			{
+				# It was run from WPA.bat, etc.
+				$Process.Close()
+				$Process = GetRunningProcess 'WPA' $PreStartTime
+			}
+		}
+
+		if ($Process)
+		{
+			$ErrResult = WaitForProcessResponsive $Process
+			if ($ErrResult) { Write-Status "WPA as Current User: $ErrResult" }
+
+			if ($global:LastExitCode -eq -1) { return $Process } # Bad Parameters, probably.
+		}
+		else
+		{
+			if ($Error -and $Error.Count) { $ErrResult = $Error[0] }
+			else { $ErrResult = "Failed to run: $Viewer" }
+		}
 	}
+
 	if ($ErrResult)
 	{
 		Write-Err (GetCmdVerbose $ViewerPath $ViewerCmd)
-		Write-Msg
+		Write-Err
 		Write-Err "Windows Performance Analyzer did not launch."
 		Write-Err $ErrResult
 		if (!(DoVerbose))
 		{
-			Write-Msg
+			Write-Err
 			Write-Err "To retry, please run: $(GetScriptCommand) View -Verbose [options]"
 		}
+
+		if ($Process) { $Process.Close() }
 		return $Null
 	}
 
 	# Get the launched WPA process. Give it a priority boost. Then return the process.
 
-	if (!$Process) { $Process = GetRunningProcess "WPA" $PreStartTime }
-
-	if ($Process)
+	if ($Process -and !$Process.HasExited)
 	{
-		$Process.PriorityClass = 'AboveNormal'
+		try { $Process.PriorityClass = 'AboveNormal' } catch { <# okay #> }
 
 		if (!$IsModernWPA)
 		{

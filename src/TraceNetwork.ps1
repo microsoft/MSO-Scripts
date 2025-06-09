@@ -171,10 +171,13 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 		$Command = "$script:ScriptRootPath\BETA\$($script:MyInvocation.MyCommand)"
 		if (Test-Path -PathType Leaf $Command -ErrorAction:SilentlyContinue)
 		{
-			Write-Info "For easier analysis, please try the BETA version:"
-			$Command = "BETA\$(GetScriptCommand) View"
-			if ($FastSym) { $Command += " -FastSym" }
-			Write-Info $Command
+			if ((CheckOSVersion '10.0.0') -and (GetFileVersion (GetWptExePath "WPA.exe" -Silent) -ge '11.0.7'))
+			{
+				Write-Info "For easier analysis, please try the BETA version:"
+				$Command = "BETA\$(GetScriptCommand) View"
+				if ($FastSym) { $Command += " -FastSym" }
+				Write-Info $Command
+			}
 		}
 	}
 
