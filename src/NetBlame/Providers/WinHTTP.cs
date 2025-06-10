@@ -74,7 +74,6 @@ namespace NetBlameCustomDataSource.WinHTTP
 	4d) etc.
 
 	But the context (Ctx1) is released and may be reused (by another thread) before logging the Stop event.
-		See HTTP_THREAD_POOL::_WorkItemCallback (../winhttp/async/thrdpool.cpp)
 
 	5)	Thread1	ThreadAction_Queue Ctx1 ActId1 WorkItem
 		Thread2	ThreadAction_Start Ctx1 ActId1 WorkItem
@@ -82,7 +81,6 @@ namespace NetBlameCustomDataSource.WinHTTP
 		Thread2 ThreadAction_Stop  Ctx1 ActId1 WorkItem
 
 	And the context (Ctx1) is enqueued and may be dispatched before logging the Queue event.
-		See HTTP_THREAD_POOL::QueueWorkItem (../winhttp/async/thrdpool.cpp)
 
 	6a)	Thread2 ThreadAction_Start Ctx1 ActId1 [WorkItem | Overlapped IO] // Enqueue of Ctx1 already happened on Thread1
 		Thread1 ThreadAction_Queue Ctx1 ActId1 [WorkItem | Overlapped IO] // Thread1 switches back in and logs to ETW!

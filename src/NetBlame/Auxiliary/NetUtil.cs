@@ -91,8 +91,7 @@ namespace NetBlameCustomDataSource
 			// TODO: What about other AddressFamily values? AF_HYPERV = 34
 			AssertCritical(socket.Family == AddressFamily.InterNetwork || socket.Family == AddressFamily.InterNetworkV6);
 
-			// TODO: This is dorky how IPEndPoint.Create works. It justs tests this.AddressFamily and throws an exception if not the same.
-			// See: http://www.dotnetframework.org/default.aspx/DotNET/DotNET/8@0/untmp/whidbey/REDBITS/ndp/fx/src/Net/System/Net/IPEndPoint@cs/1/IPEndPoint@cs
+			// IPEndPoint.Create throws an exception if (this.AddressFamily != socket.Family)
 
 			if (socket.Family == AddressFamily.InterNetworkV6)
 			{
@@ -101,7 +100,13 @@ namespace NetBlameCustomDataSource
 				return ipep;
 			}
 
-			return (IPEndPoint)ipEndPointv4.Create(socket);
+			if (socket.Family == AddressFamily.InterNetwork)
+				return (IPEndPoint)ipEndPointv4.Create(socket);
+
+			// TODO: Handle other AddressFamily values: extract their address/port
+			// Ultimately everything must be expressed as IPv4 or IPv6.
+
+			return new IPEndPoint((Int64)0x42424242, 42); // dummy ipv6 address/port
 		}
 
 		static public readonly char[] rgchURLSplit = new char[] { ':', '/' };

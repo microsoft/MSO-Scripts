@@ -50,7 +50,6 @@ using QWord = System.UInt64;
 		Time3, Callback_Dequeue, Thread2, PoolId1, TaskId1, Context1 // PoolId1==0 - Kernel event
 		Time4, Callback_Start,	 Thread2, PoolId1, TaskId1, Context1
 		Time5, Callback_Stop,	 Thread2, PoolId1, TaskId1, Context1
-	This is because RtlpTpWorkCallback may call RtlTpETWCallbackDequeue and sometimes RtlpTpWorkUnposted (Dequeue).
 
 	Or early re-enqueue (see TppWorkpExecuteCallback):
 		Time1, Callback_Enqueue, Thread1, PoolId1, TaskId1, Context1, CallStack Available
@@ -127,11 +126,7 @@ using QWord = System.UInt64;
 		}
 
 	Strangely, there's another set of ThreadPool functions (for "the original NT threadpool") that uses the same ETW instrumentation,
-	and RtlpTpWorkCallback is the only one that follows the pattern : Dequeue->Start->Stop.
-		RtlpTpETWCallbackEnqueue // v2 - RtlQueueWorkItem
-		RtlTpETWCallbackDequeue  // v3 - RtlpTpWorkCallback, RtlTpWorkUnposted
-		RtlTpETWCallbackStart	 // v2 - RtlpTpWorkCallback, RtlpTpIoCallback, RtlpTpTimerCallback, RtlpTpWaitCallback
-		RtlTpETWCallbackStop	 // v3 - RtlpTpWorkCallback, RtlpTpIoCallback, RtlpTpTimerCallback, RtlpTpWaitCallback
+	and it is the only one that follows the pattern : Dequeue->Start->Stop.
 */
 
 namespace NetBlameCustomDataSource.WThreadPool.Callback

@@ -55,11 +55,6 @@ namespace NetBlameCustomDataSource.Thread.Classic
 		}
 	} // ThreadClassicEvent
 
-
-	// ClassicEvent.Data can be problematic in some configurations:
-	// https://github.com/dotnet/runtime/issues/25543
-	// https://github.com/dotnet/runtime/issues/25854
-
 	[StructLayout(LayoutKind.Sequential, Pack = 4)]
 	public readonly struct ThreadEventPayload
 	{

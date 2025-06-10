@@ -679,7 +679,7 @@ namespace NetBlameCustomDataSource.WinINet
 				break;
 
 			case WINET.SendRequest_Extra:
-				// "The Wininet_SendRequest_Extra event reports additional request data (e.g. POST)" OS_VSO:20914114
+				// "The Wininet_SendRequest_Extra event reports additional request data (e.g. POST)"
 			case WINET.SendRequest_Main:
 				size = evt.GetUInt32("Size");
 				if (size == 0) break;
@@ -710,7 +710,8 @@ namespace NetBlameCustomDataSource.WinINet
 				if (size == 0) break;
 
 				// "The NULL Request fields in WinInet_ReadData events are caused by HTTP2 streams,
-				// which use the Task.WININET_STREAM_DATA_INDICATED event to report the data read.  OS_VSO:20914114
+				// which use the Task.WININET_STREAM_DATA_INDICATED event to report the data read."
+
 				req = FindRequestById(in evt);
 				AssertInfo(req != null);
 				if (req == null) break;

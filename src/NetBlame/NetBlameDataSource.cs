@@ -31,13 +31,9 @@ namespace NetBlameCustomDataSource
 		{
 			return new ProcessingSourceInfo()
 			{
-				Owners = new ContactInfo[]
-				{
-					new ContactInfo { Name="Raymond Fowkes", EmailAddresses = new string [] { "rayfo@microsoft.com" } },
-					new ContactInfo { Name="\rOffice Fundamentals Performance", EmailAddresses = new string [] { "odevperf@microsoft.com" } }
-				},
-				ProjectInfo = new ProjectInfo() { Uri = "https://office.visualstudio.com/OE/_git/TWCPerf-Scratch?path=%2FTools%2FWPA-AddIns%2FNetBlame" },
-				CopyrightNotice = $"Copyright (C) 2020 Microsoft Corporation. All Rights Reserved.",
+				Owners = null,
+				ProjectInfo = new ProjectInfo() { Uri = "https://github.com/microsoft/MSO-Scripts" },
+				CopyrightNotice = $"Copyright (C) Microsoft Corporation. Licensed under the MIT License.",
 				LicenseInfo = null,
 				AdditionalInformation = new string[] { GeoLocation.Attribution }
 			};

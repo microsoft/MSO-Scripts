@@ -130,8 +130,9 @@ namespace NetBlameCustomDataSource.OTaskPool
 
 		public static readonly Guid guid = new Guid("{a019725f-cff1-47e8-8c9e-8fe2635b6388}"); // Microsoft-Office-ThreadPool
 
-		// However, it is not uncommon that the manifest for this provider is missing or out-of-date.
-		// See OfficeVSO/4572384
+		// The manifest for this provider may be incorrect for older versions of Office.
+		// In that case the event field resolution with throw an exception, and we'll cancel further parsing.
+
 		private bool fCancelAll;
 
 
