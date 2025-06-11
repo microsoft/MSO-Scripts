@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# IDE0024: Use block body for operators
+csharp_style_expression_bodied_operators = false:silent
