@@ -14,7 +14,6 @@ using TimestampUI = Microsoft.Performance.SDK.Timestamp;
 using AddressETW = Microsoft.Windows.EventTracing.Address;
 using AddrVal = System.UInt64; // type of AddressUI.ToBytes
 
-
 namespace NetBlameCustomDataSource
 {
 	[System.Diagnostics.DebuggerStepThrough()]
