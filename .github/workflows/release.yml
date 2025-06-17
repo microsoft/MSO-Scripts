@@ -1,4 +1,4 @@
-name: test-release-action
+name: make-release
 
 on:
   workflow_dispatch:
@@ -18,12 +18,20 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create artifacts directory
-        run: mkdir bin
+        run: mkdir bin\MSO-Scripts
 
-      - name: Copy scripts
-        run: xcopy /e /i src bin
+      - name: Create archive with all scripts
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path "src" -File | Copy-Item -Destination "bin\MSO-Scripts"
+          Copy-Item -Path "src\BETA" -Destination "bin\MSO-Scripts\BETA" -Recurse
+          Copy-Item -Path "src\OETW" -Destination "bin\MSO-Scripts\OETW" -Recurse
+          Copy-Item -Path "src\PreWin10" -Destination "bin\MSO-Scripts\PreWin10" -Recurse
+          Copy-Item -Path "src\WPAP" -Destination "bin\MSO-Scripts\WPAP" -Recurse
+          Copy-Item -Path "src\WPRP" -Destination "bin\MSO-Scripts\WPRP" -Recurse
+          Compress-Archive -Path "bin\MSO-Scripts" -DestinationPath "bin\MSO-Scripts-${{ inputs.version }}.zip"
 
       - name: Publish release
-        run: gh release create v${{ inputs.version }} --title "Release v${{ inputs.version }}" bin --notes "Manual release"
+        run: gh release create v${{ inputs.version }} --title "Release v${{ inputs.version }}" "bin\MSO-Scripts-${{ inputs.version }}.zip" --notes "Manual release"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
