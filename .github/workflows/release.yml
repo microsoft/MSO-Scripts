@@ -11,10 +11,8 @@ on:
 jobs:
   create-release:
     runs-on: windows-latest
-
-    permissions:
-      contents: write
-
+    permissions:
+      contents: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
