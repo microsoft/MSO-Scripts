@@ -83,14 +83,15 @@ namespace NetBlameCustomDataSource
 
 		public static uint BitFromI(uint i) => (uint)1 << ((int)i - 1); // i: 1-based
 
+		// https://github.com/dotnet/runtime/issues/58378
+		static AddressFamily AF_HYPERV = (AddressFamily)34;
+		static AddressFamily AF_VSOCK = (AddressFamily)40;
+
 		static readonly IPEndPoint ipEndPointv4 = new IPEndPoint(0, 0);
 		static readonly IPEndPoint ipEndPointv6 = new IPEndPoint(IPAddress.IPv6Any, 0);
 
 		public static IPEndPoint NewEndPoint(in SocketAddress socket)
 		{
-			// TODO: What about other AddressFamily values? AF_HYPERV = 34
-			AssertCritical(socket.Family == AddressFamily.InterNetwork || socket.Family == AddressFamily.InterNetworkV6);
-
 			// IPEndPoint.Create throws an exception if (this.AddressFamily != socket.Family)
 
 			if (socket.Family == AddressFamily.InterNetworkV6)
@@ -103,11 +104,52 @@ namespace NetBlameCustomDataSource
 			if (socket.Family == AddressFamily.InterNetwork)
 				return (IPEndPoint)ipEndPointv4.Create(socket);
 
-			// TODO: Handle other AddressFamily values: extract their address/port
+			// Handle other AddressFamily values as best we can.
 			// Ultimately everything must be expressed as IPv4 or IPv6.
 
-			return new IPEndPoint((Int64)0x42424242, 42); // dummy ipv6 address/port
-		}
+			// AF_HYPERV & AF_VSOCK:
+			// https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/user-guide/make-integration-service#bind-to-a-hyper-v-socket
+			// https://man7.org/linux/man-pages/man7/vsock.7.html
+
+			if (socket.Family == AF_HYPERV && socket.Size >= 20)
+			{
+				// Create an IpV6 socket and copy the VmId (GUID) to the IpV6 address, and that's the best we can do.
+
+				SocketAddress sa = new SocketAddress(AddressFamily.InterNetworkV6, 64);
+
+				// Copy the VmId GUID into the IPv6 address such that they display similarly.
+				sa[0+8] = socket[3+4]; sa[3+8] = socket[0+4];
+				sa[1+8] = socket[2+4]; sa[2+8] = socket[1+4];
+				sa[4+8] = socket[5+4]; sa[5+8] = socket[4+4];
+				sa[6+8] = socket[7+4]; sa[7+8] = socket[6+4];
+				for (int i = 8; i < 16; ++i) { sa[i+8] = socket[i+4]; }
+				sa[3] = (byte)AF_HYPERV; // port = HyperV tag, big-endian
+
+				return (IPEndPoint)ipEndPointv6.Create(sa);
+			}
+
+			if (socket.Family == AF_VSOCK && socket.Size >= 12)
+			{
+				// Copy the svm_port and the svm_cid to the IPv6 address, and that's the best we can do.
+
+				SocketAddress sa = new SocketAddress(AddressFamily.InterNetworkV6, 64);
+
+				// Copy the CID (address) and Port into the IpV6 address such that they display as: cid::port
+				sa[0+8] = socket[3+8]; sa[1+8] = socket[2+8];
+				sa[2+8] = socket[1+8]; sa[3+8] = socket[0+8];
+				sa[0+20] = socket[3+4]; sa[1+20] = socket[2+4];
+				sa[2+20] = socket[1+4]; sa[3+20] = socket[0+4];
+				sa[3] = (byte)AF_VSOCK; // port = VSock tag, big-endian
+
+				return (IPEndPoint)ipEndPointv6.Create(sa);
+			}
+
+			// Catch-all
+
+			// dummy: 42.42.42.42 / port = family
+			return new IPEndPoint((Int64)0x2A2A2A2A, (int)socket.Family);
+		} // NewEndPoint
+
 
 		static public readonly char[] rgchURLSplit = new char[] { ':', '/' };
 		static public readonly char[] rgchEOLSplit = new char[] { '\r', '\n' };
