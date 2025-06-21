@@ -17,6 +17,16 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0'
+
+      - name: Build NetBlame addin
+        run: |
+          dotnet build  src\NetBlame\NetBlameAddIn.sln --configuration Release -p:Version=${{ inputs.version }}
+        shell: cmd
+
       - name: Create artifacts directory
         run: mkdir bin\MSO-Scripts
 
@@ -25,6 +35,7 @@ jobs:
         run: |
           Get-ChildItem -Path "src" -File | Copy-Item -Destination "bin\MSO-Scripts"
           Copy-Item -Path "src\BETA" -Destination "bin\MSO-Scripts\BETA" -Recurse
+          Copy-Item -Path "src\NetBlame\bin\Release\net8.0\*" -Destination "bin\MSO-Scripts\BETA\ADDIN" -Recurse
           Copy-Item -Path "src\OETW" -Destination "bin\MSO-Scripts\OETW" -Recurse
           Copy-Item -Path "src\PreWin10" -Destination "bin\MSO-Scripts\PreWin10" -Recurse
           Copy-Item -Path "src\WPAP" -Destination "bin\MSO-Scripts\WPAP" -Recurse
