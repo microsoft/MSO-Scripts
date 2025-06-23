@@ -150,6 +150,7 @@ namespace NetBlameCustomDataSource
 		public Stack.FirstStackSnapshotAccessProvider firstStackAccessProvider;
 		public Stack.MiddleStackSnapshotAccessProvider middleStackAccessProvider;
 		public Stack.FullStackSnapshotAccessProvider fullStackAccessProvider;
+		public IDVal[] rgPIDTarget;
 
 		public void Init(ITraceProcessor traceProcessor, Guid[] rgGuidGeneric, SymLoadProgress symLoadProgress)
 		{
@@ -166,6 +167,8 @@ namespace NetBlameCustomDataSource
 			this.fullStackAccessProvider = new Stack.FullStackSnapshotAccessProvider(symLoadProgress);
 		}
 
+		public bool IsTargetProcess(IDVal pid) => this.rgPIDTarget.Contains(pid);
+
 #if NOT_YET
 		public void Release()
 		{
@@ -177,6 +180,7 @@ namespace NetBlameCustomDataSource
 			pendingGenericEventSource = null;
 			pendingSymbolSource = null;
 			stackAccessProvider = null;
+			rgPIDTarget = null;
 		}
 #endif // NOT_YET
 	} // PendingSources
@@ -383,15 +387,6 @@ namespace NetBlameCustomDataSource
 			ThreadTable.guid,           // Thread
 		};
 
-		// Processes which emit events from these network providers have interesting call stacks.
-		// Descending priority.
-		readonly Guid[] rgGuidStack = new Guid[]
-		{
-			WebIOTable.guid,            // Microsoft-Windows-WebIO
-			WinINetTable.guid,          // Microsoft-Windows-WinINet
-			WinsockTable.guid,          // Microsoft-Windows-Winsock-AFD
-		};
-
 
 		bool FSymbolsEnabled()
 		{
@@ -402,8 +397,88 @@ namespace NetBlameCustomDataSource
 
 
 		/*
-			Load symbols only for the processes that we're analyzing:
-			those which emitted events from the providers listed in rgGuidStack.
+			Create a list of "Target" process IDs:
+			Processes for which we will do the expensive work of loading symbols
+			and chaining together stackwalks: WinMain -> ThreadPool Tasks -> Network Request
+
+			WebIO and WinINet:
+				Simply gather ProcessIds of certain events related to creating network requests,
+				and which likely have an attached stackwalk.
+			Winsock (AFD):
+				Gather ProcessIds of AFD.Create events (which likely have an attached stackwalk).
+				However, inert AFD.Create/Close event pairs are very common.
+				Therefore also require certain other key AFD events with IP addresses.
+				But ProcessIds are consistently valid for some events (Create), and not for others.
+				Each AFD event has an opaque Process handle, which is consistent.
+				Therefore use AFD.Create to build a hash of: hProcess -> ProcessId
+				Then look up other key events' hProcess and gather the ProcessId along with the other providers.
+				Thus we will include processes with AFD.Create AND other key AFD events providing IP addresses.
+		*/
+		void MakeTargetProcessList()
+		{
+			int cProcMin = 64; // expect only a few dozen target processes at most
+			var PidTargetSet = new HashSet<IDVal>(cProcMin);
+			var HProcToPid = new Dictionary<UInt64, IDVal>(cProcMin * 2);
+
+			foreach (var evt in this.sources.pendingGenericEventSource.Result?.Events)
+			{
+				// Microsoft-Windows-WebIO
+				if (evt.ProviderId == WebIOTable.guid)
+				{
+					switch (evt.Id)
+					{
+					case (int)WebIOTable.WIO.SessionCreate:
+					case (int)WebIOTable.WIO.RequestCreate:
+						PidTargetSet.Add(evt.ProcessId);
+						break;
+					}
+				}
+				// Microsoft-Windows-WinINet
+				else if (evt.ProviderId == WinINetTable.guid)
+				{
+					switch (evt.Id)
+					{
+					case (int)WinINetTable.WINET.RequestCreatedA:
+					case (int)WinINetTable.WINET.SendRequest_Start:
+						PidTargetSet.Add(evt.ProcessId);
+						break;
+					}
+				}
+				// Microsoft-Windows-Winsock-AFD
+				else if (evt.ProviderId == WinsockTable.guid)
+				{
+					switch (evt.Id)
+					{
+					case (int)WinsockTable.AFD.Create:
+						if (evt.GetUInt32("EnterExit") != 0) break;
+						AssertCritical(evt.ProcessId == (IDVal)evt.GetAddrValue("ProcessId"));
+						HProcToPid[evt.GetAddrValue("Process")] = evt.ProcessId;
+						break;
+					case (int)WinsockTable.AFD.ConnectWithAddress:
+					case (int)WinsockTable.AFD.ConnectExWithAddress:
+						// These events are reliable indicators.
+						PidTargetSet.Add(evt.ProcessId);
+						break;
+					case (int)WinsockTable.AFD.AcceptExWithAddress:
+					case (int)WinsockTable.AFD.ReceiveFromWithAddress:
+					case (int)WinsockTable.AFD.ReceiveMessageWithAddress:
+					case (int)WinsockTable.AFD.SendMessageWithAddress:
+						// These events have an unreliable ProcessId.
+						// If there was an AFD.Create event for this process, then add its ProcessId now.
+						if (evt.GetUInt32("EnterExit") == 0) break;
+						if (HProcToPid.TryGetValue(evt.GetAddrValue("Process"), out IDVal pid))
+							PidTargetSet.Add(pid);
+						break;
+					}
+				}
+			} // foreach evt
+
+			this.sources.rgPIDTarget = PidTargetSet.ToArray();
+		}
+
+
+		/*
+			Load symbols only for the Target processes.
 			Return the async Task, or null.
 		*/
 		Task LoadSymbolsAsync(IProgress<SymbolLoadingProgress> slpLogger)
@@ -411,14 +486,11 @@ namespace NetBlameCustomDataSource
 			var rgEvt = this.sources.pendingGenericEventSource.Result?.Events;
 			if (rgEvt == null) return null;
 
-			// Get the IDs of all processes which emitted events from the list of key network providers.
-			var rgPID = rgGuidStack.SelectMany(guid => rgEvt.Where(evt => evt.ProviderId == guid)).Select(evtT => evtT.ProcessId).Distinct();
-
 			var rgProc = this.sources.pendingProcessSource.Result?.Processes;
 			if (rgProc == null) return null;
 
 			// Get the process names of the given IDs, except not Idle & System.
-			string[] rgProcTarget = rgPID?.SelectMany(pid => rgProc.Where(proc => proc.Id == pid && proc.Id > 4)).Select(procT => procT.ImageName).Where(name => name != null).Distinct().ToArray();
+			string[] rgProcTarget = this.sources.rgPIDTarget?.SelectMany(pid => rgProc.Where(proc => proc.Id == pid && proc.Id > 4)).Select(procT => procT.ImageName).Where(name => name != null).Distinct().ToArray();
 			if (rgProcTarget == null) return null;
 
 			ISymbolDataSource symbolSource = this.sources.pendingSymbolSource.Result;
@@ -438,15 +510,15 @@ namespace NetBlameCustomDataSource
 		} // LoadSymbolsAsync
 
 
-		AllTables GenerateProviderTables(ClassicEventConsumer eventConsumer, in PendingSources sources, CancellationToken cancellationToken)
+		AllTables GenerateProviderTables(ClassicEventConsumer eventConsumer, CancellationToken cancellationToken)
 		{
 			AllTables allTables = new AllTables();
 
-			if (sources.pendingStackSource.HasResult)
-				allTables.stackSource = sources.pendingStackSource.Result;
+			if (this.sources.pendingStackSource.HasResult)
+				allTables.stackSource = this.sources.pendingStackSource.Result;
 
-			if (sources.pendingThreadSource.HasResult)
-				allTables.threadTable.ThreadSource = sources.pendingThreadSource.Result;
+			if (this.sources.pendingThreadSource.HasResult)
+				allTables.threadTable.ThreadSource = this.sources.pendingThreadSource.Result;
 
 			allTables.threadTable.SetThreadRundown(eventConsumer.threadEventConsumer.FHaveRundown);
 
@@ -470,14 +542,22 @@ namespace NetBlameCustomDataSource
 					if (nsWTPool <= nsThread)
 					{
 						var dq = traceWThreadPool.Dequeue();
-						allTables.wtpTable.Dispatch(dq);
+
+						// Handle this process's ThreadPool events only if it has network stackwalks to stitch together.
+						if (this.sources.IsTargetProcess(dq.idProcess))
+							allTables.wtpTable.Dispatch(dq);
+
 						nsWTPool = (traceWThreadPool.Count > 0) ? traceWThreadPool.Peek().timeStamp.Nanoseconds : long.MaxValue;
 						AssertImportant(dq.timeStamp.Nanoseconds <= nsWTPool); // sorted!
 					}
 					else
 					{
 						var dq = threadEventQueue.Dequeue();
-						allTables.threadTable.Dispatch(dq);
+
+						// Stitch together this process's thread creation events only if it has network stackwalks.
+						bool fTarget = this.sources.IsTargetProcess(dq.pidInitiator);
+						allTables.threadTable.Dispatch(dq, fTarget);
+
 						nsThread = (threadEventQueue.Count > 0) ? threadEventQueue.Peek().timeStamp.Nanoseconds : long.MaxValue;
 						AssertImportant(dq.timeStamp.Nanoseconds <= nsThread); // sorted!
 					}
@@ -485,15 +565,21 @@ namespace NetBlameCustomDataSource
 
 				if (evtGeneric.ProviderId == OTaskPoolTable.guid)
 				{
-					allTables.otpTable.Dispatch(evtGeneric);
+					// Handle this process's TaskPool events only if it has network stackwalks to stitch together.
+					if (this.sources.IsTargetProcess(evtGeneric.ProcessId))
+						allTables.otpTable.Dispatch(evtGeneric);
 				}
 				else if (evtGeneric.ProviderId == ODispatchQTable.guid)
 				{
-					allTables.odqTable.Dispatch(evtGeneric);
+					// Handle this process's Dispatch Queue events only if it has network stackwalks to stitch together.
+					if (this.sources.IsTargetProcess(evtGeneric.ProcessId))
+						allTables.odqTable.Dispatch(evtGeneric);
 				}
 				else if (evtGeneric.ProviderId == IdleManTable.guid)
 				{
-					allTables.idleTable.Dispatch(evtGeneric);
+					// Handle this process's Idle Manager events only if it has network stackwalks to stitch together.
+					if (this.sources.IsTargetProcess(evtGeneric.ProcessId))
+						allTables.idleTable.Dispatch(evtGeneric);
 				}
 				else if (evtGeneric.ProviderId == TcpTable.guid)
 				{
@@ -612,13 +698,15 @@ namespace NetBlameCustomDataSource
 				return Task.FromCanceled(cancellationToken);
 			}
 
+			MakeTargetProcessList();
+
 			Task taskSym = null;
 			if (fSymbols)
 				taskSym = LoadSymbolsAsync(symbolLoadingProgress);
 
 			progress.Report(50);
 
-			this.tables = GenerateProviderTables(eventConsumer, this.sources, cancellationToken);
+			this.tables = GenerateProviderTables(eventConsumer, cancellationToken);
 
 			if (this.tables == null)
 			{

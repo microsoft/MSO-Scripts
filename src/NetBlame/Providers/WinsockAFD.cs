@@ -63,7 +63,7 @@ namespace NetBlameCustomDataSource.WinsockAFD
 	{
 	//	SocketType field (AFD.Create record when EnterExit==0):
 		SOCK_NULL      = 0,
-		SOCK_STREAM	   = 1, // stream socket   (TCP) (common)
+		SOCK_STREAM    = 1, // stream socket   (TCP) (common)
 		SOCK_DGRAM     = 2, // datagram socket (UDP) (common)
 		SOCK_RAW       = 3, // raw-protocol interface
 		SOCK_RDM       = 4, // reliably-delivered message
@@ -451,7 +451,7 @@ namespace NetBlameCustomDataSource.WinsockAFD
 
 		public static readonly Guid guid = new Guid("{e53c6823-7bb8-44bb-90dc-3f86090d48a6}"); // Microsoft-Windows-WinSock-AFD
 
-		enum AFD
+		public enum AFD
 		{
 			Create = 1000,
 			Close = 1001,
