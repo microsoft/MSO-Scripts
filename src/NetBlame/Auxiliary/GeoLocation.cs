@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Net;
+using System.Net.Http;
 using System.Xml;
 using System.IO;
 
@@ -28,6 +29,7 @@ namespace NetBlameCustomDataSource
 			bitfAll = bitfCountry | bitfRegion | bitfCity | bitfStatus
 		};
 
+		
 		public static string GetGeoLocation(IPAddress ipAddr)
 		{
 			if (ipAddr == null)
@@ -40,10 +42,12 @@ namespace NetBlameCustomDataSource
 
 			string strRequest = strGetXmlService + strIpAddr;
 
-			try	{
-				WebRequest request = WebRequest.Create(strRequest);
-				WebResponse response = request.GetResponse();
-				Stream stream = response.GetResponseStream();
+			try
+			{
+				HttpClient client = new HttpClient();
+				using HttpResponseMessage response = client.GetAsync(strRequest).GetAwaiter().GetResult();
+				response.EnsureSuccessStatusCode(); // may throw
+				Stream stream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
 
 				// Parse the response XML into: Country / Region / City
 
@@ -65,7 +69,7 @@ namespace NetBlameCustomDataSource
 					case XmlNodeType.Element:
 						strXmlName = xmlReader.Name;
 						continue; // no break test needed
-	
+
 					case XmlNodeType.Text:
 						strValue = xmlReader.Value;
 						goto case XmlNodeType.Whitespace;
