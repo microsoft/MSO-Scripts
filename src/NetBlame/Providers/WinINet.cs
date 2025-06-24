@@ -415,7 +415,7 @@ namespace NetBlameCustomDataSource.WinINet
 
 		public static readonly Guid guid = new Guid("{43d1a55c-76d6-4f7e-995c-64c711e5cafe}"); // Microsoft-Windows-WinINet
 
-		enum WINET
+		public enum WINET
 		{
 			RequestCreatedA = 104,
 			HandleClosed = 105,

@@ -367,7 +367,7 @@ namespace NetBlameCustomDataSource.Thread
 		public static readonly Guid guid = new Guid("{3d6fa8d1-fe05-11d0-9dda-00c04fd7ba7c}"); // Thread
 
 
-		public void Dispatch(in THREAD_EVENT evt)
+		public void Dispatch(in THREAD_EVENT evt, bool fTarget)
 		{
 			ThreadItem tItem;
 
@@ -385,7 +385,8 @@ namespace NetBlameCustomDataSource.Thread
 
 				tItem = AddThread(in evt);
 
-				if (this.IsInternalAdHocThread(in tItem))
+				// Only thread together the stacks if this process has network stalkwalks of interest.
+				if (fTarget && this.IsInternalAdHocThread(in tItem))
 				{
 					// Who created this thread? (It wasn't an external process.)
 					// We may discard (Unlink) this info later if this is determined to be a Thread/Task Pool thread.
