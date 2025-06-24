@@ -16,7 +16,7 @@ if [%1]==[-?] goto :Usage
 if [%1]==[/?] goto :Usage
 if /i not [%~x1]==[.etl] goto :Usage
 
-set _ETL="%~1"
+set _ETL="%~dpnx1"
 if not exist %_ETL% echo Does not exist: %_ETL% & goto :Usage
 
 rem Default symbol resolution paths.
