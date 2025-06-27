@@ -42,6 +42,8 @@ namespace NetBlameCustomDataSource.WinsockAFD
 		UDP           = 17, // (datagram socket)
 		IDP           = 22,
 		RDP           = 27,
+		HyperV        = 34, // pseudo: AF_HYPERV
+		VSock         = 40, // pseudo: AF_VSOCK
 		IPV6          = 41, // IPv6 header
 		ROUTING       = 43, // IPv6 Routing header
 		FRAGMENT      = 44, // IPv6 fragmentation header
@@ -502,6 +504,10 @@ namespace NetBlameCustomDataSource.WinsockAFD
 					// Find counterexamples (not critical)
 					AssertImportant((cxn.ipProtocol==IPPROTO.TCP || cxn.ipProtocol==IPPROTO.ICMP) == (cxn.socktype==SOCKTYPE.SOCK_STREAM));
 					AssertImportant((cxn.ipProtocol==IPPROTO.UDP) == (cxn.socktype==SOCKTYPE.SOCK_DGRAM));
+
+					var family = (System.Net.Sockets.AddressFamily)evt.GetUInt32("AddressFamily");
+					if (family == AF_HYPERV) cxn.ipProtocol = IPPROTO.HyperV;
+					else if (family == AF_VSOCK) cxn.ipProtocol = IPPROTO.VSock;
 
 					cxn.xlink.GetLink(evt.ThreadId, cxn.timeCreate, in allTables.threadTable);
 					this.Add(cxn);
