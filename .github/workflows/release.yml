@@ -29,7 +29,7 @@ jobs:
 
       - name: Create ZIP archive with all scripts and binaries
         shell: pwsh
-        run: make\CreateRelease.ps1 -NetBlameBuild "src\NetBlame\bin\Release\net8.0" -WorkingDir bin -OutputZip "bin\MSO-Scripts-${{ inputs.version }}.zip"
+        run: make\CreateRelease.ps1 -NetBlameBuild "src\NetBlame\bin\Release\net6.0" -WorkingDir bin -OutputZip "bin\MSO-Scripts-${{ inputs.version }}.zip"
 
       - name: Publish release
         run: gh release create version_${{ inputs.version }} --title "Release ${{ inputs.version }}" "bin\MSO-Scripts-${{ inputs.version }}.zip" --notes "Manual release"
