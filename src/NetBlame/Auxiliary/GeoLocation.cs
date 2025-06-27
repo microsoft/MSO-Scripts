@@ -29,18 +29,62 @@ namespace NetBlameCustomDataSource
 			bitfAll = bitfCountry | bitfRegion | bitfCity | bitfStatus
 		};
 
-		
+
+		/*
+			IPv4 CIDR (Classless Inter-Domain Routing)
+			https://datatracker.ietf.org/doc/html/rfc1918
+			10.*.*.*      // 24-bit block / class A
+			172.16-31.*.* // 20-bit block / class B
+			192.168.*.*   // 16-bit block / class C
+		*/
+		static bool IsIPv4CIDR(IPAddress ipAddr)
+		{
+			if (ipAddr.IsIPv4MappedToIPv6)
+				ipAddr = ipAddr.MapToIPv4();
+			else if (ipAddr.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
+				return false;
+
+			#pragma warning disable 0618 // obsolete: IPAddress.Address
+			uint address = (uint)ipAddr.Address;
+			#pragma warning restore 0618
+
+			// 10.*.*.*
+			if ((byte)address == 10)
+				return true;
+
+			// 192.168.*.*  ie.  C0.A8.*.*
+			if ((ushort)address == 0xA8C0)
+				return true;
+
+			// 172.16-31.*.*  ie.  AC.10-1F.*.*  ie.  0x10AC <= address <= 0x1FAC
+			if ((byte)address == 0xAC && (ushort)(address - 0x10AC) <= 0x0F00)
+				return true;
+
+			// none of the above
+			return false;
+		}
+
+
+		/*
+			Return a string representing the geolocation of this IPAddress.
+			Check first for special ranges representing LocalHost or a Local/Private Network.
+			Then contact geoplugin.com to get a geo-location string.
+		*/
 		public static string GetGeoLocation(IPAddress ipAddr)
 		{
 			if (ipAddr == null)
 				return string.Empty;
 
-			string strIpAddr = ipAddr.ToString();
-
-			if (strIpAddr.Equals(DNSClient.DNSTable.strAddrLocalHost))
+			if (IPAddress.IsLoopback(ipAddr))
 				return DNSClient.DNSTable.strLocalHost;
 
-			string strRequest = strGetXmlService + strIpAddr;
+			if (IsIPv4CIDR(ipAddr) || ipAddr.IsIPv6UniqueLocal || ipAddr.IsIPv6SiteLocal || ipAddr.IsIPv6LinkLocal)
+				return "Local/Private Network";
+
+			if (ipAddr.IsIPv6Multicast)
+				return "Multicast";
+
+			string strRequest = strGetXmlService + ipAddr.ToString();
 
 			try
 			{

@@ -84,8 +84,8 @@ namespace NetBlameCustomDataSource
 		public static uint BitFromI(uint i) => (uint)1 << ((int)i - 1); // i: 1-based
 
 		// https://github.com/dotnet/runtime/issues/58378
-		static AddressFamily AF_HYPERV = (AddressFamily)34;
-		static AddressFamily AF_VSOCK = (AddressFamily)40;
+		public static AddressFamily AF_HYPERV = (AddressFamily)34;
+		public static AddressFamily AF_VSOCK = (AddressFamily)40;
 
 		static readonly IPEndPoint ipEndPointv4 = new IPEndPoint(0, 0);
 		static readonly IPEndPoint ipEndPointv6 = new IPEndPoint(IPAddress.IPv6Any, 0);
@@ -110,6 +110,7 @@ namespace NetBlameCustomDataSource
 			// AF_HYPERV & AF_VSOCK:
 			// https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/user-guide/make-integration-service#bind-to-a-hyper-v-socket
 			// https://man7.org/linux/man-pages/man7/vsock.7.html
+			// https://github.com/search?q=repo%3Amicrosoft%2FWSL2-Linux-Kernel+AF_HYPERV
 
 			if (socket.Family == AF_HYPERV && socket.Size >= 20)
 			{
@@ -123,6 +124,18 @@ namespace NetBlameCustomDataSource
 				sa[4+8] = socket[5+4]; sa[5+8] = socket[4+4];
 				sa[6+8] = socket[7+4]; sa[7+8] = socket[6+4];
 				for (int i = 8; i < 16; ++i) { sa[i+8] = socket[i+4]; }
+				sa[3] = (byte)AF_HYPERV; // port = HyperV tag, big-endian
+
+				return (IPEndPoint)ipEndPointv6.Create(sa);
+			}
+
+			if (socket.Family == AF_HYPERV && socket.Size >= 16)
+			{
+				// Create an IpV6 socket and copy the data to the IpV6 address, and that's the best we can do.
+
+				SocketAddress sa = new SocketAddress(AddressFamily.InterNetworkV6, 64);
+
+				for (int i = 0; i < 12; ++i) { sa[i+12] = socket[i+4]; }
 				sa[3] = (byte)AF_HYPERV; // port = HyperV tag, big-endian
 
 				return (IPEndPoint)ipEndPointv6.Create(sa);
@@ -235,6 +248,15 @@ namespace NetBlameCustomDataSource
 		{
 			switch (port)
 			{
+			case 20:
+			case 21:
+				return "FTP";
+			case 22:
+				return "SSH/SCP/SFTP";
+			case 23:
+				return "TELNET";
+			case 25:
+				return "SMTP";
 			case 53:
 				return "DNS";
 			case 80:
@@ -243,17 +265,38 @@ namespace NetBlameCustomDataSource
 				return "HTTP";
 			case 88:
 				return "Kerberos";
+			case 110:
+				return "POP3";
+			case 119:
+				return "NNTP";
+			case 123:
+				return "NTP";
 			case 135:
 				return "DCE/DHCP/DNS/WINS/DCOM";
-			case portLDAP:
+			case 137:
+				return "NetBIOS";
+			case 143:
+				return "IMAP";
+			case portLDAP: // 389
 				return "LDAP";
 			case 443:
 			case 8443:
 				return "HTTPS";
 			case 445:
 				return "AD/SMB";
+			case 465:
+				return "SMTPS";
+			case 563:
+				return "NNTPS";
 			case 636:
 				return "LDAPs";
+			case 989:
+			case 990:
+				return "FTPS";
+			case 993:
+				return "IMAPS";
+			case 995:
+				return "POP3S";
 			case 1433:
 				return "MSSQL";
 			case 2555:
@@ -264,6 +307,10 @@ namespace NetBlameCustomDataSource
 				return "LDAPs/AD";
 			case 3389:
 				return "TS/RDP";
+			case 5353:
+				return "UDP";
+			case 5355:
+				return "LLMNR";
 			case 5985:
 				return "CIM/DMTF";
 			case 7680:
