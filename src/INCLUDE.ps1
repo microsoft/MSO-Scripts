@@ -3508,11 +3508,31 @@ function CheckLanguageMode
 
 
 <#
+	If the given file is blocked with Mark of the Web, then unblock all related .ps1 files.
+#>
+function CheckMarkOfTheWeb
+{
+Param (
+	$Path
+)
+	if ($Path -and (Get-Item -Path $Path -Stream 'Zone.Identifier' -ErrorAction:SilentlyContinue))
+	{
+		Write-Warn 'Unblocking all downloaded PowerShell scripts in this folder: *.ps1'
+		$Path = Split-Path -Parent -Path $Path
+		Get-ChildItem -Path $Path -Recurse -Filter '*.ps1' | Unblock-File -ErrorAction:SilentlyContinue -Verbose:(DoVerbose)
+		Write-Warn
+	}
+}
+
+
+<#
 	These actions must occur immediately upon load.
 #>
 # Main
 
 CheckLanguageMode
+
+if ($Host.Version.Major -gt 2) { CheckMarkOfTheWeb $MyInvocation.MyCommand.Path }
 
 # Native enum doesn't exist until PS v5.0
 Add-Type -TypeDefinition @"
