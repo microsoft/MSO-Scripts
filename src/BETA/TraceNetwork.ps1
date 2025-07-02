@@ -148,15 +148,54 @@ $script:PSScriptParams = $script:PSBoundParameters # volatile
 
 . "$ScriptRootPath\INCLUDE.ps1"
 
-$VersionMinForAddin = [Version]'11.0.7' # This version and later use SDK v1.0.7+
-$VersionForProcessors = [Version]'11.8.0' # Version 11.8.262 and later requires: -Processors (Earlier versions allow it.)
+$VersionMinForAddin = [Version]'11.7.383' # This public WPA version and later use SDK v1.2.2+
+$VersionForProcessors = [Version]'11.8.0' # WPA Version 11.8.262 and later requires: -Processors (Earlier versions allow it.)
 
-$AddInPath = "$script:ScriptHomePath\ADDIN" # Uses SDK v1.0.7+
+$AddInPaths = @(
+	"$script:ScriptHomePath\ADDIN" # Released ZIP with NetBlame Plug-in
+	"$script:ScriptRootPath\NetBlame\bin\*" # Cloned project with built NetBlame Plug-in
+	)
 
 $WPA_Version_RegPath = "$script:RegPathStatus\WPA-Plugin" # $RegPathStatus also used for SetProfileStartTime, etc.
 
 # Most modern versions of WPA list/accept these plug-in names via: WPA -listplugins -addsearchdir MSO-Scripts\BETA\ADDIN
 $ETW_Plugins_Default = 'Event Tracing for Windows','Office_NetBlame'
+
+
+<#
+	Find the path that contains the most recent (or 'Release') NetBlame plug-in: NetBlameAddIn.dll
+	If this installation was downloaded and unzipped from the Release site, then it will be in: BETA\ADDIN
+	If this installation was cloned and built then it will be in NetBlame\bin\Release|Debug\net8.0
+#>
+function GetAddinPath
+{
+	# List the various path(s) which contain NetBlameAddIn.dll
+
+	$moduleName = 'NetBlameAddIn.dll'
+	$paths = Resolve-Path -Path $AddInPaths -ErrorAction:SilentlyContinue
+	$pathIOs = $paths | ForEach-Object { Get-ChildItem -Path $_ -Filter $moduleName -File -Recurse -ErrorAction:SilentlyContinue }
+
+	if (!$pathIOs)
+	{
+		Write-Err "The `"NetBlame`" WPA Plug-in ($moduleName) was not be found at any of these locations:"
+		foreach ($path in $AddInPaths) { Write-Err "`t$path" }
+		foreach ($path in $paths) { Write-Err "`t$($path.Path)" }
+
+		Write-Info "Please see: https://github.com/Microsoft/MSO-Scripts/wiki/Network-Activity"
+
+		# No reason to go on!
+		exit 1
+	}
+
+	# Choose the path which contains the most recent NetBlameAddIn.dll, or a recent 'Release' version.
+	$pathIORel = $pathIOs | Where-Object { $_.FullName -like '*Release*' }
+	if ($pathIORel) { $pathIOs = $pathIORel } # filter to 'Release' version(s)
+	$pathIO = $pathIOs | Sort-Object { $_.LastWriteTime } -Descending | Select-Object -First 1
+	$path = (Split-Path -Path $pathIO.FullName -Parent)
+
+	Write-Status "NetBlame Plug-in found at: $path"
+	return $path
+}
 
 
 <#
@@ -168,7 +207,8 @@ function GetPluginsList
 Param (
 	[Version]$WpaVersion
 )
-	[string[]]$ETW_Plugins = GetRegistryValue $WPA_Version_RegPath $WpaVersion.ToString()
+	[string[]]$ETW_Plugins = $Null
+	if ($WpaVersion)   { $ETW_Plugins = GetRegistryValue $WPA_Version_RegPath $WpaVersion.ToString() }
 	if (!$ETW_Plugins) { $ETW_Plugins = $ETW_Plugins_Default }
 
 	return ($ETW_Plugins | ForEach-Object { "`"$_`"" }) -join ','
@@ -307,30 +347,38 @@ Param ( # $ViewerParams 'parameter splat'
 		Write-Action "`nThis network analyzer plug-in will not likely work before Windows 10.`n"
 	}
 
-	# The viewer: Windows Performance Analyzer (WPA)
+	# Find the most recent version of the viewer: Windows Performance Analyzer (WPA)
+
 	$WpaPath = GetWptExePath "WPA.exe"
 	$Version = GetFileVersion $WpaPath
 
-	if (!$Version -or ($Version -lt $VersionMinForAddin))
+	if ((IsRealVersion $Version) -and !$env:WPT_PATH)
 	{
-		if ($Version)
-		{
-			Write-Err "Found an older version of the Windows Performance Analyzer (WPA): $Version"
-		}
-		elseif ($WpaPath -ne 'WPA')
-		{
-			Write-Err "Found an unknown version of the Windows Performance Analyzer (WPA)."
-		}
-		Write-Err "The minimum required version is: $VersionMinForAddin"
+		# Find an even newer version, maybe.
 
-		if ($WpaPath -ne 'WPA') { WriteWPTInstallMessage "wpa.exe" } # Else GetWptExePath wrote the message
+		$WpaPath2 = GetWptExePath "WPA.exe" -Silent -AltPath
+		$Version2 = GetFileVersion $WpaPath2
 
-		if ($Version) { exit 1 } # else maybe we found WPA.bat, etc.
+		if ($Version2 -and ($Version2 -gt $Version))
+		{
+			$WpaPath = $WpaPath2
+			$Version = $Version2
+		}
 	}
 
-	if (!(Test-Path -PathType container -Path $AddInPath -ErrorAction:SilentlyContinue))
+<#
+	1. Found a recent WPA
+	2. Found an old WPA
+	3. Found WPA.bat or stub WPA.exe without 'real' version info
+	4. Found no WPA (but try to launch "WPA" anyway)
+#>
+	if ((IsRealVersion $Version) -and ($Version -lt $VersionMinForAddin))
 	{
-		Write-Err "Could not find the NetBlame add-in path: $AddInPath"
+		# Case 2: Do not proceed.
+
+		Write-Err "Found an older version of the Windows Performance Analyzer (WPA): $Version"
+		Write-Err "The minimum version for this analysis is: $VersionMinForAddin"
+		WriteWPTInstallMessage "WPA.exe"
 		exit 1
 	}
 
@@ -349,7 +397,7 @@ Param ( # $ViewerParams 'parameter splat'
 		$ExtraParams += GetArgs -processors $Processors
 	}
 
-	$ExtraParams += GetArgs -addsearchdir "`"$AddInPath`"" -NoSymbols
+	$ExtraParams += GetArgs -addsearchdir "`"$(GetAddinPath)`"" -NoSymbols
 
 	# Now load LaunchViewerCommand and related.
 

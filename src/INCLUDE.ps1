@@ -1904,8 +1904,8 @@ Param (
 
 <#
 	Get the full path of the given executable from the Windows Performance Toolkit: WPA.exe, WPR.exe, etc.
-	This path can be customized with the WPT_PATH environment variable.
-	Will an installed WPT be newer or older than %windir%\system32\wpr.exe ?  (It's often newer than earlier versions of Win10!)
+	This path can be customized with the WPT_PATH environment variable. ($Env:WPT_PATH may get cleared if it is invalid.)
+	ISSUE Win10/11+: WPR.exe exists in: $Env:windir\system32\wpr.exe  Should this script search for another (newer?) version?
 #>
 function GetWptExePath
 {
@@ -1923,6 +1923,9 @@ Param (
 		$WptPath = $env:WPT_PATH.Trim('"').TrimEnd('\')
 		$WptPath = "$WptPath\$Exe"
 		if (TestExePath $WptPath $TestRun ([ref]$AltPath)) { return $WptPath }
+
+		# Sanity check: If $env:WPT_PATH does not exist then reset is to null for this script.
+		if (!(Test-Path -PathType container -Path $env:WPT_PATH -ErrorAction:SilentlyContinue)) { $env:WPT_PATH = $Null }
 	}
 
 	# Test Windows Apps (not executable stubs)
@@ -1965,7 +1968,26 @@ Param (
 		# "$PGF\Windows Kits\8.0\Windows Performance Toolkit\$Exe"
 	}
 
-	# Test the system path, which may include WindowsApps (executable stubs)
+	# App store paths require Admin privilege to walk, unless you land directly on the app folder.
+	# Look up the path of the app folder(s) via the registry.
+
+	$WildPath = 'Registry::HKEY_CLASSES_ROOT\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages\Microsoft.WindowsPerformanceAnalyzer*'
+	[string[]] $RegPaths = Get-Item -Path $WildPath -ErrorAction:SilentlyContinue
+
+	foreach ($RegPath in $RegPaths)
+	{
+		$Path = GetRegistryValue "Registry::$RegPath" 'PackageRootFolder'
+		if (!$Path -or !($Path -is [string])) { continue }
+
+		$WptCmd = Get-ChildItem -Recurse -Path $Path -Filter $Exe | Select-Object -First 1
+		if ($WptCmd)
+		{
+			$WptPath = $WptCmd.FullName
+			if (($WptPath -ne $PathReg) -and (TestExePath $WptPath $TestRun ([ref]$AltPath))) { return $WptPath }
+		}
+	}
+
+	# Test the system path, which may include WindowsApps (executable stubs, NO VERSION)
 
 	$PathApps= $Null
 	$WptCmd = Get-Command -TotalCount 1 -CommandType Application $Exe -ErrorAction:SilentlyContinue
@@ -1975,24 +1997,12 @@ Param (
 		if (TestExePath $WptPath $TestRun ([ref]$AltPath)) { return $WptPath }
 	}
 
-	# Search the installed WindowsApps store (Admin required) (executable stubs)
+	# Search the installed WindowsApps store (executable stubs, NO VERSION)
 
 	if ($Env:LOCALAPPDATA)
 	{
 		$WptPath = "$Env:LOCALAPPDATA\Microsoft\WindowsApps\$Exe"
 		if (($WptPath -ne $PathApps) -and (TestExePath $WptPath $TestRun ([ref]$AltPath))) { return $WptPath }
-	}
-
-	$WildPath = "$Env:ProgramFiles\WindowsApps\Microsoft.WindowsPerformance*"
-	[string[]] $Paths = Get-Item -Path $WildPath -ErrorAction:SilentlyContinue
-	foreach ($Path in $Paths)
-	{
-		$WptCmd = Get-ChildItem -Recurse -Path $Path -Filter $Exe | Select-Object -First 1
-		if ($WptCmd)
-		{
-			$WptPath = $WptCmd.FullName
-			if (($WptPath -ne $PathReg) -and (TestExePath $WptPath $TestRun ([ref]$AltPath))) { return $WptPath }
-		}
 	}
 
 	# Try the Side-by-Side path for WPR
@@ -2062,7 +2072,38 @@ Param (
 
 
 <#
+	Return $True if the version is non-null and not a default version.
+#>
+function IsRealVersion
+{
+Param (
+	[Version]$Version
+)
+	return !(!$Version -or ($Version.Build -eq 99999))
+}
+
+
+<#
+	Return a default version for files which exist but have no version info.
+	The Build number will be: 99999
+#>
+function DefaultVersion
+{
+	# When the FileVersion is not to our liking, use this default version instead.
+	$OSV = [Environment]::OSVersion.Version
+	[Version]$DefaultVersion = "$($OSV.Major).$($OSV.Minor).99999"
+	if (($OSV.Major -eq 10) -and ($OSV -ge [Version]'10.0.22000'))
+	{
+		$DefaultVersion = [Version]'11.0.99999'
+	}
+	return $DefaultVersion
+}
+
+
+<#
 	Return a [Version]X.Y.Z based on the [FileVersionInfo].
+		$Null -> nonexistent
+		Major.Minor.99999 -> exists but no real version info
 #>
 function FileVersionFromFileInfo
 {
@@ -2073,17 +2114,8 @@ Param (
 
 	$FileName = $(Split-Path -Leaf -Path $FileInfo.FileName -ErrorAction:SilentlyContinue)
 
-	# When the FileVersion is not to our liking, use this default version instead.
-	$OSV = [Environment]::OSVersion.Version
-	[Version]$DefaultVersion = "$($OSV.Major).$($OSV.Minor).99999"
-	if (($OSV.Major -eq 10) -and ($OSV -ge [Version]'10.0.22000'))
-	{
-		[Version]$DefaultVersion = '11.0.99999'
-	}
-
 	if ($FileInfo.FileVersion)
 	{
-		[Version]$FileVersion = $DefaultVersion
 		$VersionRegEx = "^\d+\.\d+\.\d+"
 
 		if ($FileInfo.FileVersion -match $VersionRegEx) # "W.X.Y.Z (Description)"
@@ -2094,17 +2126,21 @@ Param (
 		{
 			[Version]$FileVersion = $Matches[0]
 		}
+		else
+		{
+			[Version]$FileVersion = (DefaultVersion)
+		}
 
 		if (($FileVersion.Major -eq 0) -and ($FileVersion.Minor -gt 0))
 		{
-			[Version]$FileVersion = $DefaultVersion # Beta v0.X.X
+			[Version]$FileVersion = (DefaultVersion) # Beta v0.X.X
 		}
 
 		Write-Status "Version Check: $FileName - FileVersion $($FileInfo.FileVersion) - (v$FileVersion)`n" (ReplaceEnv $FileInfo.FileName) # path
 	}
 	else
 	{
-		$FileVersion = $DefaultVersion
+		$FileVersion = (DefaultVersion)
 
 		# The Windows Store version of WPA has no file version in its launcher: wpa.exe  Likewise: WPA.bat
 		Write-Status "Version Check: $FileName - No file version available. Assuming v$FileVersion`n" (ReplaceEnv $FileInfo.FileName) # path

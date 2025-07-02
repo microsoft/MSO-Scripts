@@ -8,6 +8,10 @@
 
 # if ($Host.Version.Major -gt 2) {Set-StrictMode -version latest }
 
+# For earlier versions of WPA than this, suggest updating.
+# cf. $VersionMinForAddIn - BETA\TraceNetwork.ps1
+$VersionMinRecent = [Version]'11.7.383'
+
 <#
 	The default SymbolDrive needs lots of free space for caching symbol files!
 	You can reset symbol paths, with X: as the SymbolDrive, by doing this:
@@ -133,7 +137,11 @@ Param (
 		{
 			$env:_NT_SYMBOL_PATH = $PdbPathDefault -replace $PDB_CACHE_FOLDER,$script:PdbCacheFolder
 
-			Write-Warn "Setting _NT_SYMBOL_PATH = $env:_NT_SYMBOL_PATH"
+			if (InvokedFromCMD)
+				{ Write-Warn "Setting _NT_SYMBOL_PATH=$env:_NT_SYMBOL_PATH" }
+			else
+				{ Write-Warn "Setting `$Env:_NT_SYMBOL_PATH = '$env:_NT_SYMBOL_PATH'" }
+
 			$DriveFreeSpace = GetDriveFreeSpace $script:SymbolDrive
 			if ($DriveFreeSpace) { $DriveFreeSpace = "($([int]($DriveFreeSpace / 1GB)) GB Free)" }
 			Write-Warn "NOTE: Cached symbols may consume lots of space on drive $script:SymbolDrive $DriveFreeSpace"
@@ -153,7 +161,11 @@ Param (
 		{
 			$env:_NT_SYMCACHE_PATH = $SymCacheDefault -replace $SYM_CACHE_FOLDER,$script:SymCacheFolder
 
-			Write-Warn "Setting _NT_SYMCACHE_PATH = $env:_NT_SYMCACHE_PATH"
+			if (InvokedFromCMD)
+				{ Write-Warn "Setting _NT_SYMCACHE_PATH=$env:_NT_SYMCACHE_PATH" }
+			else
+				{ Write-Warn "Setting `$Env:_NT_SYMCACHE_PATH = '$env:_NT_SYMCACHE_PATH'" }
+
 			Write-Warn
 		}
 		else
@@ -313,6 +325,8 @@ Param (
 			# else quick exit
 			Write-Info # End Progress
 			$global:LastExitCode = $Process.ExitCode
+			if (!$global:LastExitCode) { return "Early exit." }
+
 			$Code = ('{0:x}' -f $Process.ExitCode)
 			Write-Status "WPA Early Exit: $Code"
 			return "Early exit: $Code"
@@ -607,11 +621,11 @@ Param (
 	# v10.0.15063: -TTI -ClipRundown -Symbols -SymCacheOnly -Profile ...
 	# v10.5.16+  : -TTI -TLE -ClipRundown -Symbols -SymCacheOnly -Profile ...
 	# v11.0.7+   : -Processors ... -AddSearchDir ... (modern add-ins)
+	# v11.7.383  : First public version which uses SDK v1.2.2
 
 	$IsModernWPA  = ($VersionInfo -ge [Version]'10.0.0')     # -Symbols
 	$IsSymCacheOK = ($VersionInfo -ge [Version]'10.0.15063') # -Symbols -SymCacheOnly
 	$IsFullWPA    = ($VersionInfo -ge [Version]'10.5.16')    # ADK for Server 2022, or later
-	$IsNewerWPA   = ($VersionInfo -ge [Version]'11.0.7')     # Works with modern add-ins
 
 	# Should have previously called EnsureTracePath
 	if (!$script:TracePath) { EnsureTracePath; Write-Dbg "Trace path not set for default working folder!" }
@@ -713,14 +727,6 @@ Param (
 		}
 	}
 
-	if (!$IsNewerWPA -and $IsModernWPA)
-	{
-		Write-Warn "A newer Windows Performance Analizer (WPA) is available:"
-		Write-Warn "  Windows Store: https://apps.microsoft.com/detail/9n0w1b2bxgnz"
-		Write-Warn "  Windows Performance Toolkit: https://learn.microsoft.com/en-us/windows-hardware/test/wpt/"
-		Write-Warn "Or set WPT_PATH to the folder of a more recent WPA."
-	}
-
 	Write-Msg "Launching Windows Performance Analyzer (WPA) ..."
 	WriteCmdVerbose $ViewerPath $ViewerCmd
 
@@ -728,6 +734,7 @@ Param (
 
 	# Launch the viewer without Admin privileges, if possible.
 
+	$VersionRun = $Null
 	$Process = $Null
 	$ErrResult = $True
 
@@ -744,6 +751,8 @@ Param (
 			$Process = GetRunningProcess 'WPA' $PreStartTime
 			if ($Process)
 			{
+				$VersionRun = FileVersionFromFileInfo($Process.MainModule.FileVersionInfo)
+
 				$ErrResult = WaitForProcessResponsive $Process
 				if ($ErrResult) { Write-Status "WPA as Standard User: $ErrResult" }
 
@@ -777,6 +786,8 @@ Param (
 
 		if ($Process)
 		{
+			$VersionRun = FileVersionFromFileInfo($Process.MainModule.FileVersionInfo)
+
 			$ErrResult = WaitForProcessResponsive $Process
 			if ($ErrResult) { Write-Status "WPA as Current User: $ErrResult" }
 
@@ -787,6 +798,18 @@ Param (
 			if ($Error -and $Error.Count) { $ErrResult = $Error[0] }
 			else { $ErrResult = "Failed to run: $Viewer" }
 		}
+	}
+
+	# Test the version of the running WPA, if possible.
+
+	if (!(IsRealVersion $VersionRun)) { $VersionRun = $VersionInfo }
+	if ((IsRealVersion $VersionRun) -and ($VersionRun -lt $VersionMinRecent) -and (CheckOSVersion '10.0.0'))
+	{
+		Write-Warn "A newer Windows Performance Analizer (WPA) is available:"
+		Write-Warn "  Windows Store: https://apps.microsoft.com/detail/9n0w1b2bxgnz"
+		Write-Warn "  Windows Performance Toolkit: https://learn.microsoft.com/en-us/windows-hardware/test/wpt/"
+		Write-Warn "Or set WPT_PATH to the folder of a more recent WPA."
+		Write-Warn
 	}
 
 	if ($ErrResult)
