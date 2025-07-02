@@ -137,7 +137,11 @@ Param (
 		{
 			$env:_NT_SYMBOL_PATH = $PdbPathDefault -replace $PDB_CACHE_FOLDER,$script:PdbCacheFolder
 
-			Write-Warn "Setting _NT_SYMBOL_PATH = $env:_NT_SYMBOL_PATH"
+			if (InvokedFromCMD)
+				{ Write-Warn "Setting _NT_SYMBOL_PATH=$env:_NT_SYMBOL_PATH" }
+			else
+				{ Write-Warn "Setting `$Env:_NT_SYMBOL_PATH = '$env:_NT_SYMBOL_PATH'" }
+
 			$DriveFreeSpace = GetDriveFreeSpace $script:SymbolDrive
 			if ($DriveFreeSpace) { $DriveFreeSpace = "($([int]($DriveFreeSpace / 1GB)) GB Free)" }
 			Write-Warn "NOTE: Cached symbols may consume lots of space on drive $script:SymbolDrive $DriveFreeSpace"
@@ -157,7 +161,11 @@ Param (
 		{
 			$env:_NT_SYMCACHE_PATH = $SymCacheDefault -replace $SYM_CACHE_FOLDER,$script:SymCacheFolder
 
-			Write-Warn "Setting _NT_SYMCACHE_PATH = $env:_NT_SYMCACHE_PATH"
+			if (InvokedFromCMD)
+				{ Write-Warn "Setting _NT_SYMCACHE_PATH=$env:_NT_SYMCACHE_PATH" }
+			else
+				{ Write-Warn "Setting `$Env:_NT_SYMCACHE_PATH = '$env:_NT_SYMCACHE_PATH'" }
+
 			Write-Warn
 		}
 		else
@@ -795,7 +803,7 @@ Param (
 	# Test the version of the running WPA, if possible.
 
 	if (!(IsRealVersion $VersionRun)) { $VersionRun = $VersionInfo }
-	if ((IsRealVersion $VersionRun) -and ($VersionRun -lt $VersionMinRecent))
+	if ((IsRealVersion $VersionRun) -and ($VersionRun -lt $VersionMinRecent) -and (CheckOSVersion '10.0.0'))
 	{
 		Write-Warn "A newer Windows Performance Analizer (WPA) is available:"
 		Write-Warn "  Windows Store: https://apps.microsoft.com/detail/9n0w1b2bxgnz"
