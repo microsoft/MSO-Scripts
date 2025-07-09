@@ -1,3 +1,6 @@
+Copyright (c) Microsoft Corporation. Licensed under the MIT License.
+
+```
 WebIO (the core of the WinHTTP Network Stack)
 Session -> Request -> Connection -> Socket -> (TCB)
 
@@ -37,3 +40,4 @@ iCxn/Next = linked list (by index) of Connection objects which represent a conne
 
 Traversal links look like this, with Sockets and Connections also linking themselves into subgroups.
 TCB <- Socket[<] -> Connection[<] -> Request -> Session
+```

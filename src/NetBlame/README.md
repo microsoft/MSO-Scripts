@@ -1,35 +1,9 @@
-# Introduction 
-The Performance Toolkit SDK allows for you to create AddIns to process your own data inside of Windows Performance Analyzer (WPA).
-# Requirements
-1. Visual Studio 2019
-2. .NET Standard 2.1
-3. Access to the PerfToolKit NuGet feed. See [here](https://dev.azure.com/perftoolkit/SDK/_wiki/wikis/SDK.wiki?wikiVersion=GBwikiMaster&pagePath=%2FOverview&pageId=2) for details on connecting to the NuGet feed
-
-# Configuring NuGet
-
-#### Feeds
-
-- URI:  https://dev.azure.com/perftoolkit/SDK/_packaging?_a=feed&feed=PerfToolkit
-- Feed URI:  https://pkgs.dev.azure.com/perftoolkit/_packaging/PerfToolkit/nuget/v3/index.json
-
-#### Configuring Visual Studio
-
-To access the NuGet packages from Visual Studio, simply add the feed URI in the Package Manager settings as a new source
-
-- Tools -> NuGet Package Manager -> Package Manager Settings -> Package Sources
-- Click the green plus (+) to add a new source.
-- Give the feed a descriptive name, e.g. PerfToolKit, in the name field.
-- Place the feed URI in the source field
-- The feed will now be available from the package manager
-
-# Instructions
-
-1. [Overview](https://dev.azure.com/perftoolkit/SDK/_wiki/wikis/SDK.wiki?wikiVersion=GBwikiMaster&pagePath=%2FOverview&pageId=2)
-2. [Creating your project](https://dev.azure.com/perftoolkit/SDK/_wiki/wikis/SDK.wiki?wikiVersion=GBwikiMaster&pagePath=%2FUsing%20the%20SDK%2FCreating%20your%20project&pageId=8)
+Copyright (c) Microsoft Corporation. Licensed under the MIT License.
 
 # NetBlame Add-in
 
 This add-in analyzes and summarizes network and thread pool ETW events:
+
 	Microsoft-Windows-Winsock-NameResolution	{55404e71-4db9-4deb-a5f5-8f86e46dde56}
 	Microsoft-Windows-Winsock-AFD	{e53c6823-7bb8-44bb-90dc-3f86090d48a6}
 	Microsoft-Windows-DNS-Client	{1c95126e-7eea-49a9-a3fe-a378b03ddb4d}
@@ -40,3 +14,37 @@ This add-in analyzes and summarizes network and thread pool ETW events:
 	Windows-ThreadPool	{c861d0e2-a2c1-4d36-9f9c-970bab943a12}
 	Office-ThreadPool	{A019725F-CFF1-47E8-8C9E-8FE2635B6388}
 	OfficeDispatchQueue	{559A5658-8100-4D84-B756-0A47A476280C}
+
+It is based on the [Microsoft Performance Toolkit SDK](https://github.com/microsoft/microsoft-performance-toolkit-sdk)
+
+This product includes GeoLite2 data created by MaxMind, available from https://www.maxmind.com
+
+# Build
+
+When a Release of this project is downloaded and unzipped, the NetBlame plug-in is ready to go.
+
+When this repository is cloned, the NetBlame plug-in must be built.
+
+See: https://github.com/microsoft/MSO-Scripts/wiki/Network-Activity#plugin
+
+`DotNet.exe build -c Release`
+
+# Run
+
+Requires WPA v11.7.383+ and SDK v1.2.2+
+
+`c:\MSO-Scripts\BETA\TraceNetwork View`
+
+The above script executes this WPA command to load the NetBlame plug-in and process the ETW trace:
+
+```
+WPA -i "$Env:LocalAppData\MSO-Scripts\MSO-Trace-Network.etl"
+-processors "Event Tracing for Windows","Office_NetBlame"
+-addsearchdir "c:\MSO_Scripts\NetBlame\bin\Release\net6.0"
+-profile "c:\MSO-Scripts\BETA\WPAP\Network.wpaProfile"
+```
+
+The script chooses one of these paths for -addsearchdir :
+- `"c:\MSO_Scripts\NetBlame\bin\Release\net6.0"`
+- `"c:\MSO_Scripts\NetBlame\bin\Debug\net6.0"`
+- `"c:\MSO_Scripts\BETA\ADDIN"`
