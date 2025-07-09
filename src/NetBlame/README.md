@@ -35,7 +35,7 @@ Requires WPA v11.7.383+ and SDK v1.2.2+
 
 `c:\MSO-Scripts\BETA\TraceNetwork View`
 
-The above script executes the this WPA command to load the NetBlame add-in and process the ETW trace:
+The above script executes this WPA command to load the NetBlame plug-in and process the ETW trace:
 
 ```
 WPA -i "$Env:LocalAppData\MSO-Scripts\MSO-Trace-Network.etl"
