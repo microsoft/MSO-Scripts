@@ -29,7 +29,7 @@ The scripts accept these tracing commands: Start, Stop, View, Status, Cancel<br/
 These commands, except View, require Administrator privilege.
 
 To trace CPU activity:
-* Download and unzip [a recent Release of MSO-Scripts](releases), or clone the Repository: `<> Code ↓`<br/>
+* Download and unzip [a recent Release of MSO-Scripts](https://github.com/microsoft/MSO-Scripts/releases), or clone the Repository: `<> Code ↓`<br/>
 * _MSO-Scripts_\\`TraceCPU Start`<br/>
 _Exercise the application/scenario._
 * _MSO-Scripts_\\`TraceCPU Stop`
