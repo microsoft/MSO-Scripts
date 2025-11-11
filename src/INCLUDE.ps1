@@ -728,7 +728,9 @@ function HandleChangeThreadMode
 {
 	Write-Err "Windows Performance Recorder (WPR): Internal COM Error"
 	Write-Warn "This issue usually resolves by restarting Windows."
-	Write-Warn "If this occurs frequently, make sure that you have a very recent version of WPR:`n"
+	Write-Warn "If this occurs frequently, make sure that you have a very recent version of WPR."
+	if (!$script:WPR_PreWin10) { Write-Warn "The current version is: $script:WPR_Win10Ver" }
+	Write-Warn 'https://devblogs.microsoft.com/performance-diagnostics/wpr-start-and-stop-commands/#:~:text=0x80010106'
 	WriteWPTInstallMessage "WPR.exe"
 }
 
@@ -869,6 +871,28 @@ Param (
 	Write-Warn "Windows may also be low on Virtual Memory."
 	Write-Warn "See: https://www.windowscentral.com/how-change-virtual-memory-size-windows-10"
 	Write-Warn "And: https://www.windowscentral.com/software-apps/windows-11/how-to-manage-virtual-memory-on-windows-11"
+}
+
+
+<#
+	0x80071069: The instance name passed was not recognized as valid by a WMI data provider.
+#>
+function HandleAbortedTrace
+{
+Param (
+	$WprParams
+)
+	Write-Err (GetCmdVerbose $script:WPR_Path $WprParams)
+
+	Write-Err "`nWPR returned error 0x80071069: The instance name passed was not recognized as valid by a WMI data provider.`n"
+
+	Write-Warn "This sometimes means that there is not enough space on the disk for the .ETL log file."
+	Write-Warn "Intermediate trace files are stored here:"
+	Write-Warn "`"$env:TRACE_PATH`""
+	Write-Warn
+	Write-Warn "Try running 'cleanmgr' or clearing space on the disk."
+	Write-Warn "Or set the TRACE_PATH environment variable to a folder on another drive."
+	Write-Warn "Or simply try again to capture the trace using -Loop : TraceCPU Start -Loop ..."
 }
 
 
@@ -1865,17 +1889,19 @@ Param (
 
 	if ($TestRun)
 	{
+		# Skip stray, obviously old installations.
+		$fileVer = GetFileVersion $ExePath
+		if ($fileVer -and ($fileVer.Major -lt [Environment]::OSVersion.Version.Major))
+		{
+			Write-Status "Found old v$fileVer at: $ExePath"
+			return $False
+		}
+
 		try
 		{
 			$Null = & $ExePath -? 2>$Null | Out-Null # silent mode for PSv2+
-			if ($?) { $TestRun = $False } # Success!
 		}
 		catch
-		{
-			# Do not flag success.
-		}
-
-		if ($TestRun)
 		{
 			Write-Status "Test run failed: $ExePath"
 			return $False
@@ -1906,23 +1932,26 @@ Param (
 	Get the full path of the given executable from the Windows Performance Toolkit: WPA.exe, WPR.exe, etc.
 	This path can be customized with the WPT_PATH environment variable. ($Env:WPT_PATH may get cleared if it is invalid.)
 	ISSUE Win10/11+: WPR.exe exists in: $Env:windir\system32\wpr.exe  Should this script search for another (newer?) version?
+	Consider Win10 installed with: WPR v10.0.19041  This is subject to: Error 0x80010106
+	https://devblogs.microsoft.com/performance-diagnostics/wpr-start-and-stop-commands/#:~:text=0x80010106
 #>
 function GetWptExePath
 {
 Param (
 	[string]$Exe,
 	[switch]$Silent,
+	[switch]$Shallow,
 	[switch]$AltPath,
 	[switch]$TestRun
 )
-	# Test the optional environment variable
+	# Test the optional environment variable. (Use the binary found on this path if at all possible.)
 	# This is set by the user. All others are set by the system or by an installer.
 
 	if ($env:WPT_PATH)
 	{
 		$WptPath = $env:WPT_PATH.Trim('"').TrimEnd('\')
 		$WptPath = "$WptPath\$Exe"
-		if (TestExePath $WptPath $TestRun ([ref]$AltPath)) { return $WptPath }
+		if (TestExePath $WptPath -TestRun:$False ([ref]$AltPath)) { return $WptPath }
 
 		# Sanity check: If $env:WPT_PATH does not exist then reset is to null for this script.
 		if (!(Test-Path -PathType container -Path $env:WPT_PATH -ErrorAction:SilentlyContinue)) { $env:WPT_PATH = $Null }
@@ -1931,9 +1960,9 @@ Param (
 	# Test Windows Apps (not executable stubs)
 
 	# $Exe should exist in the folder registered under WPA.exe
-	$PathReg = $Null
+	$WptPath = $PathReg = $Null
 	$WpaOpenPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\App Paths\wpa.exe"
-	$WptPath = GetRegistryValue $WpaOpenPath "Path"
+	if (!$Shallow) { $WptPath = GetRegistryValue $WpaOpenPath "Path" }
 	if ($WptPath)
 	{
 		$WptPath = $PathReg = "$WptPath\$Exe"
@@ -1970,10 +1999,14 @@ Param (
 
 	# App store paths require Admin privilege to walk, unless you land directly on the app folder.
 	# Look up the path of the app folder(s) via the registry.
+	# This may only work for WPA.
 
-	$WildPath = 'Registry::HKEY_CLASSES_ROOT\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages\Microsoft.WindowsPerformanceAnalyzer*'
-	[string[]] $RegPaths = Get-Item -Path $WildPath -ErrorAction:SilentlyContinue
-
+	[string[]]$RegPaths = $Null
+	if (!$Shallow)
+	{
+		$WildPath = 'Registry::HKEY_CLASSES_ROOT\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages\Microsoft.WindowsPerformanceAnalyzer*'
+		$RegPaths = Get-Item -Path $WildPath -ErrorAction:SilentlyContinue
+	}
 	foreach ($RegPath in $RegPaths)
 	{
 		$Path = GetRegistryValue "Registry::$RegPath" 'PackageRootFolder'
@@ -1989,11 +2022,10 @@ Param (
 
 	# Test the system path, which may include WindowsApps (executable stubs, NO VERSION)
 
-	$PathApps= $Null
 	$WptCmd = Get-Command -TotalCount 1 -CommandType Application $Exe -ErrorAction:SilentlyContinue
-	if ($WptCmd)
+	foreach ($Cmd in $WptCmd)
 	{
-		$WptPath = $PathApps = $WptCmd.Path
+		$WptPath = $PathApps = $Cmd.Path
 		if (TestExePath $WptPath $TestRun ([ref]$AltPath)) { return $WptPath }
 	}
 
@@ -2002,7 +2034,7 @@ Param (
 	if ($Env:LOCALAPPDATA)
 	{
 		$WptPath = "$Env:LOCALAPPDATA\Microsoft\WindowsApps\$Exe"
-		if (($WptPath -ne $PathApps) -and (TestExePath $WptPath $TestRun ([ref]$AltPath))) { return $WptPath }
+		if (!($WptCmd -contains $WptPath) -and (TestExePath $WptPath $TestRun ([ref]$AltPath))) { return $WptPath }
 	}
 
 	# Try the Side-by-Side path for WPR
@@ -3202,6 +3234,18 @@ Param (
 		0x800705aa # Insufficient system resources...
 		{
 			HandleInsufficientResources
+
+			Write-Msg "`nCanceling..."
+			$Null = InvokeWPR -Cancel -InstanceName $InstanceName
+
+			ListRunningProfiles
+
+			return [ResultValue]::Error
+		}
+
+		0x80071069 # The instance name passed was not recognized as valid by a WMI data provider.
+		{
+			HandleAbortedTrace $WprParams
 
 			Write-Msg "`nCanceling..."
 			$Null = InvokeWPR -Cancel -InstanceName $InstanceName

@@ -402,7 +402,7 @@ function LaunchAsStandardUser
 		$ArgList = $ArgList -replace '(?<!\\)"', "'"
 	}
 
-	Write-Status "Launching WPA as Standard User (non-Admin):`n" $ProcessCommand.FilePath $ArgList
+	Write-Status "Launching as Standard User (non-Admin):`n" $ProcessCommand.FilePath $ArgList
 
 	ResetError
 	$ErrorDefault = "Failed to run: $($Args[0])"
@@ -467,7 +467,7 @@ Param(
 	# If the viewer command is WPA.bat or something other than WPA.exe or "WPA.exe", don't maximize that window.
 	if ($Viewer.TrimEnd('"') -notlike '*.exe') { $ProcessCommand.WindowStyle = "Minimized" }
 
-	Write-Status "Launching WPA as Current User."
+	Write-Status "Launching as Current User."
 
 	ResetError
 	$Process = $Null
@@ -496,7 +496,7 @@ function BackgroundResolveSymbols
 Param (
 	[string]$ETL
 )
-	$XPerfPath = GetWptExePath 'XPerf.exe' -silent
+	$XPerfPath = GetWptExePath 'XPerf.exe' -TestRun -Shallow
 
 	if (!$XPerfPath)
 	{
@@ -524,7 +524,7 @@ Param (
 	$XPerfCmd = "`"$XPerfPath`" -tle -tti -i `"$ETL`" -symbols verbose -a symcache -build"
 	$XPerfCmdEnv = "$(ReplaceEnv $XPerfPath) -tle -tti -i $(ReplaceEnv $ETL) -symbols verbose -a symcache -build"
 
-	$OutFilter = <# $XPerfCmd #> '2>&1 | findstr /r "bytes.*SYMSRV.*RESULT..0x00000000"'
+	$OutFilter = <# $XPerfCmd #> '2>&1 | findstr /r /c:"[0-9] bytes -"'
 	$XPerfFiltered = "$XPerfCmd $OutFilter"
 	$XPerfFilterEnv = "$XPerfCmdEnv $OutFilter"
 
