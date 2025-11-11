@@ -58,6 +58,9 @@ namespace NetBlameCustomDataSource.DNSClient
 		*/
 		public uint IDNSFromAddress(IPAddress ipAddress)
 		{
+			if (ipAddress.Empty())
+				return 0;
+
 			if (ipAddress.IsIPv4MappedToIPv6)
 				ipAddress = ipAddress.MapToIPv4();
 
@@ -251,6 +254,9 @@ namespace NetBlameCustomDataSource.DNSClient
 			AssertInfo(!strServer.IsNA());
 			AssertInfo(!strServerAlt.IsNA());
 
+			if (string.IsNullOrEmpty(strServer))
+				strServer = Util.strNA;
+
 			return strServer;
 		}
 
@@ -378,7 +384,6 @@ namespace NetBlameCustomDataSource.DNSClient
 				strAddr = strAddr[..iPct];
 			}
 
-			// TODO: Confirm that this works with AF_HYPERV
 			if (!IPAddress.TryParse(strAddr, out ipAddress))
 				return false;
 
@@ -496,10 +501,12 @@ namespace NetBlameCustomDataSource.DNSClient
 				int iSpace = strDNS.LastIndexOf(' ');
 				string strAddr = (iSpace >= 0) ? strDNS[(iSpace + 1)..] : strDNS;
 
-				// TODO: Confirm that this works with AF_HYPERV
 				if (TryParseIgnorePort(strAddr, out IPAddress ipAddress))
 				{
-					iAddr = AddDNSEntry(hostName, ipAddress, ref iDNSCache);
+					uint iAddrT = AddDNSEntry(hostName, ipAddress, ref iDNSCache);
+					// Return the index of the first address parsed.
+					if (iAddr == 0)
+						iAddr = iAddrT;
 				}
 				else if (strAddr.LastIndexOf('.') >= 0) // reality check
 				{
@@ -544,7 +551,7 @@ namespace NetBlameCustomDataSource.DNSClient
 			string strServerName = evt.GetString("FQDN");
 			string strCanonicalName = evt.GetString("CanonicalName");
 
-			if (strServer != null)
+			if (!string.IsNullOrWhiteSpace(strServer))
 			{
 				// The "canonical name" is added below, so use the server name from the URL.
 				if (strServerName.Equals(strCanonicalName, StringComparison.OrdinalIgnoreCase))

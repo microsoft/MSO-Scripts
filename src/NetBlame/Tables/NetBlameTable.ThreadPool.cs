@@ -15,7 +15,6 @@ using static NetBlameCustomDataSource.Util;
 
 using TimestampUI = Microsoft.Performance.SDK.Timestamp;
 
-using IDVal = System.Int32; // type of Event.pid/tid / ideally: System.UInt32
 using QWord = System.UInt64;
 
 
@@ -233,7 +232,7 @@ namespace NetBlameCustomDataSource.Tables
 
 			public static uint Index(ThreadPoolItem tpObj) => tpObj.IFromTask;
 
-			public static IDVal TID(ThreadPoolItem tpObj) => tpObj.tpTask.tidExec;
+			public static string TID(ThreadPoolItem tpObj) => StringFromInt(tpObj.tpTask.tidExec);
 
 			public static TimestampUI StartExecTime(ThreadPoolItem tpObj) => tpObj.tpTask.timeStartExec;
 
@@ -254,7 +253,7 @@ namespace NetBlameCustomDataSource.Tables
 
 			public static IStackSnapshot InvokerStack(ThreadPoolItem tpObj) => tpObj.tpTask.xlink.taskLinkNext?.stack;
 
-			public static IDVal InvokerTID(ThreadPoolItem tpObj) => tpObj.tpTask.xlink.taskLinkNext?.tidCreate ?? 0;
+			public static string InvokerTID(ThreadPoolItem tpObj) => StringFromInt(tpObj.tpTask.xlink.taskLinkNext?.tidCreate ?? NetBlameCustomDataSource.Tables.TID.Unknown);
 		} // Generators
 
 
@@ -277,7 +276,7 @@ namespace NetBlameCustomDataSource.Tables
 			var xlStatus = Projection.Project(xlBaseProjector, Generators.Status);
 			var xlState = Projection.Project(xlBaseProjector, Generators.State);
 
-			// int -> IDVal
+			// int -> numeric string
 			var xlThreadExec = Projection.Project(xlBaseProjector, Generators.TID);
 			var xlInvokerTID = Projection.Project(xlBaseProjector, Generators.InvokerTID);
 

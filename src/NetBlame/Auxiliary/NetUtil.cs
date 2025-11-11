@@ -2,10 +2,11 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices; // MethodImpl
 
-using System.Diagnostics;
 using Microsoft.Windows.EventTracing.Symbols;
 
 using QWord = System.UInt64;
@@ -79,6 +80,7 @@ namespace NetBlameCustomDataSource
 
 		public static bool SUCCEEDED(UInt32 err) => (Int32)err >= 0;
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool FImplies(bool a, bool b) => !a || b;
 
 		public static uint BitFromI(uint i) => (uint)1 << ((int)i - 1); // i: 1-based
@@ -92,6 +94,9 @@ namespace NetBlameCustomDataSource
 
 		public static IPEndPoint NewEndPoint(in SocketAddress socket)
 		{
+			if (socket.Empty())
+				return new IPEndPoint(0, 0);
+
 			// IPEndPoint.Create throws an exception if (this.AddressFamily != socket.Family)
 
 			if (socket.Family == AddressFamily.InterNetworkV6)
@@ -162,6 +167,14 @@ namespace NetBlameCustomDataSource
 			// dummy: 42.42.42.42 / port = family
 			return new IPEndPoint((Int64)0x2A2A2A2A, (int)socket.Family);
 		} // NewEndPoint
+
+		public static IPEndPoint NewEndPoint(in Microsoft.Windows.EventTracing.Events.IGenericEvent evt)
+		{
+			if (evt.GetUInt32("AddressLen") == 0)
+				return new IPEndPoint(0, 0);
+
+			return NewEndPoint(evt.GetSocketAddress());
+		}
 
 
 		static public readonly char[] rgchURLSplit = new char[] { ':', '/' };
@@ -286,6 +299,11 @@ namespace NetBlameCustomDataSource
 				return "AD/SMB";
 			case 465:
 				return "SMTPS";
+			case 546:
+			case 547:
+				return "DHCPv6";
+			case 554:
+				return "RTSP";
 			case 563:
 				return "NNTPS";
 			case 636:
@@ -299,7 +317,11 @@ namespace NetBlameCustomDataSource
 				return "POP3S";
 			case 1433:
 				return "MSSQL";
+			case 1900:
+				return "SSDP";
 			case 2555:
+			case 2869:
+			case 5000:
 				return "UPnP";
 			case 3268:
 				return "LDAP/AD";
@@ -308,7 +330,7 @@ namespace NetBlameCustomDataSource
 			case 3389:
 				return "TS/RDP";
 			case 5353:
-				return "UDP";
+				return "mDNS";
 			case 5355:
 				return "LLMNR";
 			case 5985:
@@ -347,6 +369,67 @@ namespace NetBlameCustomDataSource
 			return service;
 		}
 
+		static public string AddressType(IPAddress addr)
+		{
+			if (addr == null)
+				return null;
+
+			if (addr.IsIPv4MappedToIPv6)
+				addr = addr.MapToIPv4();
+
+			if (addr.AddressFamily == AddressFamily.InterNetwork)
+			{
+				byte[] bytes = addr.GetAddressBytes();
+				switch (bytes[0])
+				{
+				case 10:
+					return "Private Network (A)";
+				case 127:
+					return "Loopback";
+				case 169:
+					if (bytes[1] == 254)
+						return "Link-Local";
+					break;
+				case 172:
+					if (bytes[1] >= 16 && bytes[1] < 32)
+						return "Private Network (B)";
+					break;
+				case 192:
+					if (bytes[1] == 168)
+						return "Private Network (C)";
+					break;
+				case 255:
+					if (bytes[1] == 255 && bytes[2] == 255 && bytes[3] == 255)
+						return "Broadcast";
+					break;
+				default:
+					if (bytes[0] >= 224 && bytes[0] < 240)
+						return "Multicast";
+					break;
+				}
+				return null;
+			}
+
+			if ((int)addr.AddressFamily == 34)
+				return "Hyper-V";
+
+			if (addr.AddressFamily != AddressFamily.InterNetworkV6)
+				return null;
+
+			if (addr.IsIPv6LinkLocal)
+				return "Link Local";
+
+			if (addr.IsIPv6Multicast)
+				return "Multicast";
+
+			if (addr.IsIPv6SiteLocal)
+				return "Site Local";
+
+			if (addr.IsIPv6UniqueLocal)
+				return "Unique Local";
+
+			return null;
+		}
 
 		/*
 			qw.RotateLeft()

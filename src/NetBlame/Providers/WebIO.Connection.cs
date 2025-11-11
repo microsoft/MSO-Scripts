@@ -5,6 +5,7 @@ using System.Diagnostics;
 using IDVal = System.Int32; // type of Event.pid/tid / ideally: System.UInt32
 using QWord = System.UInt64;
 
+using static NetBlameCustomDataSource.Util;
 
 namespace NetBlameCustomDataSource.WebIO
 {
@@ -29,6 +30,12 @@ namespace NetBlameCustomDataSource.WebIO
 		// Thread of most recent Send activity, between: ConnectionSocketSend_Start/Stop
 		public IDVal tidSend;
 		public uint cbSendTCB;
+
+		public QWord ctxSend;
+		public QWord ctxRecv;
+
+		// There's another one of these used by an earlier Request.
+		public bool fDuplicate;
 #if DEBUG
 		public bool fOutdated;
 		public bool fTransferred;
@@ -51,6 +58,20 @@ namespace NetBlameCustomDataSource.WebIO
 			else
 				return false; // no TCB, no tid: very uncertain
 		}
-	}
 
+		[Conditional("DEBUG")]
+		public void TestSocket(in Microsoft.Windows.EventTracing.Events.IGenericEvent evt, QWord qwCxn)
+		{
+			QWord qwSocket = evt.TryGetUInt64("SocketHandle"); // ConnectSocketStop, etc.
+			if (qwSocket == 0)
+				qwSocket = evt.TryGetUInt64("Socket"); // ConnectSocketClose
+#if DEBUG
+			AssertCritical(qwSocket != 0);
+			AssertCritical(this.socket != null);
+			AssertImportant(this.socket.qwSocket == qwSocket || (this.socket.FClosed && qwSocket == QWord.MaxValue));
+			AssertImportant(this.socket.qwConnection == qwCxn);
+			AssertImportant(this.qwConnection == qwCxn);
+#endif // DEBUG
+		}
+	}
 }

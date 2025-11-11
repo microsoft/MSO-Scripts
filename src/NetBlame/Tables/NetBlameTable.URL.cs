@@ -4,7 +4,6 @@ using Microsoft.Performance.SDK.Processing;
 
 using Microsoft.Windows.EventTracing.Symbols;
 
-using IDVal = System.Int32; // type of Event.pid/tid / ideally: System.UInt32
 using QWord = System.UInt64;
 
 
@@ -350,10 +349,10 @@ namespace NetBlameCustomDataSource.Tables
 
 			public static QWord TCB(URL urlObj) => urlObj.tcbId;
 
-			public static IDVal PID(URL urlObj) => urlObj.Pid;
+			public static string PID(URL urlObj) => StringFromInt(urlObj.Pid);
 
 			// TID which corresponds to StackFirst, hopefully that of WinMain.
-			public static IDVal ThreadIdFirst(URL urlObj) => urlObj.myStack.stackFirst?.ThreadId ?? urlObj.myStack.rgAttrib?[0].tidEnqueue ?? 0;
+			public static string ThreadIdFirst(URL urlObj) => StringFromInt(urlObj.myStack.TidFirst);
 
 			// This is the full aggregation of call stacks: First + Middle + Last
 			// This will upcast back to MyStackSnapshot by FullStackSnapshotAccessProvider.
@@ -403,7 +402,7 @@ namespace NetBlameCustomDataSource.Tables
 			var urlPortProjector = Projection.Project(urlBaseProjector, Generators.Port);
 			var urlSocketProjector = Projection.Project(urlBaseProjector, Generators.Socket);
 
-			// int -> IDVal
+			// int -> numeric string
 			var urlPIDProjector = Projection.Project(urlBaseProjector, Generators.PID);
 			var urlThreadFirstProjector = Projection.Project(urlBaseProjector, Generators.ThreadIdFirst);
 

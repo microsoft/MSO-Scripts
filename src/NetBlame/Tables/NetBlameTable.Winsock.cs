@@ -11,7 +11,6 @@ using NetBlameCustomDataSource.WinsockAFD;
 
 using static NetBlameCustomDataSource.Util;
 
-using IDVal = System.Int32; // type of Event.pid/tid / ideally: System.UInt32
 using QWord = System.UInt64;
 
 
@@ -201,7 +200,7 @@ namespace NetBlameCustomDataSource.Tables
 
 			public static uint Socket(Connection cxnObj) => cxnObj.socket;
 
-			public static IDVal TidClose(Connection cxnObj) => cxnObj.tidClose;
+			public static string TidClose(Connection cxnObj) => StringFromInt(cxnObj.tidClose);
 
 			public static QWord TCB(Connection cxnObj, TcpIp.TcpTable tcpTable) => tcpTable.TcbrFromI(cxnObj.iTCB)?.tcb ?? 0;
 		} // Generators
@@ -224,7 +223,7 @@ namespace NetBlameCustomDataSource.Tables
 			var wsDNSTableProjector = Projection.Constant(this.Tables.dnsTable);
 			var wsTcpTableProjector = Projection.Constant(this.Tables.tcpTable);
 
-			// int -> IDVal: TID Create/Close
+			// int -> numeric string: TID Create/Close
 			var wsTidCloseProjector = Projection.Project(wsBaseProjector, Generators.TidClose);
 
 			// int -> string: ws, Server, Protocol, IPProto, SockType

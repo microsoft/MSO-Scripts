@@ -11,7 +11,7 @@ using NetBlameCustomDataSource.Tasks;
 using static NetBlameCustomDataSource.Util; // Assert*
 
 using QWord = System.UInt64;
-using IDVal = System.Int32; // type of Event.pid/tid / ideally: System.UInt32
+using IDVal = System.Int32; // type of Event.pid/tid
 using System.Collections.Generic;
 
 
@@ -125,8 +125,10 @@ namespace NetBlameCustomDataSource.WinHTTP
 		public int actHash;
 		public ActionType actType;
 
-		public CallbackEvent(QWord qwContext, int actHash, ActionType action, IDVal pid, IDVal tid, TimestampUI timeStamp)
-				: base(pid, tid, timeStamp)
+		public const IDVal tidUnknown = -1;
+
+		public CallbackEvent(QWord qwContext, int actHash, ActionType action, IDVal pid, IDVal tid, in TimestampUI timeStamp)
+				: base(pid, tid, in timeStamp)
 		{
 			this.qwContext = qwContext;
 			this.actHash = actHash;
@@ -134,8 +136,8 @@ namespace NetBlameCustomDataSource.WinHTTP
 			this.state = EState.Created;
 		}
 
-		public bool FQueued => this.tidCreate != 0;
-		public bool FStarted => this.tidExec != 0;
+		public bool FQueued => this.tidCreate != tidUnknown;
+		public bool FStarted => this.tidExec != tidUnknown;
 		public bool FOnlyCreated => this.state == EState.Created;
 		public bool FOnlyStarted => this.state == EState.StartExec;
 		public bool FStopped => this.state == EState.EndExec;
@@ -175,10 +177,6 @@ namespace NetBlameCustomDataSource.WinHTTP
 			hashContext[cbt.qwContext] = (uint)this.Count; // 1-based index, single-threaded
 		}
 
-#if DEBUG
-		int cTableCount;
-#endif // DEBUG
-
 		/*
 			Return the most recent worker object with the given context and time range.
 		*/
@@ -188,7 +186,7 @@ namespace NetBlameCustomDataSource.WinHTTP
 
 			for (uint i = IFromContext(qwContext); i > 0; i = cbe.iNext)
 			{
-				if (i == 0) break;
+				AssertCritical(i != 0);
 
 				cbe = EventFromI(i);
 				AssertCritical(cbe.qwContext == qwContext);
@@ -270,14 +268,15 @@ namespace NetBlameCustomDataSource.WinHTTP
 				AssertCritical(cbe.actHash == actHash);
 			}
 
-			TimestampUI timeStamp = evt.Timestamp.ToGraphable();
+			TimestampUI timeStamp;
 
 			switch ((ThreadAction)evt.Id)
 			{
 			case ThreadAction.Queue:
 				if (cbe == null)
 				{
-					cbe = new CallbackEvent(qwContext, actHash, action, evt.ProcessId, evt.ThreadId, timeStamp);
+					timeStamp = evt.Timestamp.ToGraphable();
+					cbe = new CallbackEvent(qwContext, actHash, action, evt.ProcessId, evt.ThreadId, in timeStamp);
 					Add(cbe);
 				}
 				else
@@ -288,7 +287,7 @@ namespace NetBlameCustomDataSource.WinHTTP
 					AssertImportant(!cbe.FOnlyCreated);
 					AssertImportant(cbe.FInverted);
 					// This is a thread inversion / race condition. There should be no long delays.
-					AssertImportant(timeStamp.ToMilliseconds - cbe.timeCreate.ToMilliseconds < 100);
+					AssertImportant(evt.Timestamp.ToGraphable().ToMilliseconds - cbe.timeCreate.ToMilliseconds < 100);
 
 					cbe.tidCreate = evt.ThreadId; // cbe.FQueued = true
 				}
@@ -301,10 +300,11 @@ namespace NetBlameCustomDataSource.WinHTTP
 				break;
 
 			case ThreadAction.Start:
+				timeStamp = evt.Timestamp.ToGraphable();
 				if (cbe == null)
 				{
 					// Case 6!?  Or the Enqueue event happened before the start of the trace.
-					cbe = new CallbackEvent(qwContext, actHash, action, evt.ProcessId, 0/*tidCreate*/, timeStamp);
+					cbe = new CallbackEvent(qwContext, actHash, action, evt.ProcessId, CallbackEvent.tidUnknown/*tidCreate*/, in timeStamp);
 					Add(cbe);
 
 					AssertImportant(!cbe.FQueued);
@@ -320,7 +320,7 @@ namespace NetBlameCustomDataSource.WinHTTP
 				AssertImportant(cbe.timeDestroy.HasMaxValue());
 				AssertImportant(cbe.cRef == 0);
 
-				cbe.StartExec(evt.ThreadId, timeStamp);
+				cbe.StartExec(evt.ThreadId, in timeStamp);
 
 				// Remember the most recent StartExec on this thread.
 				this.allTables.threadTable.StartExec(this, cbe);
@@ -339,7 +339,8 @@ namespace NetBlameCustomDataSource.WinHTTP
 				AssertImportant(cbe.tidExec == evt.ThreadId);
 				AssertImportant(cbe.FOnlyStarted);
 
-				cbe.EndExec(timeStamp);
+				timeStamp = evt.Timestamp.ToGraphable();
+				cbe.EndExec(in timeStamp);
 
 				// We must disable garbage collection:
 				// We're indexing into the table with the per-Context lists hashed and linked.
@@ -351,12 +352,12 @@ namespace NetBlameCustomDataSource.WinHTTP
 				AssertInfo(cbe != null);
 				if (cbe == null) break;
 
-				AssertImportant(cbe.FQueued);
+				AssertInfo(cbe.FQueued); // maybe near the trace start
 				AssertImportant(cbe.timeCreate.HasValue());
 				AssertImportant(cbe.timeDestroy.HasMaxValue());
 
 				if (cbe.FOnlyCreated)
-					{
+				{
 					// case 2 - Canceling
 					AssertImportant(!cbe.timeStartExec.HasValue());
 					AssertImportant(!cbe.timeEndExec.HasValue());
@@ -364,23 +365,17 @@ namespace NetBlameCustomDataSource.WinHTTP
 
 					Finish(cbe, false /*fGC*/);
 					cbe.state = EState.Canceled;
-					}
+				}
 				else // FOnlyStarted
-					{
+				{
 					// case 3 - Ignore this event.
 					AssertImportant(cbe.FOnlyStarted);
 					AssertImportant(cbe.timeStartExec.HasValue());
 					AssertImportant(cbe.timeEndExec.HasMaxValue());
 					AssertImportant(cbe.tidExec == evt.ThreadId);
-					}
+				}
 				break;
 			} // switch
-
-#if DEBUG
-			// No garbage collection for this table.
-			AssertCritical(this.Count >= cTableCount);
-			cTableCount = this.Count;
-#endif // DEBUG
 		} // DoDispatchEvent
 
 		public void Dispatch(IGenericEvent evt)

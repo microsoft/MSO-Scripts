@@ -21,9 +21,9 @@ namespace NetBlameCustomDataSource.TcpIp
 	public class TcbRecord : IGraphableEntry
 	{
 		public const IDVal pidUnknown = -1; // process
+		public const IDVal tidUnknown = -1; // thread
 		public const IDVal pidIdle = 0;
 		public const IDVal pidSystem = 4;
-		public const IDVal tidUnknown = 0; // thread
 
 		public enum MyStatus : byte
 		{
@@ -65,14 +65,17 @@ namespace NetBlameCustomDataSource.TcpIp
 		public IDVal tid; // thread id
 		public IDVal pid; // process id
 		public IDVal pidAlt; // alternate PID if pid==pidUnknown
+		public IDVal tidRecvCache; // thread of most recent UDP Receive event
 
 		public uint cbPost;
 		public uint cbSend;
 		public uint cbRecv;
+		public uint cbRecvCache; // data size of most recent UDP Receive event
 
 		public uint iNext; // UDP records with the same open endpoint and different addresses
 
 		public bool fUDP; // fUDP => tcb = endpoint identifier
+		public bool fPidSure;
 		public bool fGathered; // for GatherTcpIp
 		public bool fCorrelatedSendRecv; // optimization for CorrelateSendRecv
 
@@ -87,14 +90,13 @@ namespace NetBlameCustomDataSource.TcpIp
 
 		public ushort socket; // for correlation with WinINet and Winsock
 
-
-		public MyStatus_Meta MetaStatus { get => (MyStatus_Meta)status; }
-
 		public TcbRecord(QWord tcb)
 		{
 			this.tcb = tcb;
 			this.pid = pidUnknown;
 			this.pidAlt = pidUnknown;
+			this.tid = tidUnknown;
+			this.tidRecvCache = tidUnknown;
 			this.timeShutdown.SetMaxValue();
 			this.timeClose.SetMaxValue();
 		}
@@ -104,9 +106,31 @@ namespace NetBlameCustomDataSource.TcpIp
 			TcbRecord tcbr = (TcbRecord)this.MemberwiseClone();
 			tcbr.addrRemote = ipAddrRemote;
 			tcbr.iNext = 0;
-			tcbr.cbPost = tcbr.cbSend = tcbr.cbRecv = 0;
+			tcbr.grbitProtocol = 0;
+			tcbr.cbPost = tcbr.cbSend = tcbr.cbRecv = tcbr.cbRecvCache = 0;
+			tcbr.tidRecvCache = tidUnknown;
 			return tcbr;
 		}
+
+		/*
+			Confirm that the UDP Endpoint of the most recent UDP Receive event is the expected one.
+		*/
+		public bool FMatch(IDVal pid, ushort socket, in IPEndPoint address)
+		{
+			AssertImportant(this.socket != 0);
+			if (!this.fUDP) return false;
+			if (!FImplies(pid != pidUnknown, this.pid == pid)) return false;
+			if (!FImplies(socket != 0, this.socket == socket)) return false;
+			if (this.addrRemote.Empty() || !this.addrRemote.Equals(address)) return false;
+			return true;
+		}
+
+		public bool FMatchCb(IDVal pid, uint cb, ushort socket, in IPEndPoint address)
+		{
+			if (this.cbRecvCache != cb) return false;
+			return FMatch(pid, socket, in address);
+		}
+
 
 		public bool CheckType(Protocol bitf)
 		{
@@ -119,6 +143,23 @@ namespace NetBlameCustomDataSource.TcpIp
 		}
 
 
+		/*
+			pidSure is the PID from the event's ProcessId/PID field via GetProcessId().
+		*/
+		public void EnsurePID(IDVal pidSure)
+		{
+			AssertCritical(this != null);
+			if (pidSure != pidUnknown)
+			{
+				AssertCritical(FImplies(this.fPidSure, this.pid == pidSure));
+				AssertCritical(FImplies(this.pid != pidUnknown, this.pid == pidSure));
+				AssertImportant(FImplies(this.pid == pidUnknown && this.pidAlt != pidUnknown, this.pidAlt == pidSure));
+				this.pid = pidSure;
+				this.fPidSure = true;
+			}
+		}
+
+
 		public void HandleOpenRecord(MyStatus status, IDVal pid, IDVal tid, in TimestampETW timeStamp, in SocketAddress addrLocal, in SocketAddress addrRemote)
 		{
 			// All these are important.
@@ -127,47 +168,71 @@ namespace NetBlameCustomDataSource.TcpIp
 			AssertImportant(timeStamp.HasValue);
 
 			AssertImportant(!this.FClosed);
-
-			if (status == TcbRecord.MyStatus.Connect_Request || status == TcbRecord.MyStatus.Rundown || status == TcbRecord.MyStatus.Inferred)
+#if DEBUG
+			switch (status)
 			{
+			case TcbRecord.MyStatus.Connect_Request:
+			case TcbRecord.MyStatus.Rundown:
+			case TcbRecord.MyStatus.Inferred:
 				// First logged record of a TCB.
 				AssertInfo(this.status == TcbRecord.MyStatus.Null || this.status == TcbRecord.MyStatus.Inferred);
 				AssertInfo(!this.timeOpen.HasValue);
-				AssertImportant(this.addrRemote.Empty());
-			}
-			else
-			{
+				// There may be duplicated rundown records.
+				AssertImportant(FImplies(status != TcbRecord.MyStatus.Rundown, this.addrRemote.Empty()));
+				break;
+			default:
 				// Subsequent logged records of a TCB.
 				AssertImportant(this.status < status || this.status == MyStatus.Rundown);
 				AssertImportant(this.timeOpen.HasValue);
 				AssertImportant(!this.addrRemote.Empty());
+				break;
 			}
-
+#endif // DEBUG
 			if (!this.timeOpen.HasValue)
 				this.timeOpen = timeStamp;
 
 			this.status = status;
 
-			if (this.pid == pidUnknown)
-				this.pid = pid;
+			if (pid != pidUnknown)
+			{
+				if (this.pid == pidUnknown)
+				{
+					this.pid = pid;
+				}
+				else if (this.pid != pid)
+				{
+					// Somehow we got an inconsistent ProcessID.
+					AssertImportant(this.pid == pidSystem); // OK, don't trust pidSystem
+					AssertImportant(tid == tidUnknown); // Got 'pid' from the ProcessId field.
+					AssertImportant(!this.fPidSure); // Inconsistency not unexpected?
+					if (!this.fPidSure)
+						this.pid = pid;
+				}
 
-			if (this.tid == tidUnknown)
-				this.tid = tid;
+				if (this.tid == tidUnknown)
+					this.tid = tid;
+			}
 
 			// The "socket" is the port of the local address.
-			if (this.socket == 0 && addrLocal != null)
-				this.socket = addrLocal.Port();
+			if (!addrLocal.Empty())
+			{
+				if (this.socket == 0)
+					this.socket = addrLocal.Port();
+				else
+					AssertImportant(this.socket == addrLocal.Port());
+			}
 
-			if (addrRemote != null)
+			if (!addrRemote.Empty())
 			{
 				if (this.addrRemote.Empty())
+				{
 					this.addrRemote = NewEndPoint(addrRemote);
+				}
 #if DEBUG
 				else
 				{
 					IPEndPoint addrT = NewEndPoint(addrRemote);
-					if (!addrT.Empty())
-						AssertImportant(addrT.Address.Equals(this.addrRemote.Address));
+					AssertImportant(addrT.Address.Equals(this.addrRemote.Address));
 				}
 #endif // DEBUG
 			}
@@ -262,15 +327,27 @@ namespace NetBlameCustomDataSource.TcpIp
 		struct UDPEvent
 		{
 			public TcbRecord tcbr;
-			public IDVal pid;
-			public uint  cb;
+			IDVal pid;
+			uint  cb;
 
-			public bool FMatch(IPEndPoint address, uint cb) => this.cb == cb && this.tcbr?.addrRemote != null && this.tcbr.addrRemote.Equals(address);
-			public bool FMatch(IPEndPoint address, IDVal pid, uint cb) => this.pid == pid && this.FMatch(address, cb);
+			public void Set(IDVal pid, uint cb, TcbRecord tcbr)
+			{
+				this.pid = pid;
+				this.cb = cb;
+				this.tcbr = tcbr;
+			}
+
+			public void Reset()
+			{
+				this.pid = pidUnknown;
+				this.cb = 0;
+				this.tcbr = null;
+			}
+
+			public bool FMatch(IPEndPoint address, IDVal pid, uint cb) => this.pid == pid && this.cb == cb && this.tcbr?.addrRemote != null && this.tcbr.addrRemote.Equals(address);
 		}
 
 		// For correlating with adjacent Winsock events.
-		UDPEvent udpSendCache;
 		UDPEvent udpRecvCache;
 
 		new void Add(TcbRecord tcbr)
@@ -287,26 +364,22 @@ namespace NetBlameCustomDataSource.TcpIp
 		/*
 			Return the most recent, matching, open TCB record.
 			Shutdown might occur before the close and other events, so track it separately.
+			'pid' is either reliable (GetProcessId(evt)), or it is pidUnknown.
+			If 'pid' is reliable, it might modify: TcbRecord.pid
 			HIGH TRAFFIC FUNCTION!
 		*/
 		TcbRecord FindTcbRecord(QWord tcb, IDVal pid)
 		{
-			if (tcbRCache.tcb == tcb)
-				return !tcbRCache.FClosed ? tcbRCache : null;
-
-			TcbRecord tcbR = this.FindLast(t => t.tcb == tcb);
-
-			if (tcbR == null || tcbR.FClosed) return null; // already shutdown/closed
-
-#if DEBUG
 			AssertCritical(pid != pidIdle);
 
-			if (pid != TcbRecord.pidUnknown && pid != TcbRecord.pidSystem)
-			{
-				AssertCritical(tcbR.pid == pid || tcbR.pid == TcbRecord.pidUnknown);
-				AssertCritical(FImplies(tcbR.pid == TcbRecord.pidUnknown, tcbR.pidAlt == pid || tcbR.pidAlt == TcbRecord.pidUnknown));
-			}
-#endif // DEBUG
+			TcbRecord tcbR = tcbRCache;
+
+			if (tcbR.tcb != tcb)
+				tcbR = this.FindLast(t => t.tcb == tcb);
+
+			if (tcbR == null || tcbR.FClosed) return null; // already closed?
+
+			tcbR.EnsurePID(pid);
 
 			tcbRCache = tcbR;
 
@@ -316,23 +389,27 @@ namespace NetBlameCustomDataSource.TcpIp
 		/*
 			When a TCB Record is closed, we may still need to access it for Shutdown.
 			Or there may be lingering Receive events.
+			'pid' is either reliable (GetProcessId(evt)), or it is pidUnknown.
+			If 'pid' is reliable, it might modify: TcbRecord.pid
 		*/
 		TcbRecord FindTcbRecordClosed(QWord tcb, IDVal pid)
 		{
 			AssertCritical(pid != pidIdle);
 
-			if (tcbRCache.tcb == tcb)
-				return !tcbRCache.FShutdown ? tcbRCache : null;
+			TcbRecord tcbR = tcbRCache;
 
-			TcbRecord tcbR = this.FindLast(t => t.tcb == tcb);
-			if (tcbR == null || tcbR.FShutdown) return null; // already shutdown/closed
-#if DEBUG
-			if (pid != TcbRecord.pidUnknown && pid != TcbRecord.pidSystem)
+			if (tcbR.tcb != tcb)
 			{
-				AssertCritical(tcbR.pid == pid || tcbR.pid == TcbRecord.pidUnknown);
-				AssertCritical(FImplies(tcbR.pid == TcbRecord.pidUnknown, tcbR.pidAlt == pid || tcbR.pidAlt == TcbRecord.pidUnknown));
+				if (pid != pidUnknown)
+					tcbR = this.FindLast(t => t.tcb == tcb && FImplies(t.fPidSure, t.pid == pid));
+				else
+					tcbR = this.FindLast(t => t.tcb == tcb);
 			}
-#endif // DEBUG
+
+			if (tcbR == null || tcbR.FShutdown)
+				return null; // already shutdown?
+
+			tcbR.EnsurePID(pid);
 
 			tcbRCache = tcbR;
 
@@ -340,9 +417,13 @@ namespace NetBlameCustomDataSource.TcpIp
 		}
 
 
+		/*
+			Do all the work (to close an outstanding TcbRecord and) to open a new TcbRecord.
+			pid is assumed to be trusted (via GetProcessId()) iff tid == tidUnknown
+		*/
 		TcbRecord AddTcbRecord(QWord tcb, TcbRecord.MyStatus status, in TimestampETW timeStamp, IDVal pid, IDVal tid, in SocketAddress addrLocal, in SocketAddress addrRemote)
 		{
-			TcbRecord tcbR = FindTcbRecord(tcb, pid);
+			TcbRecord tcbR = FindTcbRecord(tcb, (tid==tidUnknown) ? pid : pidUnknown);
 			if (FImplies(status == TcbRecord.MyStatus.Rundown, tcbR == null))
 			{
 				AssertImportant(tcbR == null);
@@ -394,51 +475,30 @@ namespace NetBlameCustomDataSource.TcpIp
 
 
 		/*
-			Return the Process ID of the most recently created UDP record, if its IP Address matches.
-		*/
-		public IDVal PidFromUDPEvent(IPEndPoint ipAddr, uint cb, bool fSend)
-		{
-			AssertCritical(ipAddr != null);
-
-			if (fSend)
-				{
-					if (udpSendCache.FMatch(ipAddr, cb))
-						return udpSendCache.pid;
-				}
-			else
-				{
-					if (udpRecvCache.FMatch(ipAddr, cb))
-						return udpRecvCache.pid;
-				}
-
-			if (this.Count > 0 && this[^1].fUDP && this[^1].addrRemote != null && this[^1].addrRemote.Equals(ipAddr))
-				return this[^1].pid;
-
-			return pidUnknown;
-		}
-
-		/*
-			Return the 1-based index if the most recent, open UDP record with the given IP Address and Process ID.
+			Return the 1-based index if the most recent, UDP receive event's TcbRecord with the given IP Address, cb, etc.
 			Mark it as correlated with Winsock.
 		*/
-		public uint CorrelateUDPAddress(IPEndPoint ipAddr, uint cb, IDVal pid, bool fSend)
+		public uint CorrelateUDPRecvEvent(IDVal pid, IDVal tid, uint cb, ushort socket, IPEndPoint ipAddr)
 		{
 			TcbRecord tcbr = null;
 
-			if (fSend)
+			if (udpRecvCache.FMatch(ipAddr, pid, cb))
 			{
-				if (udpSendCache.FMatch(ipAddr, pid, cb))
-					tcbr = udpSendCache.tcbr;
-			}
-			else
-			{
-				if (udpRecvCache.FMatch(ipAddr, pid, cb))
+				if (FImplies(tid != tidUnknown, udpRecvCache.tcbr.tidRecvCache == tid) && FImplies(socket != 0, udpRecvCache.tcbr.socket == socket))
+				{
 					tcbr = udpRecvCache.tcbr;
+					AssertImportant(tcbr.cbRecvCache == cb);
+
+					tcbr.tidRecvCache = tidUnknown;
+					tcbr.cbRecvCache = 0;
+
+					udpRecvCache.Reset();
+				}
 			}
 
 			int iTCB;
 
-			// Search by most recent event or by address (less accurate).
+			// Search by most recent event.
 
 			if (tcbr != null)
 			{
@@ -448,10 +508,36 @@ namespace NetBlameCustomDataSource.TcpIp
 			}
 			else
 			{
-				iTCB = this.FindLastIndex(t => t.fUDP && t.pid == pid && !t.FClosed && t.addrRemote.Equals(ipAddr));
-				if (iTCB < 0) return 0;
-				tcbr = this[iTCB];
+				if (tid != tidUnknown)
+					iTCB = this.FindLastIndex(t => t.tidRecvCache == tid && t.FMatchCb(pid, cb, socket, in ipAddr));
+				else
+					iTCB = this.FindLastIndex(t => t.FMatchCb(pid, cb, socket, in ipAddr));
+
+				if (iTCB >= 0)
+				{
+					tcbr = this[iTCB];
+					tcbr.cbRecvCache = 0; // match by size only once
+				}
+				else
+				{
+					// It may still be that other UDP.EndpointReceiveMessage events were emitted after the one that matches this event. 
+					// But if the PID, socket, and address match, then we can still trust it.
+					AssertImportant(pid != pidUnknown);
+					AssertInfo(socket != 0); // zero near the start of a trace
+
+					if (tid != tidUnknown)
+						iTCB = this.FindLastIndex(t => t.tidRecvCache == tid && t.FMatch(pid, socket, in ipAddr));
+					else
+						iTCB = this.FindLastIndex(t => t.FMatch(pid, socket, in ipAddr));
+
+					if (iTCB < 0) return 0;
+
+					tcbr = this[iTCB];
+				}
 			}
+
+			AssertImportant(FImplies(socket != 0, tcbr.socket == socket));
+			AssertImportant(tcbr.cbRecv >= cb);
 
 			tcbr.SetType(Protocol.Winsock);
 
@@ -720,11 +806,12 @@ namespace NetBlameCustomDataSource.TcpIp
 			TcbRecord tcbr;
 			SocketAddress addrLocal, addrRemote;
 			TimestampUI timeStamp;
+			WinsockAFD.Connection cxn;
 
 			switch ((TCP)evt.Id)
 			{
 			case TCP.RequestConnect:
-				// evt.ProcessId is reliable
+				// evt.ProcessId is usually reliable, unless it's pidSystem
 				tcb = GetTCB(evt);
 				addrLocal = evt.GetLocalAddress();
 				addrRemote = evt.GetRemoteAddress();
@@ -737,24 +824,27 @@ namespace NetBlameCustomDataSource.TcpIp
 			case TCP.ConnectTcbProceeding:
 				tid = tidUnknown;
 				pid = GetProcessId(in evt); // usually unknown
-				if (pid == pidUnknown)
-				{
-					// evt.ProcessId is reliable
-					pid = evt.ProcessId;
-					tid = evt.ThreadId;
-				}
+
 				AssertStatus(in evt);
+
+				tcbr = FindTcbRecord(GetTCB(evt), pid);
 
 				addrLocal = evt.GetLocalAddress();
 				addrRemote = evt.GetRemoteAddress();
 
-				tcbr = FindTcbRecord(GetTCB(evt), pid);
+				if (pid == pidUnknown || pid == evt.ProcessId)
+				{
+					// evt.ProcessId is reliable?
+					pid = evt.ProcessId;
+					tid = evt.ThreadId;
+				}
+
 				CorrelateConnection(tcbr, in addrLocal, in addrRemote, pid, tid, evt.Timestamp);
 				break;
 
 			case TCP.ConnectTcbComplete:
 				// evt.ProcessId is usually unreliable
-				pid = GetProcessId(in evt); // sometimes unknown
+				IDVal pidField = pid = GetProcessId(in evt); // sometimes unknown
 				tcb = GetTCB(evt);
 
 				AssertStatus(in evt);
@@ -766,20 +856,25 @@ namespace NetBlameCustomDataSource.TcpIp
 				addrRemote = evt.GetRemoteAddress();
 
 				tid = tidUnknown;
-				if (pid == pidUnknown && tcbr.pid == evt.ProcessId)
+				if (pid == evt.ProcessId || (pid == pidUnknown && tcbr?.pid == evt.ProcessId))
 				{
 					// These are now assumed to be reliable.
 					pid = evt.ProcessId;
 					tid = evt.ThreadId;
 				}
 
-				if (tcbr == null)
-					tcbr = RestoreTcbRecord(tcb, TcbRecord.MyStatus.Inferred, evt.Timestamp, pid, addrLocal, addrRemote);
-				else
+				if (tcbr != null)
+				{
 					tcbr.HandleOpenRecord(TcbRecord.MyStatus.Connect_Complete, pid, tid, evt.Timestamp, addrLocal, in addrRemote);
+				}
+				else
+				{
+					tcbr = RestoreTcbRecord(tcb, TcbRecord.MyStatus.Inferred, evt.Timestamp, pid, addrLocal, addrRemote);
+					tcbr.EnsurePID(pidField);
+				}
 
 				// ThreadId doesn't correlate here.
-				CorrelateConnection(tcbr, in addrLocal, in addrRemote, pid, 0/*tid*/, evt.Timestamp);
+				CorrelateConnection(tcbr, in addrLocal, in addrRemote, pid, tidUnknown, evt.Timestamp);
 				break;
 
 			case TCP.ConnectTcbFailure:
@@ -789,7 +884,8 @@ namespace NetBlameCustomDataSource.TcpIp
 				// Status is usually non-zero
 
 				tcbr = FindTcbRecord(tcb, pid);
-				AssertImportant(tcbr != null);
+				// The record may already be closed/shutdown.
+				AssertInfo(tcbr != null);
 
 				if (tcbr != null)
 				{
@@ -810,15 +906,18 @@ namespace NetBlameCustomDataSource.TcpIp
 				addrRemote = evt.GetRemoteAddress();
 				addrLocal = evt.GetLocalAddress();
 
-				if (tcbr == null)
-					tcbr = RestoreTcbRecord(tcb, TcbRecord.MyStatus.Inferred, evt.Timestamp, pid, addrLocal, addrRemote);
-				else
+				if (tcbr != null)
+				{
 					tcbr.HandleOpenRecord(TcbRecord.MyStatus.Inferred, pid, tidUnknown, evt.Timestamp, in addrLocal, in addrRemote);
-
-				timeStamp = evt.Timestamp.ToGraphable();
+				}
+				else
+				{
+					tcbr = RestoreTcbRecord(tcb, TcbRecord.MyStatus.Inferred, evt.Timestamp, pid, addrLocal, addrRemote);
+					tcbr.EnsurePID(pid);
+				}
 
 				// Here the actual ThreadId matches the ThreadId of WebIO.AFD.AcceptExWithAddress
-				WinsockAFD.Connection cxn =  this.allTables.wsTable.CorrelateListener(addrRemote, tcbr, pid, evt.ThreadId, in timeStamp);
+				cxn =  this.allTables.wsTable.CorrelateListener(tcbr, pid, (pid==evt.ProcessId) ? evt.ThreadId : tidUnknown);
 				break;
 
 			case TCP.CloseTcbRequest:
@@ -867,7 +966,8 @@ namespace NetBlameCustomDataSource.TcpIp
 				addrLocal = evt.GetLocalAddress();
 				addrRemote = evt.GetRemoteAddress();
 
-				AddTcbRecord(tcb, TcbRecord.MyStatus.Rundown, evt.Timestamp, pid, tidUnknown, in addrLocal, in addrRemote);
+				tcbr = AddTcbRecord(tcb, TcbRecord.MyStatus.Rundown, evt.Timestamp, pid, tidUnknown, in addrLocal, in addrRemote);
+				tcbr.EnsurePID(pid);
 				break;
 
 			case TCP.DataTransferReceive:
@@ -917,14 +1017,14 @@ namespace NetBlameCustomDataSource.TcpIp
 					pid = pidUnknown;
 
 				tcbr = FindTcbRecord(tcb, pidUnknown);
-				if (tcbr == null)
-				{
-					tcbr = RestoreTcbRecord(tcb, TcbRecord.MyStatus.Inferred, evt.Timestamp, pid, null, null);
-				}
-				else
+				if (tcbr != null)
 				{
 					if (tcbr.pidAlt == pidUnknown)
 						tcbr.pidAlt = pid;
+				}
+				else
+				{
+					tcbr = RestoreTcbRecord(tcb, TcbRecord.MyStatus.Inferred, evt.Timestamp, pid, null, null);
 				}
 
 				timeStamp = evt.Timestamp.ToGraphable();
@@ -946,14 +1046,14 @@ namespace NetBlameCustomDataSource.TcpIp
 
 				tcbr = FindTcbRecord(tcb, pidUnknown);
 
-				if (tcbr == null)
-				{
-					tcbr = RestoreTcbRecord(tcb, TcbRecord.MyStatus.Inferred, evt.Timestamp, pid, null, null);
-				}
-				else
+				if (tcbr != null)
 				{
 					if (tcbr.pidAlt == pidUnknown)
 						tcbr.pidAlt = pid;
+				}
+				else
+				{
+					tcbr = RestoreTcbRecord(tcb, TcbRecord.MyStatus.Inferred, evt.Timestamp, pid, null, null);
 				}
 
 				timeStamp = evt.Timestamp.ToGraphable();
@@ -964,7 +1064,7 @@ namespace NetBlameCustomDataSource.TcpIp
 			case TCP.InspectConnectWithNameResContext:
 				tcb = GetTCB(evt);
 				pid = evt.ProcessId; // reliable
-				if (pid == 0)
+				if (pid <= TcbRecord.pidSystem)
 					pid = pidUnknown;
 
 				AssertStatus(in evt);
@@ -999,40 +1099,38 @@ namespace NetBlameCustomDataSource.TcpIp
 				tcb = evt.GetAddrValue("Endpoint"); // Not exactly a TCB
 				tcbr = FindTcbRecord(tcb/*pseudo-TCB*/, pid);
 
-				SocketAddress addrSrc, addrDst;
-				addrLocal = (evt.GetUInt32("LocalSockAddrLength") != 0) ? evt.GetSocketAddress("LocalSockAddr") : null;
 				addrRemote = (evt.GetUInt32("RemoteSockAddrLength") != 0) ? evt.GetSocketAddress("RemoteSockAddr") : null;
+				addrLocal = (evt.GetUInt32("LocalSockAddrLength") != 0) ? evt.GetSocketAddress("LocalSockAddr") : null;
+				socket = addrLocal?.Port() ?? 0;
 
-				if ((UDP)evt.Id == UDP.EndpointSendMessages)
+				if ((UDP)evt.Id == UDP.EndpointReceiveMessages)
 				{
-					addrDst = addrRemote;// address of interest
-					addrSrc = addrLocal; // 0.0.0.0:Port
-				}
-				else
-				{
-					AssertCritical((UDP)evt.Id == UDP.EndpointReceiveMessages);
-
-					addrDst = addrLocal; // address of interest
-					addrSrc = addrRemote;// [LocalIPAddress]:Port
-
 					// There may be a lingering Receive message after the TCB was closed.
 					if (tcbr == null)
 						tcbr = FindTcbRecordClosed(tcb/*pseudo-TCB*/, pid);
+
+					// Sometimes the addresses are swapped.
+					if (tcbr != null && socket != tcbr.socket && addrRemote?.Port() == tcbr.socket && (NewEndPoint(addrLocal).Equals(tcbr.addrRemote)))
+					{
+						SocketAddress addrT = addrLocal;
+						addrLocal = addrRemote;
+						addrRemote = addrT;
+						socket = addrLocal?.Port() ?? 0;
+					}
 				}
+
+				IPEndPoint ipAddrRemote = NewEndPoint(addrRemote);
 
 				if (tcbr == null)
 				{
 					IDVal pidAlt = (evt.ProcessId > TcbRecord.pidSystem) ? evt.ProcessId : pidUnknown;
-					tcbr = RestoreTcbRecord(tcb/*pseudo-TCB*/, TcbRecord.MyStatus.Inferred, evt.Timestamp, pidAlt, addrSrc, addrDst);
+					tcbr = RestoreTcbRecord(tcb/*pseudo-TCB*/, TcbRecord.MyStatus.Inferred, evt.Timestamp, pidAlt, addrLocal, addrRemote);
 					tcbr.pid = pid;
 					tcbr.tid = evt.ThreadId;
 					tcbr.fUDP = true;
 				}
 				else
 				{
-					IPEndPoint ipAddrRemote = NewEndPoint(addrDst);
-					socket = addrSrc?.Port() ?? 0;
-
 					// UDP can have different Remote Addresses on the same Endpoint.
 					// Find the record with matching address.
 					// If needed, create separate records and link them backward in time.
@@ -1058,24 +1156,46 @@ namespace NetBlameCustomDataSource.TcpIp
 					tcbr = tcbrFound;
 				}
 
+				tcbr.EnsurePID(pid);
 				AssertImportant(tcbr.fUDP);
 
 				cb = (uint)evt.GetUInt32("NumBytes");
 				if ((UDP)evt.Id == UDP.EndpointSendMessages)
 				{
-					tcbr.cbSend += cb;
+					// Correlate this UDP Send event with the preceeding Winsock Send event.
+					// AFD.SendMessageWithAddress TID cb Address
+					// UDP.EndpointSendMessages   TID cb RemoteSockAddr
 
-					this.udpSendCache.cb = cb;
-					this.udpSendCache.pid = pid;
-					this.udpSendCache.tcbr = tcbr;
+					cxn =  this.allTables.wsTable.CorrelateUDPSendEvent(pid, evt.ThreadId, cb, socket, ipAddrRemote);
+
+					if (cxn != null)
+					{
+						if (cxn.iTCB == 0)
+							cxn.iTCB = this.IFromTcbr(tcbr);
+						else
+							AssertImportant(cxn.iTCB == this.IFromTcbr(tcbr));
+
+						if (cxn.socket == 0)
+							cxn.socket = socket;
+						else
+							AssertImportant(cxn.socket == socket);
+
+						AssertImportant(tcbr.addrRemote.Address.Equals(cxn.addrRemote.Address));
+						
+						tcbr.SetType(Protocol.Winsock);
+					}
+
+					tcbr.cbSend += cb;
 				}
 				else
 				{
+					// Note that this UDP Receive event with the preceeds the Winsock Receive event.
+
+					tcbr.tidRecvCache = evt.ThreadId;
+					tcbr.cbRecvCache = cb;
 					tcbr.cbRecv += cb;
 
-					this.udpRecvCache.cb = cb;
-					this.udpRecvCache.pid = pid;
-					this.udpRecvCache.tcbr = tcbr;
+					this.udpRecvCache.Set(pid, cb, tcbr);
 				}
 				break;
 
@@ -1086,7 +1206,7 @@ namespace NetBlameCustomDataSource.TcpIp
 				socket = evt.GetLocalAddress()?.Port() ?? 0;
 
 				// For UDP there can be various TCB (really, Endpoint) records with different addresses.
-				for (tcbr = FindTcbRecord(tcb/*pseudo-TCB*/, pid); tcbr != null; tcbr = TcbrFromI(tcbr.iNext))
+				for (tcbr = FindTcbRecord(tcb/*pseudo-TCB*/, pidUnknown); tcbr != null; tcbr = TcbrFromI(tcbr.iNext))
 				{
 					AssertCritical(tcbr.fUDP);
 					AssertCritical(tcbr.tcb == tcb);
@@ -1100,7 +1220,7 @@ namespace NetBlameCustomDataSource.TcpIp
 					// Correlate with WinSock Datagram / UDP record.
 
 					uint iTCB = IFromTcbr(tcbr);
-					cxn = this.allTables.wsTable.CorrelateByAddress(tcbr.addrRemote, iTCB, tcbr.socket, pid, 0);
+					cxn = this.allTables.wsTable.CorrelateByAddress(tcbr.addrRemote, iTCB, tcbr.socket, pid, tidUnknown);
 					if (cxn != null)
 					{
 						AssertImportant(cxn.socktype == WinsockAFD.SOCKTYPE.SOCK_DGRAM);

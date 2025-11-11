@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 
 using Microsoft.Windows.EventTracing.Events; // IGenericEvent
@@ -12,7 +13,7 @@ using TimestampETW = Microsoft.Windows.EventTracing.TraceTimestamp;
 using TimestampUI = Microsoft.Performance.SDK.Timestamp;
 
 using AddressETW = Microsoft.Windows.EventTracing.Address;
-using AddrVal = System.UInt64; // type of AddressUI.ToBytes
+using AddrVal = System.UInt64;
 
 namespace NetBlameCustomDataSource
 {
@@ -46,6 +47,43 @@ namespace NetBlameCustomDataSource
 		public static uint PortGraphable(this IPEndPoint ipEndPoint) => (uint?)ipEndPoint?.Port ?? 0;
 
 		public static bool Empty(this SocketAddress socket) => (socket == null || socket[0]/*family*/ == 0);
+
+		// SocketAddress.Equals may give false negatives when the socket contains random padding bytes!
+		public static bool SafeEquals(this SocketAddress socket, SocketAddress comparand)
+		{
+			if (socket == null || comparand == null)
+				return false;
+
+			if (socket.Family != comparand.Family)
+				return false;
+
+			if (socket.Port() != comparand.Port())
+				return false;
+
+			if (socket.Equals(comparand))
+				return true;
+
+			// Expensive!
+			return Util.NewEndPoint(socket).Equals(Util.NewEndPoint(comparand));
+		}
+
+		public static bool IsAddrZero(this SocketAddress socket)
+		{
+#if DEBUG
+			if (socket.Empty()) return true;
+
+			switch (socket.Family)
+			{
+			case System.Net.Sockets.AddressFamily.InterNetwork: // IPv4
+				return Util.NewEndPoint(socket).Address.Equals(IPAddress.Any);
+			case System.Net.Sockets.AddressFamily.InterNetworkV6: // IPv6
+				return Util.NewEndPoint(socket).Address.Equals(IPAddress.IPv6Any);
+			}
+			return false;
+#else
+			throw new NotImplementedException("IsAddrZero: Not intended for release.");
+#endif // DEBUG
+		}
 
 		public static ushort Port(this SocketAddress socket) => (ushort)((socket[2] << 8) + socket[3]);
 

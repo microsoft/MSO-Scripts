@@ -1,6 +1,13 @@
 ﻿// Copyright(c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+/*
+	It is often helpful to add a title to each call stack (even when missing).
+	However, WPA can't aggregate same call stacks when the titles have different PIDs, types, ...
+	Nonetheless, middle stacks have titles as separators.
+*/
+// #define StackTitle
+
 using Microsoft.Windows.EventTracing;
 using Microsoft.Windows.EventTracing.Processes;
 using Microsoft.Windows.EventTracing.Symbols; // IStackDataSource, IStackSnapshot
@@ -48,6 +55,10 @@ using IStackSnapshotAccessProvider = Microsoft.Performance.SDK.Processing.IColle
 
 namespace NetBlameCustomDataSource.Stack
 {
+	static class PID { public const IDVal Unknown = -1; } // Process ID
+	static class TID { public const IDVal Unknown = -1; } // Thrread ID
+	static class PROC { public const IDVal Unknown = -1; } // Processor ID
+
 	public class MyStackSnapshot : IStackSnapshot
 	{
 		public struct Attributes
@@ -62,11 +73,16 @@ namespace NetBlameCustomDataSource.Stack
 		public readonly IStackSnapshot[] rgStack;
 		public readonly Attributes[] rgAttrib;
 
+		// If there is exactly one Stack then rgStack[0] == rgStack[^1].
+		// But that Stack cannot be BOTH the First AND the Last Stack.
+		public bool IsOneStack => rgStack?.Length == 1 && rgStack[0] != null;
+
 		// The stack which first enqueued the work item, usually on the main thread.
-		public IStackSnapshot stackFirst => rgStack?[0];
+		// If there is only one stack then let it be StackLast.
+		public IStackSnapshot StackFirst => IsOneStack ? null : rgStack?[0];
 
 		// The stack which actually dispatched the network request, usually via threadpool worker.
-		public IStackSnapshot stackLast => rgStack?[^1];
+		public IStackSnapshot StackLast => rgStack?[^1];
 
 		public IStackSnapshot[] StackChainExport() => rgStack;
 
@@ -74,6 +90,14 @@ namespace NetBlameCustomDataSource.Stack
 
 		public MyStackSnapshot() { } // no stacks
 
+		public IDVal TidFirst
+		{
+			get
+			{
+				AssertImportant(this.StackFirst == null || this.StackFirst.ThreadId == this.rgAttrib[0].tidEnqueue);
+				return this.StackFirst?.ThreadId ?? this.rgAttrib?[0].tidEnqueue ?? TID.Unknown;
+			}
+		}
 
 		/*
 			Populate the stack chains and their attributes.
@@ -101,12 +125,12 @@ namespace NetBlameCustomDataSource.Stack
 			for (Tasks.TaskItem taskNext = xlink.taskLinkNext; taskNext != null; taskNext = taskNext.xlink.taskLinkNext)
 			{
 				depth = taskNext.xlink.depth;
-				AssertImportant(depth == (taskNext.xlink.taskLinkNext?.xlink.depth+1 ?? 0)); // Sequential!
+				AssertImportant(depth == (taskNext.xlink.taskLinkNext?.xlink.depth + 1 ?? 0)); // Sequential!
 				this.rgStack[depth] = taskNext.stack;
 				this.rgAttrib[depth].tidEnqueue = taskNext.tidCreate;
 				this.rgAttrib[depth].tidExec = taskNext.tidExec;
-				this.rgAttrib[depth+1].type = typeNext;
-				this.rgAttrib[depth+1].strSubType = taskNext.Info.SubTypeName;
+				this.rgAttrib[depth + 1].type = typeNext;
+				this.rgAttrib[depth + 1].strSubType = taskNext.Info.SubTypeName;
 				typeNext = taskNext.xlink.typeNext;
 			}
 			AssertImportant(depth == 0);
@@ -114,17 +138,19 @@ namespace NetBlameCustomDataSource.Stack
 
 			AssertImportant(this.rgAttrib[0].type == XLinkType.None);
 			AssertImportant(this.rgAttrib[0].strSubType == null);
+			AssertImportant(this.rgAttrib[^1].cCut == 0);
 			AssertImportant(this.rgAttrib[^1].tidEnqueue == 0);
 			AssertImportant(this.rgAttrib[^1].tidExec == 0);
-			AssertImportant(this.rgAttrib[^1].cCut == 0);
 
-			AssertInfo(this.stackFirst != null);
-			AssertCritical(this.stackLast == null);
+			this.rgAttrib[^1].tidEnqueue = TID.Unknown;
+			this.rgAttrib[^1].tidExec = TID.Unknown;
+
+			AssertCritical(this.StackLast == null);
 
 			// This is the final stack where the network action occurs.
 			this.rgStack[^1] = stack;
 			this.rgAttrib[^1].tidExec = tidStack;
-			AssertImportant(FImplies(stack != null, tidStack != 0));
+			AssertImportant(FImplies(stack != null, tidStack != TID.Unknown));
 
 			// Mark and remove redundancies in the set of stacks.
 			if (OptimizeStack())
@@ -281,18 +307,18 @@ namespace NetBlameCustomDataSource.Stack
 		} // OptimizeStack
 
 
-		// Implement IStackSnapshot on stackLast
-		public int ProcessId { get => this.stackLast?.ProcessId ?? 0; }
-		public int ThreadId { get => this.stackLast?.ThreadId ?? 0; }
-		public TraceTimestamp Timestamp { get => this.stackLast?.Timestamp ?? default; }
-		public IProcess Process { get => this.stackLast?.Process ?? default; }
-		public IThread Thread { get => this.stackLast?.Thread ?? default; }
-		public int Processor { get => this.stackLast?.Processor ?? -1; }
-		public IReadOnlyList<IStackFrameTag> GetStackFrameTags(IStackTagMapper mapper) => this.stackLast?.GetStackFrameTags(mapper);
-		public string GetStackTag(IStackTagMapper mapper) => this.stackLast?.GetStackTag(mapper);
-		public string GetStackTagPath(IStackTagMapper mapper) => this.stackLast?.GetStackTagPath(mapper);
-		public bool IsIdle => this.stackLast?.IsIdle ?? false;
-		public IReadOnlyList<StackFrame> Frames => this.stackLast?.Frames;
+		// Implement IStackSnapshot on StackLast
+		public int ProcessId { get => this.StackLast?.ProcessId ?? PID.Unknown; }
+		public int ThreadId { get => this.StackLast?.ThreadId ?? TID.Unknown; }
+		public TraceTimestamp Timestamp { get => this.StackLast?.Timestamp ?? default; }
+		public IProcess Process { get => this.StackLast?.Process ?? default; }
+		public IThread Thread { get => this.StackLast?.Thread ?? default; }
+		public int Processor { get => this.StackLast?.Processor ?? PROC.Unknown; }
+		public IReadOnlyList<IStackFrameTag> GetStackFrameTags(IStackTagMapper mapper) => this.StackLast?.GetStackFrameTags(mapper);
+		public string GetStackTag(IStackTagMapper mapper) => this.StackLast?.GetStackTag(mapper);
+		public string GetStackTagPath(IStackTagMapper mapper) => this.StackLast?.GetStackTagPath(mapper);
+		public bool IsIdle => this.StackLast?.IsIdle ?? false;
+		public IReadOnlyList<StackFrame> Frames => this.StackLast?.Frames;
 	}
 
 
@@ -305,26 +331,36 @@ namespace NetBlameCustomDataSource.Stack
 
 		public StackSnapshotAccessProvider(SymLoadProgress _symLoadProgress) { this.symLoadProgress = _symLoadProgress; }
 
+		public int SymLoadProgress => symLoadProgress?.PctProcessed ?? 0; // 0 = disabled
+
 		public bool HasUniqueStart => false;
 
 		// This is what appears in an otherwise empty column.
 		public string PastEndValue => strNA; // "N/A"
 
-		public bool IsNull(IStackSnapshot stack) => stack?.Frames == null;
+		protected static bool IsEmpty(MyStackSnapshot stack)
+		{
+			if (CountAll(stack) == 0) return true;
+			return Array.TrueForAll(stack.rgStack, s => s?.Frames == null);
+		}
 
-		public int GetFullCount(IStackSnapshot stack) => stack?.Frames?.Count ?? 0;
+		public bool IsNull(IStackSnapshot stack) => IsEmpty((MyStackSnapshot)stack);
+
+		protected static int CountAll(MyStackSnapshot stack) => stack?.rgStack?.Length ?? 0;
+
+		static int GetFrameCount(IStackSnapshot stack) => stack?.Frames?.Count ?? 0;
 
 		// Return the count of stack frames.
 		// For brevity, trim the final ~three ETW stack frames in ntdll.dll
-		public int GetCount(IStackSnapshot stack)
+		protected int _GetCount(IStackSnapshot stack)
 		{
 			// Empirically: EtwEventWrite, EtwpEventWriteFull, ZwTraceEvent
 			const int cFramesTrim = 3;
 
-			int cFrames = GetFullCount(stack);
+			int cFrames = GetFrameCount(stack);
 
 			int cTrim = 0;
-			int iFrameMax = Math.Min(cFrames - cFramesTrim + 1, cFramesTrim+1);
+			int iFrameMax = Math.Min(cFrames - cFramesTrim + 1, cFramesTrim + 1);
 			for (int iFrame = 0; iFrame < iFrameMax; ++iFrame)
 			{
 				if (!stack.Frames[iFrame].Image?.FileName?.Equals("ntdll.dll") ?? true)
@@ -339,18 +375,66 @@ namespace NetBlameCustomDataSource.Stack
 			return cFrames;
 		}
 
-		public int GetHashCode(IStackSnapshot stack) => stack?.Hash() ?? 0;
-
-		public bool Equals(IStackSnapshot x, IStackSnapshot y)
+		public string _GetValue(IStackSnapshot stack, in MyStackSnapshot.Attributes attrib, int index)
 		{
-			return x.ThreadId == y.ThreadId && x.Timestamp.Nanoseconds == y.Timestamp.Nanoseconds;
+#if !StackTitle
+			if (stack?.Frames != null)
+				++index; // title + frames
+#endif
+			if (index > 0)
+				return GetStackFrame(stack, index - 1);
+
+#if StackTitle
+			return ThreadTitle(in attrib, stack?.Frames != null);
+#else
+			return "Missing Stackwalk";
+#endif
 		}
 
-		public int SymLoadProgress => symLoadProgress?.PctProcessed ?? 0;
+		// Invoked for Last Stack
+		public int GetCount(IStackSnapshot stack)
+		{
+			MyStackSnapshot myStack = (MyStackSnapshot)stack;
+
+			AssertCritical(myStack?.StackLast == null || Equals(stack, myStack.StackLast));
+
+			if (IsEmpty(myStack)) return 0;
+
+			int count = _GetCount(stack);
+#if StackTitle
+			++count; // title + frames
+#else
+			if (count == 0)
+				++count; // title only
+#endif
+			return count;
+		}
+
+		// Invoked for Last Stack
+		public string GetValue(IStackSnapshot stack, int index)
+		{
+			MyStackSnapshot myStack = (MyStackSnapshot)stack;
+
+			AssertCritical(myStack?.StackLast == null || Equals(stack, myStack.StackLast));
+
+			if (IsEmpty(myStack)) return PastEndValue;
+
+			return _GetValue(stack, in ((MyStackSnapshot)stack).rgAttrib[^1], index);
+
+		}
+
+
+		//// vvv Not Invoked vvv
+		public int GetHashCode(IStackSnapshot stack) => stack?.Hash() ?? 0;
+
+		public bool Equals(IStackSnapshot x, IStackSnapshot y) => x.ThreadId == y.ThreadId && x.Timestamp.Nanoseconds == y.Timestamp.Nanoseconds;
+
+		public IStackSnapshot GetParent(IStackSnapshot collection) => throw new NotImplementedException();
+		//// ^^^ Not Invoked ^^^
 
 		protected string GetStackFrame(IStackSnapshot stack, int index)
 		{
-			int iFwd = GetFullCount(stack) - index - 1;
+			int iFwd = GetFrameCount(stack) - index - 1;
 			if (iFwd < 0) { return PastEndValue; }
 
 			const string strUnknown = "?";
@@ -374,7 +458,12 @@ namespace NetBlameCustomDataSource.Stack
 					{
 						StringBuilder builderPct =
 							new StringBuilder(module.Length + "!<Resolving 99%> ".Length);
-						builderPct.AppendFormat("{0}!<Resolving {1}%>", module, pct);
+
+						if (pct != 0)
+							builderPct.AppendFormat("{0}!<Resolving {1}%>", module, pct);
+						else
+							builderPct.AppendFormat("{0}!<Symbols Disabled>", module, pct);
+
 						return builderPct.ToString();
 					}
 				}
@@ -391,11 +480,8 @@ namespace NetBlameCustomDataSource.Stack
 			return builder.ToString();
 		} // GetStackFrame
 
-		public string GetValue(IStackSnapshot stack, int index) => GetStackFrame(stack, index);
 
-		public IStackSnapshot GetParent(IStackSnapshot collection) => throw new NotImplementedException();
-
-		protected string ThreadTitle(in MyStackSnapshot.Attributes attrib, TraceTimestamp? timeStamp)
+		protected static string ThreadTitle(in MyStackSnapshot.Attributes attrib, bool fPresent)
 		{
 			StringBuilder builder = new StringBuilder(160);
 
@@ -409,14 +495,18 @@ namespace NetBlameCustomDataSource.Stack
 				builder.AppendFormat("> Pool Thread: {0} {1}, ", attrib.type.ToString(), attrib.strSubType);
 			}
 
-			if (attrib.tidEnqueue == 0)
+			string strShow = fPresent ? "below" : "missing stack";
+
+			if (attrib.tidEnqueue == TID.Unknown)
 			{
-				if (attrib.tidExec != 0)
-					builder.AppendFormat("TID Exec (below): {0}", attrib.tidExec);
+				if (attrib.tidExec != TID.Unknown)
+					builder.AppendFormat("TID Exec ({1}): {0}", attrib.tidExec, strShow);
+				else
+					builder.AppendFormat(strShow);
 			}
 			else
 			{
-				builder.AppendFormat("TID Enqueue (below): {0}, TID Exec (next): {1}", attrib.tidEnqueue, attrib.tidExec);
+				builder.AppendFormat("TID Enqueue ({2}): {0}, TID Exec (next): {1}", attrib.tidEnqueue, attrib.tidExec, strShow);
 			}
 
 			if (attrib.cCut > 0)
@@ -432,7 +522,7 @@ namespace NetBlameCustomDataSource.Stack
 	*/
 	public class FirstStackSnapshotAccessProvider : StackSnapshotAccessProvider, IStackSnapshotAccessProvider
 	{
-		public FirstStackSnapshotAccessProvider(SymLoadProgress _symLoadProgress) : base(_symLoadProgress) {}
+		public FirstStackSnapshotAccessProvider(SymLoadProgress _symLoadProgress) : base(_symLoadProgress) { }
 
 #if DEBUG
 		public new int GetHashCode(IStackSnapshot stack) => throw new NotImplementedException();
@@ -440,33 +530,37 @@ namespace NetBlameCustomDataSource.Stack
 		public new bool Equals(IStackSnapshot x, IStackSnapshot y) => throw new NotImplementedException();
 #endif // DEBUG
 
-		public new bool IsNull(IStackSnapshot stack) => (((MyStackSnapshot)stack)?.rgStack?.Length ?? 0) == 0;
-
 		public new int GetCount(IStackSnapshot stack)
 		{
 			AssertImportant(stack != null);
-			if (IsNull(stack)) return 0;
 
 			MyStackSnapshot myStack = (MyStackSnapshot)stack;
 
-			if (myStack.stackFirst != null)
-				return base.GetCount(myStack.stackFirst);
+			if (IsEmpty(myStack)) return 0;
 
-			return 1; // ThreadTitle
+			if (myStack.IsOneStack)
+				return 1; // "One Stack >"
+
+			int count = _GetCount(myStack.StackFirst);
+#if StackTitle
+			++count; // title + frames
+#else
+			if (count == 0)
+				++count; // title only
+#endif
+			return count;
 		}
 
 		public new string GetValue(IStackSnapshot stack, int index)
 		{
-			if (IsNull(stack)) return PastEndValue;
-
 			MyStackSnapshot myStack = (MyStackSnapshot)stack;
 
-			if (myStack.stackFirst != null)
-				return base.GetValue(myStack.stackFirst, index);
+			if (IsEmpty(myStack)) return PastEndValue;
 
-			// Don't leave the First Stack column blank in this case. At least show some data for the thread.
+			if (index == 0 && myStack.IsOneStack)
+				return "One Stack >";
 
-			return base.ThreadTitle(in myStack.rgAttrib[0], null);
+			return _GetValue(myStack.StackFirst, in myStack.rgAttrib[0], index);
 		}
 	}
 
@@ -485,21 +579,24 @@ namespace NetBlameCustomDataSource.Stack
 #endif // DEBUG
 
 		// The middle stacks exclude the first and last, naturally.
-		public new bool IsNull(IStackSnapshot stack) => (((MyStackSnapshot)stack)?.rgStack?.Length ?? 0) <= 2;
+		new static bool IsEmpty(MyStackSnapshot stack) => CountAll(stack) < 2 || StackSnapshotAccessProvider.IsEmpty(stack);
+
+		public new bool IsNull(IStackSnapshot stack) => IsEmpty((MyStackSnapshot)stack);
 
 		public new int GetCount(IStackSnapshot stack)
 		{
 			AssertImportant(stack != null);
-			if (IsNull(stack)) return 0;
 
 			MyStackSnapshot myStack = (MyStackSnapshot)stack;
 
+			if (IsEmpty(myStack)) return 0;
+
 			int cFrames = 0;
-			int iStackMax = myStack.rgStack.Length-1;
+			int iStackMax = myStack.rgStack.Length - 1;
 			for (int iStack = 1; iStack < iStackMax; ++iStack)
 			{
 				// Include a title on each stack.
-				cFrames += base.GetCount(myStack.rgStack[iStack]) + 1;
+				cFrames += _GetCount(myStack.rgStack[iStack]) + 1;
 			}
 			return cFrames;
 		}
@@ -507,21 +604,22 @@ namespace NetBlameCustomDataSource.Stack
 		public new string GetValue(IStackSnapshot stack, int index)
 		{
 			AssertImportant(stack != null);
-			if (IsNull(stack)) return PastEndValue;
 
 			MyStackSnapshot myStack = (MyStackSnapshot)stack;
 
-			int iStackMax = myStack.rgStack.Length-1;
+			if (IsEmpty(myStack)) return PastEndValue;
+
+			int iStackMax = myStack.rgStack.Length - 1;
 			for (int iStack = 1; iStack < iStackMax; ++iStack)
 			{
 				IStackSnapshot stackM = myStack.rgStack[iStack];
-				int cFrames = base.GetCount(stackM) + 1; // plus the "thread title" string
+				int cFrames = _GetCount(stackM) + 1; // plus the "thread title" string
 
 				if (index == 0)
-					return ThreadTitle(in myStack.rgAttrib[iStack], stackM?.Timestamp);
+					return ThreadTitle(in myStack.rgAttrib[iStack], stackM?.Frames != null);
 
 				if (index < cFrames)
-					return GetStackFrame(stackM, index-1);
+					return GetStackFrame(stackM, index - 1);
 
 				index -= cFrames;
 			}
@@ -544,20 +642,19 @@ namespace NetBlameCustomDataSource.Stack
 		public new bool Equals(IStackSnapshot x, IStackSnapshot y) => throw new NotImplementedException();
 #endif // DEBUG
 
-		public new bool IsNull(IStackSnapshot stack) => ((MyStackSnapshot)stack)?.rgStack == null;
-
 		public new int GetCount(IStackSnapshot stack)
 		{
 			AssertImportant(stack != null);
-			if (IsNull(stack)) return 0;
 
 			MyStackSnapshot myStack = (MyStackSnapshot)stack;
+
+			if (IsEmpty(myStack)) return 0;
 
 			int cFrames = 0;
 			foreach (IStackSnapshot stackF in myStack.rgStack)
 			{
 				// Include a title on each stack.
-				cFrames += base.GetCount(stackF) + 1;
+				cFrames += _GetCount(stackF) + 1;
 			}
 
 			// Omit the title on the top stack.
@@ -570,9 +667,10 @@ namespace NetBlameCustomDataSource.Stack
 		public new string GetValue(IStackSnapshot stack, int index)
 		{
 			AssertImportant(stack != null);
-			if (IsNull(stack)) return PastEndValue;
 
 			MyStackSnapshot myStack = (MyStackSnapshot)stack;
+
+			if (IsEmpty(myStack)) return PastEndValue;
 
 			// Omit the title on the top stack.
 			if (myStack.rgStack.Length > 0 && myStack.rgStack[0] != null)
@@ -581,13 +679,13 @@ namespace NetBlameCustomDataSource.Stack
 			int iStack = 0;
 			foreach (IStackSnapshot stackF in myStack.rgStack)
 			{
-				int cFrames = base.GetCount(stackF) + 1; // plus the "thread title" string
+				int cFrames = _GetCount(stackF) + 1; // plus the "thread title" string
 
 				if (index == 0)
-					return ThreadTitle(in myStack.rgAttrib[iStack], stackF?.Timestamp);
+					return ThreadTitle(in myStack.rgAttrib[iStack], stackF?.Frames != null);
 
 				if (index < cFrames)
-					return GetStackFrame(stackF, index-1);
+					return GetStackFrame(stackF, index - 1);
 
 				index -= cFrames;
 				++iStack;
