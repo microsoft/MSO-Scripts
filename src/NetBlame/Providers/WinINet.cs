@@ -15,7 +15,7 @@ using static NetBlameCustomDataSource.Util;
 using TimestampETW = Microsoft.Windows.EventTracing.TraceTimestamp;
 using TimestampUI = Microsoft.Performance.SDK.Timestamp;
 
-using IDVal = System.Int32; // type of Event.pid/tid / ideally: System.UInt32
+using IDVal = System.Int32;
 using QWord = System.UInt64;
 
 
@@ -158,7 +158,7 @@ namespace NetBlameCustomDataSource.WinINet
 
 		public readonly IDVal pid; // for correlation
 		public IDVal tid1; // for correlation
-		public IDVal tid2;
+		public IDVal tid2; // Wininet_Connect.Start
 
 		public uint iDNS;
 		public uint iAddr;
@@ -201,6 +201,7 @@ namespace NetBlameCustomDataSource.WinINet
 			this.timeClose1.SetMaxValue();
 			this.timeClose2.SetMaxValue();
 			this.pid = pid;
+			this.tid1 = this.tid2 = WinINetTable.tidUnknown;
 			this.strMethod = strMethod;
 		}
 
@@ -220,6 +221,8 @@ namespace NetBlameCustomDataSource.WinINet
 		readonly AllTables allTables;
 
 		public WinINetTable(int capacity, in AllTables _allTables) : base(capacity) { this.allTables = _allTables; }
+
+		public const IDVal tidUnknown = -1;
 
 		/*
 			Find the request in the given Process with the given Connect handle,
@@ -274,7 +277,7 @@ namespace NetBlameCustomDataSource.WinINet
 			The remote address (sockAddr) usually has a port.
 			Redundant calls are fine.
 		*/
-		public void StopRequest(in Request req, in SocketAddress sockAddr)
+		public void StopRequest(Request req, in SocketAddress sockAddr)
 		{
 			AssertInfo(req.qwConnect != 0);
 			AssertImportant(req.timeSend.HasValue());
@@ -285,9 +288,10 @@ namespace NetBlameCustomDataSource.WinINet
 
 			if (req.addrRemote.Empty())
 			{
+				int iTCB;
 				uint iDNSNew = 0;  // none
 				uint iAddrNew = 1; // first
-				if (sockAddr != null)
+				if (!sockAddr.Empty())
 				{
 					// This is the remote address, and it usually has a port.
 					// The other port value is that of the server request...not always the same.
@@ -296,6 +300,19 @@ namespace NetBlameCustomDataSource.WinINet
 						ipep.Port = (int)req.portS;
 
 					req.addrRemote = ipep;
+				}
+				else if ((iTCB = this.allTables.tcpTable.FindLastIndex(t => t.pid == req.pid && t.socket == req.socket && t.tid == req.tid2)) >= 0)
+				{
+					TcpIp.TcbRecord tcbT = this.allTables.tcpTable[iTCB];
+
+					req.addrRemote = tcbT.addrRemote;
+
+					AssertImportant(req.iTCB == 0);
+
+					if (req.iTCB == 0)
+						req.iTCB = (uint)(iTCB + 1);
+
+					tcbT.SetType(Protocol.WinINet);
 				}
 				else if (req.iDNS != 0)
 				{
@@ -338,7 +355,10 @@ namespace NetBlameCustomDataSource.WinINet
 
 				// Without an IP address, there's nothing more that can be done!
 				if (req.addrRemote.Empty())
+				{
+					req.addrRemote = new IPEndPoint(0, 0);
 					return;
+				}
 			}
 #if DEBUG
 			else if (sockAddr != null)
@@ -374,7 +394,7 @@ namespace NetBlameCustomDataSource.WinINet
 				if (req.iTCB == 0)
 					req.iTCB = this.allTables.tcpTable.CorrelateByAddress(in req.addrRemote, req.pid, req.tid2, req.socket, Protocol.WinINet);
 
-				WinsockAFD.Connection cxn = this.allTables.wsTable.CorrelateByAddress(req.addrRemote, req.iTCB, req.socket, req.pid, 0/*tid*/);
+				WinsockAFD.Connection cxn = this.allTables.wsTable.CorrelateByAddress(req.addrRemote, req.iTCB, req.socket, req.pid, WinsockAFD.WinsockTable.tidUnknown);
 
 				if (cxn != null)
 				{
@@ -384,6 +404,8 @@ namespace NetBlameCustomDataSource.WinINet
 #if DEBUG
 					if (req.cxnWinsock == null)
 						req.cxnWinsock = cxn;
+					else
+						AssertImportant(req.cxnWinsock == cxn);
 #endif // DEBUG
 				}
 			}
@@ -503,7 +525,7 @@ namespace NetBlameCustomDataSource.WinINet
 				// This may occur once or twice in the lifetime of a request, and if twice then its parameters will match the first.
 				// In fact the HTTPRequest_Start/Stop events can seem rather spurious.
 
-				QWord qwContext = evt.GetAddrValue("Context"); // often 0!
+				QWord qwContext = evt.TryGetAddrValue("Context"); // often 0!
 				timeStamp = evt.Timestamp.ToGraphable();
 				req = FindRequestByCxn(evt.GetAddrValue("HINTERNET"), qwContext, evt.ProcessId, timeStamp);
 				AssertImportant(req != null);
@@ -516,7 +538,7 @@ namespace NetBlameCustomDataSource.WinINet
 				if (req.qwContext == 0)
 					req.qwContext = qwContext;
 
-				if (req.tid1 == 0)
+				if (req.tid1 == tidUnknown)
 					req.tid1 = evt.ThreadId;
 
 				break;
@@ -537,8 +559,7 @@ namespace NetBlameCustomDataSource.WinINet
 
 				if (req.socket == 0)
 					req.socket = (ushort)socket;
-				else
-					AssertImportant(req.socket == socket);
+				// else see how a different socket is eventually handled in case WINET.Connect_Stop
 
 				break;
 
@@ -556,8 +577,8 @@ namespace NetBlameCustomDataSource.WinINet
 				{
 					// Case 2 above: Keep Alive / Connection Reused
 
-					AssertImportant(req.tid1 != 0);
-					AssertImportant(req.tid2 != 0);
+					AssertImportant(req.tid1 != tidUnknown);
+					AssertImportant(req.tid2 != tidUnknown);
 					AssertImportant(req.strURL != null);
 					AssertImportant(req.fStopped);
 					AssertImportant(req.timeSend.HasValue());
@@ -581,7 +602,7 @@ namespace NetBlameCustomDataSource.WinINet
 					req = reqNew;
 				}
 
-				AssertImportant(req.tid2 == 0);
+				AssertImportant(req.tid2 == tidUnknown);
 				AssertCritical(req.tid1 == evt.ThreadId);
 				AssertCritical(req.qwRequest == 0); // Case2 should already be covered above!
 				AssertCritical(req.timeClose1.HasMaxValue());
@@ -620,7 +641,7 @@ namespace NetBlameCustomDataSource.WinINet
 				AssertInfo(req.timeClose2.HasMaxValue()); // Sometimes WINET.HandleClosed comes early.
 				AssertImportant(req.strURL != null);
 				AssertImportant(req.strStatus == null);
-				AssertInfo(req.tid2 != 0); // no Connect_Start
+				AssertInfo(req.tid2 != tidUnknown); // no Connect_Start
 
 				if (req.timeClose1.HasMaxValue())
 					req.timeClose1 = evt.Timestamp.ToGraphable();
@@ -653,7 +674,7 @@ namespace NetBlameCustomDataSource.WinINet
 				AssertImportant(req.timeClose2.HasMaxValue());
 				AssertImportant(req.strURL != null);
 				AssertImportant(req.strStatus == null);
-				AssertInfo(req.tid2 != 0); // no Connect_Start
+				AssertInfo(req.tid2 != tidUnknown); // no Connect_Start
 
 				timeStamp = evt.Timestamp.ToGraphable();
 
@@ -733,8 +754,8 @@ namespace NetBlameCustomDataSource.WinINet
 				if (req.timeClose2.HasMaxValue())
 					req.timeClose2 = timeStamp;
 
-				AssertImportant(req.tid1 != 0);
-				// If req.tid2==0 then there was no Connect.Start event. Too bad.
+				AssertImportant(req.tid1 != tidUnknown);
+				// If req.tid2==tidUnknown then there was no Connect.Start event. Too bad.
 
 				StopRequest(req, null);
 

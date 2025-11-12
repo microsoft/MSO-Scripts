@@ -67,6 +67,8 @@ namespace NetBlameCustomDataSource.Thread.Classic
 		public readonly ThreadEventPayload ThreadEvt;
 		public readonly Addr64 ThreadProc;
 
+		const DWId tidUnknown = -1;
+
 		private Addr32 GetThreadProc32(in ClassicEvent evt)
 		{
 			if (evt.Data.Length < 2*sizeof(UInt32) + 6*sizeof(UInt32))
@@ -95,7 +97,7 @@ namespace NetBlameCustomDataSource.Thread.Classic
 
 			// If the thread "created itself" then the creator/initiator is unknown.
 			if (this.tidInitiator == this.ThreadEvt.ThreadId && (TEID)evt.Id != TEID.Exit)
-				this.tidInitiator = 0;
+				this.tidInitiator = tidUnknown;
 
 			// Get the ThreadProc address if available. (See wmicore.mof: "Thread Create/Exit Event")
 			if (evt.Version > 0)

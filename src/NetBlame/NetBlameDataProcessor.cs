@@ -102,6 +102,10 @@ namespace NetBlameCustomDataSource
 		public void Report(SymbolLoadingProgress slp)
 		{
 			pctProcessed = slp.ImagesProcessed * 100 / slp.ImagesTotal;
+
+			// 0% => Symbols Disabled
+			if (pctProcessed <= 0)
+				pctProcessed = 1;
 		}
 	}
 
@@ -243,10 +247,10 @@ namespace NetBlameCustomDataSource
 		*/
 		public int EventCount()
 		{
-			return this.wsTable.Count()
-					+ this.tcpTable.Count()
-					+ this.webioTable.sessionTable.Count()
-					+ this.winetTable.Count();
+			return this.wsTable.Count
+					+ this.tcpTable.Count
+					+ this.webioTable.sessionTable.Count
+					+ this.winetTable.Count;
 		}
 
 
@@ -390,9 +394,9 @@ namespace NetBlameCustomDataSource
 
 		bool FSymbolsEnabled()
 		{
-			// If either of these are null/empty then LoadSymbolsAsync won't do anything anyway, it appears.
+			// If both of these are null/empty then LoadSymbolsAsync won't do anything anyway, it appears.
 			// But if _NT_SYMCACHE_PATH or _NT_SYMBOL_PATH were empty then default values will appear here.
-			return !String.IsNullOrWhiteSpace(SymCachePath.Automatic.Value) && !String.IsNullOrWhiteSpace(SymbolPath.Automatic.Value);
+			return !String.IsNullOrWhiteSpace(SymCachePath.Automatic.Value) || !String.IsNullOrWhiteSpace(SymbolPath.Automatic.Value);
 		}
 
 
@@ -454,6 +458,7 @@ namespace NetBlameCustomDataSource
 						AssertCritical(evt.ProcessId == (IDVal)evt.GetAddrValue("ProcessId"));
 						HProcToPid[evt.GetAddrValue("Process")] = evt.ProcessId;
 						break;
+					case (int)WinsockTable.AFD.BindWithAddress:
 					case (int)WinsockTable.AFD.ConnectWithAddress:
 					case (int)WinsockTable.AFD.ConnectExWithAddress:
 						// These events are reliable indicators.
@@ -462,10 +467,12 @@ namespace NetBlameCustomDataSource
 					case (int)WinsockTable.AFD.AcceptExWithAddress:
 					case (int)WinsockTable.AFD.ReceiveFromWithAddress:
 					case (int)WinsockTable.AFD.ReceiveMessageWithAddress:
-					case (int)WinsockTable.AFD.SendMessageWithAddress:
 						// These events have an unreliable ProcessId.
 						// If there was an AFD.Create event for this process, then add its ProcessId now.
-						if (evt.GetUInt32("EnterExit") == 0) break;
+						if (evt.GetUInt32("EnterExit") == 1)
+							goto case (int)WinsockTable.AFD.SendMessageWithAddress;
+						break;
+					case (int)WinsockTable.AFD.SendMessageWithAddress:
 						if (HProcToPid.TryGetValue(evt.GetAddrValue("Process"), out IDVal pid))
 							PidTargetSet.Add(pid);
 						break;
@@ -499,7 +506,7 @@ namespace NetBlameCustomDataSource
 			// WPA doesn't allow -symbols or -symcacheonly with -addsearchdir
 			// So simulate -symcacheonly with: !!_NT_SYMCACHE_PATH & !_NT_SYMBOL_PATH
 
-			bool fSymCacheOnly = SymCachePath.FromEnvironment != null && SymbolPath.FromEnvironment == null;
+			bool fSymCacheOnly = !string.IsNullOrWhiteSpace(SymCachePath.FromEnvironment?.Value) && string.IsNullOrWhiteSpace(SymbolPath.FromEnvironment?.Value);
 #if DEBUG
 			fSymCacheOnly = true; // fast symbols when debugging
 #endif // DEBUG

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 using Microsoft.Windows.EventTracing.Events;
 using Microsoft.Windows.EventTracing.Symbols;
@@ -72,6 +73,9 @@ namespace NetBlameCustomDataSource.WebIO
 			this.timeOpen = evt.Timestamp.ToGraphable();
 			this.timeClose.SetMaxValue();
 			this.pid = evt.ProcessId;
+			this.tidStack = RequestTable.tidUnknown;
+			this.strServer = string.Empty;
+			this.strMethod = string.Empty;
 		}
 
 		public bool FOpen => this.timeClose.HasMaxValue();
@@ -85,13 +89,69 @@ namespace NetBlameCustomDataSource.WebIO
 		public bool HasCurrentOpenConnection =>
 				this.HasCurrentConnection && this.FOpen;
 
+/*
+	The Connection value from RequestWaitingForConnection
+	is sometimes invalid (never occuring elsewhere in the trace).
+	It appears to be the address of a different heap object.
+	Empirically, the invalidity appears to be unique to a certain pattern.
+	It is these 5 events, all on the same thread, always occuring together:
+		WIO.RequestCreate               T1 Request=R# Method=M$
+		WIO.RequestWaitingForConnection T1 Request=R# Connection=C1#
+		WIO.RequestHeader_Start         T1 Request=R# Headers=H$
+		WIO.ConnectionSocketSend_Start  T1 Connection=C2#
+		WIO.ConnectionSocketSend_End    T1 Connection=C2#
+		...
+		AND !H$.StartsWith(M$) OR exception thrown.
+	Also, the WIO.RequestHeader_Start event often has fields that throw when parsed. (!?)
+
+	Even so, C1#==C2# sometimes, unless we find the inconsistencies in the header event.
+	It appears that when we see those inconsistencies in the above pattern, then C1# != C2#.
+*/
+		public enum EValidity : int
+		{
+			Dubious = -1,
+			Unknown = 0, // default
+			Confirmed = 1
+		}
+
+		public EValidity Validity { get; private set; }
+
+		[Conditional("DEBUG")]
+		public void ConfirmValidity() => this.Validity = EValidity.Confirmed;
+
+		[Conditional("DEBUG")]
+		public void HandleValidity(in IGenericEvent evt, bool fTestHeader)
+		{
+			AssertImportant(this.strMethod != null);
+			AssertCritical(evt.Id == (int)WebIOTable.WIO.RequestHeader_Send);
+			// Test the GuessRequest mechanism for the RequestHeader_Send event.
+			AssertInfo(WebIOTable.GuessRequest(in evt, this.qwConnectionCur) == this.qwRequest);
+
+			if (this.Validity != EValidity.Unknown)
+			{
+				AssertImportant(this.Validity != EValidity.Dubious); // how?
+				return;
+			}
+
+			if (fTestHeader)
+			{
+				string strHeader = evt.GetString("Headers");
+				if (!strHeader.StartsWith(this.strMethod))
+					this.Validity = EValidity.Dubious; // rare!
+			}
+			else
+			{
+				this.Validity = EValidity.Dubious;
+			}
+		}
+
 		// Implement IGraphableEntry
 #if DEBUG || AUX_TABLES
 		public IDVal Pid => this.pid;
 		public IDVal TidOpen => this.tidStack;
 #else
-		public IDVal Pid => 0;
-		public IDVal TidOpen => 0;
+		public IDVal Pid => pidUnknown;
+		public IDVal TidOpen => tidUnknown;
 #endif // DEBUG || AUX_TABLES
 		public TimestampETW TimeRef => this.timeRef;
 		public TimestampUI TimeOpen => this.timeOpen;
@@ -110,6 +170,8 @@ namespace NetBlameCustomDataSource.WebIO
 		public Request RequestFromI(uint iReq) => (iReq != 0) ? this[(int)iReq - 1] : null;
 
 		public uint IFromRequest(in Request request) => (uint)(this.LastIndexOf(request) + 1); // 1-based
+
+		public const IDVal tidUnknown = -1;
 
 
 		public uint IFindRequest(QWord qwRequest, TimestampUI timeStamp)
@@ -172,89 +234,15 @@ namespace NetBlameCustomDataSource.WebIO
 			This can return a Connection which doesn't (yet) belong to the Request (but should).
 			A returned Connection is assumed to have a non-null Socket.
 		*/
-		public Connection FindConnectionByHandle_OLD(in IGenericEvent evt, out Request req)
-		{
-			Connection cxn = null;
-
-			req = null;
-
-			IDVal pid = evt.ProcessId;
-
-			QWord qwCxn = evt.TryGetAddrValue("Connection"); // not ConnectionSocketClose
-
-			if (qwCxn != 0)
-			{
-				// In some cases (ConnectionSocketReceive) we're looking for a Request which can be technically closed.
-
-				QWord hreq = WebIOTable.GetHReq(in evt);
-
-				req = FindRequestByHReq(hreq, pid);
-
-				// Check all Connections of the expected Request.
-
-				if (req != null && req.HasCurrentConnection)
-					cxn = req.rgConnection.FindLast(c => c.qwConnection == qwCxn);
-			}
-
-			if (cxn == null)
-			{
-				if (qwCxn == 0)
-					qwCxn = evt.GetAddrValue("Endpoint"); // ConnectionSocketClose
-
-				AssertCritical(qwCxn != 0);
-
-				// Check all Requests for their current Connection.
-				// The request may already be closed for ConnectionSocketClose.
-
-				req = this.FindLast(r => r.qwConnectionCur == qwCxn && r.pid == pid);
-
-				if (req != null)
-				{
-					if (req.HasCurrentConnection)
-						cxn = req.rgConnection[^1]; // current connection
-				}
-				else
-				{
-					// Check all Connections of all Requests, most recent first.
-
-					Request reqT = this.FindLast(r =>
-					{
-						if (r.pid != pid) return false;
-						cxn = r.rgConnection?.FindLast(c => c.qwConnection == qwCxn);
-						return cxn != null;
-					});
-				}
-			}
-
-#if DEBUG
-			// Verify that the Connection has the expected Socket.
-
-			if (cxn != null)
-			{
-				QWord qwSocket = evt.TryGetUInt64("SocketHandle"); // ConnectSocketStop, etc.
-				if (qwSocket == 0)
-					qwSocket = evt.TryGetUInt64("Socket"); // ConnectSocketClose
-
-				AssertCritical(qwSocket != 0);
-				AssertCritical(cxn.socket != null);
-
-				AssertImportant(cxn.socket.qwSocket == qwSocket || (cxn.socket.FClosed && qwSocket == QWord.MaxValue));
-				AssertImportant(cxn.socket.qwConnection == qwCxn);
-				AssertImportant(cxn.qwConnection == qwCxn);
-			}
-#endif // DEBUG
-
-			return cxn;
-		}
-
-
 		public Connection FindConnectionByHandle(in IGenericEvent evt, out Request req)
 		{
-			Connection cxn = null;
-
 			req = null;
-
+			Connection cxn = null;
 			IDVal pid = evt.ProcessId;
+
+			// Here we test Connection values AGAINST the one provided by RequestWaitingForConnection.
+			AssertCritical(evt.Id != (int)WebIOTable.WIO.RequestWaitingForConnection_Stop);
+			AssertCritical(evt.Id < (int)WebIOTable.WIO.ConnectionSocketSend_Start || evt.Id > (int)WebIOTable.WIO.ConnectionSocketReceive_Stop);
 
 			QWord qwCxn = evt.TryGetAddrValue("Connection"); // not ConnectionSocketClose
 
@@ -274,16 +262,13 @@ namespace NetBlameCustomDataSource.WebIO
 					if (req.HasCurrentConnection)
 						cxn = req.rgConnection[^1];
 					// else later add a new Connection to this Request.
+
+					// The Request's Connection ID matches the event's (qwCxn).
+					req.ConfirmValidity();
 				}
 				else
 				{
-					// SocketReceive events are allowed to operate on a non-current Connection.
-
-					if (WebIOTable.IsSocketReceiveStopClose(in evt))
-						cxn = req?.rgConnection.FindLast(c => c.qwConnection == qwCxn);
-
-					if (cxn == null)
-						req = null;
+					req = null;
 				}
 			}
 
@@ -301,9 +286,9 @@ namespace NetBlameCustomDataSource.WebIO
 				{
 					req = null;
 
-					// Find a Closed request, sometimes needed for ConnectionSocketReceive/Close.
+					// Find a Closed request, sometimes needed for ConnectionSocketClose.
 
-					if (WebIOTable.IsSocketReceiveStopClose(in evt))
+					if (evt.Id == (int)WebIOTable.WIO.ConnectionSocketClose)
 						reqT = this.FindLast(r => r.HasCurrentConnection && r.qwConnectionCur == qwCxn && r.pid == pid);
 				}
 
@@ -311,161 +296,237 @@ namespace NetBlameCustomDataSource.WebIO
 				{
 					req = reqT;
 					cxn = reqT.rgConnection[^1]; // current connection
+
+					// The Request's Connection ID matches the event's (qwCxn).
+					req.ConfirmValidity();
 #if DEBUG
 					AssertImportant(reqT.qwConnectionCur == qwCxn);
 					AssertImportant(FImplies(!WebIOTable.IsSocketReceiveStopClose(in evt), !cxn.fOutdated));
 #endif // DEBUG
 				}
 			}
-#if DEBUG
-			// Verify that the Connection has the expected Socket.
 
-			if (cxn != null)
-			{
-				QWord qwSocket = evt.TryGetUInt64("SocketHandle"); // ConnectSocketStop, etc.
-				if (qwSocket == 0)
-					qwSocket = evt.TryGetUInt64("Socket"); // ConnectSocketClose
-
-				AssertCritical(qwSocket != 0);
-				AssertCritical(cxn.socket != null);
-
-				AssertImportant(cxn.socket.qwSocket == qwSocket || (cxn.socket.FClosed && qwSocket == QWord.MaxValue));
-				AssertImportant(cxn.socket.qwConnection == qwCxn);
-				AssertImportant(cxn.qwConnection == qwCxn);
-
-				AssertImportant(!cxn.fOutdated || WebIOTable.IsSocketReceiveStopClose(in evt));
-			}
-#endif // DEBUG
+			cxn?.TestSocket(in evt, qwCxn);
 
 			return cxn;
-		}
+		} // FindConnectionByHandle
 
 
 		/*
-			The Socket is probably there in the Request, created by ConnectionSocketConnect records.
-			But the Request may be reusing a Socket, probably referenced by another Request.
-			Or we may need to create a default Socket if we missed its creation.
+			Create a new Connection and add it to this Request.
+			Base it on an existing Connection from another Request, if possible.
 		*/
-		public Connection GetConnection(in IGenericEvent evt)
+		public Connection SetRequestConnection(in IGenericEvent evt, Request req, QWord qwCxn, int iReq)
 		{
-			Connection cxn = this.FindConnectionByHandle(in evt, out Request req);
-
-			QWord hReq = WebIOTable.GetHReq(in evt);
-			if (req == null || (req.qwHandle != hReq && (!req.FOpen || req.FShared)))
-			{
-				Request reqT = null;
-				QWord qwCxn = (cxn != null) ? cxn.qwConnection : evt.GetAddrValue("Connection");
-
-				switch ((WebIOTable.WIO)evt.Id)
-				{
-				case WebIOTable.WIO.ConnectionSocketSend_Start:
-				case WebIOTable.WIO.ConnectionSocketReceive_Start:
-					// PATTERN 4B: Sharing a Connection with a closed Request!?
-					// Or this handle might be used to send data for: Request.Header
-
-					AssertImportant(req == null || !req.FOpen || req.FShared);
-					if (req != null && req.FOpen && req.qwConnectionCur == qwCxn)
-						break;
-
-					// Here we don't completely trust hReq, but we also don't completely trust reqT.qwConnectionCur.
-					// We do see: Microsoft-Windows-WebIO.RequestWaitingForConnection | Connection = <bogus value>
-					// So go back to using the request identified by the request handle, if it has no connections.
-
-					reqT = this.FindOpenRequestByHReq(hReq, evt.ProcessId);
-					AssertImportant(reqT == null || !reqT.FShared);
-					if (reqT != null && reqT.rgConnection == null)
-					{
-						req = reqT;
-						req.qwConnectionCur = qwCxn;
-					}
-					else if (req == null)
-					{
-						// fall through to find the Request and Connection
-						goto case WebIOTable.WIO.ConnectionSocketSend_Stop;
-					}
-					break;
-
-				case WebIOTable.WIO.ConnectionSocketSend_Stop:
-				case WebIOTable.WIO.ConnectionSocketReceive_Stop:
-					AssertImportant(req == null || req.FOpen);
-					AssertImportant(req == null || req.FShared);
-
-					// Empirically we believe that this 'receive' (or even 'send') event is residual from a [soon to be] closed Request.
-					// Find that one.
-					// Or this handle might be used to receive data for: Request.Header
-
-					IDVal pid = evt.ProcessId;
-					reqT = this.FindLast(r => r != req && r.qwConnectionCur == qwCxn && r.pid == pid);
-					AssertImportant(reqT == null || reqT.qwConnectionCur == evt.GetAddrValue("Connection"));
-					if (reqT != null && (req == null || (reqT.qwHandle == hReq && reqT.FOpen))) // Is it a better match?
-					{
-						AssertImportant(reqT.HasCurrentConnection);
-						if (reqT.HasCurrentConnection)
-						{
-							req = reqT;
-							cxn = req.rgConnection[^1];
-#if DEBUG
-							AssertImportant(!cxn.fOutdated);
-#endif // DEBUG
-						}
-					}
-					break;
-
-				default:
-					AssertCritical(false);
-					break;
-				}
-			}
-
-			if (req == null) return null;
-
-			// Hereafter must not return null;
-
-			if (req.HasCurrentConnection)
-			{
-				AssertImportant(cxn != null);
-				AssertImportant(cxn == req.rgConnection?.Find(c => c == cxn)); // cxn is in req.rgConnection[]
-				return cxn;
-			}
+			AssertCritical(req.qwConnectionCur == qwCxn);
+			AssertCritical(req.Validity == Request.EValidity.Confirmed);
 
 			// We didn't get a ConnectionSocketConnect event pair, apparently.
 			// We must be reusing a Connection/Socket previously opened (PATTERN 4B).
 			// Or this event occurs very near the beginning of the trace.
 
-			req.FShared = true;
+			QWord qwSocket = evt.TryGetUInt64("SocketHandle");
+			AssertImportant(qwSocket != 0);
+			AssertImportant(qwSocket != QWord.MaxValue);
+
+			if (iReq < 0)
+				iReq = this.Count - 1;
+
+			// Find the shareable Connection and Socket with the given ID/handle values.
+
+			Connection cxn = null;
+			while (cxn == null && --iReq >= 0)
+			{
+				Request reqT = this[iReq];
+
+				if (reqT.pid != evt.ProcessId)
+					continue;
+
+				cxn = reqT.rgConnection?.FindLast(
+					c => c.qwConnection == qwCxn && c.socket.qwSocket == qwSocket && !c.socket.FClosed
+					);
+			}
+
+			Socket socket;
+
+			if (cxn != null)
+			{
+				// This Connection and its Socket will get shared with this Request.
+				// Both Requests may be open at the same time but Send/Receive operations cannot overlap, respectively.
+#if DEBUG
+				bool fSend = ((evt.Id + 1) & -2) == (int)WebIOTable.WIO.ConnectionSocketSend_Stop; // ConnectionSocketSent_Start/Stop
+				AssertImportant((fSend ? cxn.ctxSend : cxn.ctxRecv) == 0); // no overlapping, cross-Request conflicts!
+
+				cxn.socket.AddRef();
+				cxn.fOutdated = true;
+#endif // DEBUG
+				req.FShared = true;
+				socket = cxn.socket;
+			}
+			else
+			{
+				socket = new Socket(in evt);
+			}
+
+			Connection cxnNew = new Connection(qwCxn, socket);
+
+			cxnNew.fDuplicate = cxn != null;
+#if DEBUG
+			cxnNew.fTransferred = true;
+#endif // DEBUG
+			AssertImportant(!cxnNew.socket.FClosed);
+			AssertImportant(cxnNew.socket.timeStart.HasValue());
+			cxnNew.socket.timeStop.SetMaxValue(); // no longer stopped
 
 			if (req.rgConnection == null)
 				req.rgConnection = new List<Connection>(1);
 			else
 				AssertCritical(!req.HasCurrentConnection); // No duplicates!
 
-			if (cxn == null)
-			{
-				// The socket might have been created before the trace started. (Rare!)
-
-				Socket socket = new Socket(in evt);
-
-				cxn = new Connection(evt.GetAddrValue("Connection"), socket);
-			}
-			else
-			{
-				// Reusing a Connection attached to another Request.
-
-				AssertCritical(cxn.socket != null);
-				AssertImportant(!cxn.socket.FClosed);
-				AssertImportant(cxn.socket.timeStart.HasValue());
-
-				if (cxn.socket.FStopped)
-					cxn.socket.timeStop = cxn.socket.timeClose; // infinity
-			}
-
-			req.qwConnectionCur = cxn.qwConnection;
-			req.rgConnection.Add(cxn);
+			req.qwConnectionCur = qwCxn;
+			req.rgConnection.Add(cxnNew);
 
 			AssertCritical(req.HasCurrentConnection);
+			req.ConfirmValidity(); // valid qwConnectionCur
 
-			return cxn;
-		}
+			cxnNew.TestSocket(in evt, qwCxn);
+			return cxnNew;
+		} // SetRequestConnection
+
+
+		/*
+			Return the Connection which matches:
+			- Request Handle (hReq) - param hReq not trusted
+			- Connection Id (qwCxn) - Request.qwConnectionCur not always trusted
+			- Context (ctx) - ctx==0 if Start, ctx!=0 if Stop
+			- Send/Recv (fSend) - true = Send, false = Receive
+			A Stop event can arrive after the Request has closed.
+
+			Find the most recent Request and its current Connection (if it exists):
+			- Matching Request handle, where hReq is not always trusted, particularly for Receive.
+			- Matching current Connection ID, where Request.qwConnectionCur is not always trusted.
+			- Matching Context: Start context uses 0; Stop context = Start context 
+
+			It mat create a new Connection/Socket via SetRequestConnection.
+		*/
+		public Connection GetConnection(in IGenericEvent evt)
+		{
+			AssertCritical(evt.Id >= (int)WebIOTable.WIO.ConnectionSocketSend_Start && evt.Id <= (int)WebIOTable.WIO.ConnectionSocketReceive_Stop);
+
+			bool fSend = ((evt.Id + 1) & -2) == (int)WebIOTable.WIO.ConnectionSocketSend_Stop; // ConnectionSocketSent_Start/Stop
+			bool fStart = (evt.Id & 1) != 0;
+
+			QWord ctx = fStart ? 0 : evt.GetAddrValue("Context");
+
+			QWord qwCxn = evt.GetAddrValue("Connection");
+			AssertCritical(qwCxn != 0);
+
+			QWord hReq = WebIOTable.GetHReq(in evt);
+			AssertImportant(hReq != 0);
+
+			for (int iReq = this.Count-1; iReq >= 0; --iReq)
+			{
+				Request req = this[iReq];
+
+				if (req.pid != evt.ProcessId)
+					continue;
+
+				if (req.qwConnectionCur == 0)
+					continue;
+
+				// Check for a current Connection and match the Context value.
+
+				Connection cxn = null;
+				if (req.HasCurrentConnection)
+				{
+					cxn = req.rgConnection[^1];
+
+					AssertCritical(cxn != null);
+
+					// The Connection's Context value MUST match, even 0==0.
+					QWord ctxCxn = fSend ? cxn.ctxSend : cxn.ctxRecv;
+					if (ctx != ctxCxn)
+					{
+						if (fStart || ctxCxn != 0)
+							continue;
+
+						if (qwCxn != req.qwConnectionCur)
+							continue;
+
+						// There's another, earlier Request with the same Connection?
+						if (cxn.fDuplicate)
+							continue;
+
+						// There is no Start context for this Stop event.
+						// This is probably near the beginning of the trace.
+						AssertImportant(iReq == 0); // iReq == small number
+					}
+
+					// If this is a Stop event then we've found the match and are done.
+					if (!fStart)
+					{
+						AssertImportant(qwCxn == req.qwConnectionCur);
+						cxn.TestSocket(in evt, qwCxn);
+						return cxn;
+					}
+				}
+				else if (!fStart)
+				{
+					// Stop event with no current Connection OR Send_Stop event with closed Connection.
+					continue;
+				}
+				else if (!req.FOpen)
+				{
+					// Closed Request with no current Connection!?
+					continue;
+				}
+
+				// Here we have only ConnectionSocketSend/Receive_Start events.
+				// The Request is not closed.
+				// It may have a current Connection, in which case: cxn != null
+
+				AssertCritical(fStart); // only Start events
+
+				if (req.qwConnectionCur == qwCxn)
+				{
+					AssertImportant(req.Validity != Request.EValidity.Dubious);
+					req.ConfirmValidity();
+
+					// The critical parameters match!
+					if (cxn != null)
+					{
+						cxn.TestSocket(in evt, qwCxn);
+						return cxn;
+					}
+
+					// Here we got a RequestWaitingForConnection event (with valid Connection ID),
+					// but no Connection/Socket creation events.
+					// That means it's a shared Connection.
+				}
+				else if (cxn == null)
+				{
+					// Here we have no current Connection and not a matching Connection ID.
+					// It might not be a match, but the Connection ID is not always trustable.
+					// This could be the famous case 4B! (See: WebIO.Socket.cs)
+
+					if (hReq != req.qwHandle)
+						continue;
+
+					AssertImportant(req.Validity == Request.EValidity.Dubious); // part of condition?
+					req.qwConnectionCur = qwCxn;
+					req.ConfirmValidity();
+				}
+				else // Has current Connection, but not a matching Connection ID.
+				{
+					AssertImportant(req.Validity != Request.EValidity.Dubious);
+					continue;
+				}
+
+				return SetRequestConnection(in evt, req, qwCxn, iReq);
+			} // for iReq
+
+			return null;
+		} // GetConnection
 
 
 		/*
@@ -489,7 +550,7 @@ namespace NetBlameCustomDataSource.WebIO
 					// Socket (of the most recently created Connection) appears near the beginning of the trace, lacking full context.
 					// If the match is nearly certain, apply the TCB context.
 					cxn = req.rgConnection[^1];
-					if ((fSend ? cxn.tidSend : cxn.tidRecv) == tid && cxn.tidTCB == 0 && cxn.socket.tidConnect == tid && cxn.socket.iTCB == 0 && !cxn.socket.FClosed)
+					if ((fSend ? cxn.tidSend : cxn.tidRecv) == tid && cxn.tidTCB == tidUnknown && cxn.socket.tidConnect == tid && cxn.socket.iTCB == 0 && !cxn.socket.FClosed)
 					{
 						cxn.tidTCB = tid;
 						cxn.socket.iTCB = iTCB;
@@ -516,7 +577,7 @@ namespace NetBlameCustomDataSource.WebIO
 
 
 		/*
-			Find the unique Socket created on the given time during the given time interval.
+			Find the unique Socket created on the given thread during the given time interval.
 		*/
 		public Socket CorrelateByTimeThread(uint iTCB, IDVal pid, IDVal tid, TimestampUI timeCreate, TimestampUI timeConnect)
 		{
@@ -550,6 +611,9 @@ namespace NetBlameCustomDataSource.WebIO
 		}
 
 
+		/*
+			Search all the Requests to find the most recent Connection which matches the given parameters.
+		*/
 		public Socket CorrelateByAddress(uint iTCB, uint iDNS, uint iAddr, IDVal pid, IDVal tid)
 		{
 			AssertImportant(iTCB != 0);
@@ -572,7 +636,7 @@ namespace NetBlameCustomDataSource.WebIO
 #if DEBUG
 			// Search all Connections/Sockets of each open Request.
 			// We shouldn't find a match.
-			req = this.FindLast(r => r.FOpen && r.rgConnection?.FindLast(c => c.MatchTCB(iTCB, iDNS, iAddr, tid)) != null);
+			req = this.FindLast(r => r.pid == pid && r.FOpen && r.rgConnection?.FindLast(c => c.MatchTCB(iTCB, iDNS, iAddr, tid)) != null);
 			AssertImportant(req == null);
 #endif // DEBUG
 
@@ -580,6 +644,10 @@ namespace NetBlameCustomDataSource.WebIO
 		} // CorrelateByAddress
 
 
+		/*
+			Handle the event: RequestHeader_Recv
+			Extrace the Header string and add it to the corresponding Connection.
+		*/
 		public void AddHeader(in IGenericEvent evt)
 		{
 			Request req;
@@ -619,9 +687,13 @@ namespace NetBlameCustomDataSource.WebIO
 			AssertInfo(cxn.strHeader == null);
 			if (cxn.strHeader == null || !cxn.strHeader.StartsWith("HTTP", StringComparison.OrdinalIgnoreCase) || strHeader.StartsWith("HTTP", StringComparison.OrdinalIgnoreCase))
 				cxn.strHeader = strHeader;
-		}
+		} // AddHeader
 
 
+		/*
+			Handle the event: ConnectionSocketClose
+			Find the corresponding Connection(s) and close the attached Socket.
+		*/
 		public void CloseSocket(in IGenericEvent evt)
 		{
 			// ConnectionSocketClose behaves like Stop in the case of (potentially) multiple Sockets. (See PATTERN 2, elsewhere.)
@@ -635,9 +707,9 @@ namespace NetBlameCustomDataSource.WebIO
 
 			if (cxn != null)
 			{
-				cxn.tidSend = 0;
-				cxn.tidRecv = 0;
-				cxn.tidTCB = 0;
+				cxn.tidSend = tidUnknown;
+				cxn.tidRecv = tidUnknown;
+				cxn.tidTCB = tidUnknown;
 
 				socket = cxn.socket;
 #if DEBUG
@@ -667,9 +739,9 @@ namespace NetBlameCustomDataSource.WebIO
 				if (cxn == null) continue;
 
 				// There may be some other Connections which share this Socket whose ThreadID values are not cleared here.
-				cxn.tidTCB = 0;
-				cxn.tidSend = 0;
-				cxn.tidRecv = 0;
+				cxn.tidTCB = tidUnknown;
+				cxn.tidSend = tidUnknown;
+				cxn.tidRecv = tidUnknown;
 
 				socket = cxn.socket;
 #if DEBUG
@@ -685,6 +757,10 @@ namespace NetBlameCustomDataSource.WebIO
 		} // CloseSocket
 
 
+		/*
+			Handle the event: RequestCreate
+			Create a new Request, attach it to a Session, and apply a Stackwalk.
+		*/
 		public void AddRequest(in IGenericEvent evt, in AllTables allTables)
 		{
 			Request request = new Request(in evt);
@@ -743,6 +819,10 @@ namespace NetBlameCustomDataSource.WebIO
 		} // AddRequest
 
 
+		/*
+			Handle the event: RequestClose_Stop
+			Find the corresponding Request, tidy it up, and mark it as closed.
+		*/
 		public Request CloseRequest(QWord qwRequest, QWord qwHandle, IDVal pid, in TimestampUI timeStamp)
 		{
 			Request request = FindOpenRequestByHReq(qwHandle, pid);

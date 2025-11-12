@@ -74,11 +74,13 @@ namespace NetBlameCustomDataSource.Tasks
 		public uint cRef; // Count of other events that happened between Start/EndExec
 		public EState state;
 
+		const IDVal tidUnknown = -1;
 
 		public TaskItem(IDVal pid, IDVal tid, in TimestampUI timeStamp)
 		{
 			this.pid = pid;
 			this.tidCreate = tid;
+			this.tidExec = tidUnknown;
 			this.timeCreate = timeStamp;
 			this.timeDestroy.SetMaxValue();
 			this.state = EState.Created;

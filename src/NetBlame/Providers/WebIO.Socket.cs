@@ -7,7 +7,6 @@ using TimestampUI = Microsoft.Performance.SDK.Timestamp;
 
 using IDVal = System.Int32; // type of Event.pid/tid / ideally: System.UInt32
 using QWord = System.UInt64;
-using System.Diagnostics;
 
 
 /*

@@ -200,7 +200,6 @@ namespace NetBlameCustomDataSource.Tables
 			if (cxn.socket != null)
 			{
 				tcbR = this.allTables.tcpTable.TcbrFromI(cxn.socket.iTCB);
-				AssertImportant((tcbR == null) == (cxn.socket.iDNS == 0)); // else may not be adequately correlated: RequestTable.CorrelateByAddress
 				AssertCritical(tcbR == null || tcbR.pid == req.pid);
 			}
 
@@ -215,6 +214,12 @@ namespace NetBlameCustomDataSource.Tables
 			url.timeRef = req.timeRef;
 			url.xlink = req.xlink; // no AddRef
 			url.myStack = new MyStackSnapshot(in req.stack, in req.xlink, req.tidStack);
+			if (tcbR == null)
+			{
+				IPAddress addr = this.allTables.dnsTable.AddressFromI(cxn.socket?.iDNS ?? 0, cxn.socket?.iAddr ?? 0);
+				if (addr != null)
+					url.ipAddrPort = new IPEndPoint(addr, (int)cxn.socket.port);
+			}
 		}
 
 		static readonly WebIO.Connection s_cxnWebIO_Null = new WebIO.Connection(0, null);
@@ -306,7 +311,25 @@ namespace NetBlameCustomDataSource.Tables
 		void AddURL(TcbRecord tcb)
 		{
 			tcb.grbitProtocol |= (byte)(tcb.fUDP ? Protocol.UDP : Protocol.TCP);
-			string strMethod = ((tcb.grbitProtocol & (byte)Protocol.Rundown) != 0) ? Protocol.Rundown.ToString() : null;
+
+			string strMethod = null;
+			if ((tcb.grbitProtocol & (byte)Protocol.Rundown) != 0)
+			{
+				strMethod = Protocol.Rundown.ToString();
+			}
+			else if (tcb.addrRemote != null)
+			{
+				strMethod = Util.ServiceFromPort(tcb.addrRemote.Port);
+				string strType = Util.AddressType(tcb.addrRemote.Address);
+				if (strType != null)
+				{
+					if (strMethod != null)
+						strMethod += " : " + strType;
+					else
+						strMethod = strType;
+				}
+			}
+
 			URL url = AddURL(null, strMethod, tcb.Pid, tcb.TidOpen, tcb.cbSend, tcb.cbRecv, in tcb, Prominent((Protocol)tcb.grbitProtocol));
 
 			url.strServer = this.allTables.dnsTable.GetServerNameAndAlt(tcb.addrRemote?.Address, null, strNA, out url.strServerAlt);
@@ -401,16 +424,21 @@ namespace NetBlameCustomDataSource.Tables
 					continue;
 				}
 
-				AssertImportant(cxn.ipProtocol == WinsockAFD.IPPROTO.TCP || cxn.ipProtocol == WinsockAFD.IPPROTO.UDP); // else handle other protocol
-
-				// Claim a TCB not otherwise claimed by WinINet or WinHTTP.
-				// WARNING: This is a best-guess: the most recent TCB that mostly matches.
-				if (cxn.iTCB == 0 && cxn.ipProtocol != WinsockAFD.IPPROTO.UDP)
-					cxn.iTCB = this.allTables.tcpTable.CorrelateByAddress(cxn.addrRemote, cxn.pid, cxn.tidClose, cxn.socket, (Protocol)cxn.grbitType);
-
-				// Try again! The Name<->Address mapping may have been added later.
-				if (cxn.iDNS == 0)
-					cxn.iDNS = this.allTables.dnsTable.IDNSFromAddress(cxn.addrRemote.Address);
+				if (cxn.ipProtocol == WinsockAFD.IPPROTO.TCP || cxn.ipProtocol == WinsockAFD.IPPROTO.UDP)
+				{
+#if DEBUG
+					// Confirm that we cannot still claim a TCB which is not otherwise claimed by WinINet or WinHTTP.
+					if (cxn.iTCB == 0 && cxn.ipProtocol != WinsockAFD.IPPROTO.UDP && cxn.socktype != WinsockAFD.SOCKTYPE.SOCK_RAW)
+						AssertImportant(0 == this.allTables.tcpTable.CorrelateByAddress(cxn.addrRemote, cxn.pid, cxn.tidClose, cxn.socket, (Protocol)cxn.grbitType));
+#endif // DEBUG
+					// Maybe we can finally claim a DNS entry which was added later.
+					if (cxn.iDNS == 0)
+						cxn.iDNS = this.allTables.dnsTable.IDNSFromAddress(cxn.addrRemote.Address);
+				}
+				else
+				{
+					AssertImportant(cxn.ipProtocol == WinsockAFD.IPPROTO.HyperV); // else do what?
+				}
 
 				AddURL(cxn);
 			}

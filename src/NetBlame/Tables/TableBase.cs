@@ -14,17 +14,22 @@ using static NetBlameCustomDataSource.Util;
 
 using TimestampUI = Microsoft.Performance.SDK.Timestamp;
 
-using IDVal = System.Int32; // type of Event.pid/tid / ideally: System.UInt32
+using IDVal = System.Int32; // type of Event.pid/tid
 
 
 namespace NetBlameCustomDataSource.Tables
 {
+	static class PID { public const IDVal Unknown = -1; } // PID.Unknown
+	static class TID { public const IDVal Unknown = -1; } // TID.Unknown
+
 	// BuildTableCore does this:
 	//   var table = Activator.CreateInstance(type, parms) as OfficeTaskPoolTableBase;
 	// If this creates more than one table type then it helps to share a base type.
 
 	public abstract class NetBlameTableBase
 	{
+		public static string StringFromInt(IDVal val) => (val >= 0) ? val.ToString("N0") : Util.strNA;
+
 		protected PendingSources Sources { get; }
 
 		protected AllTables Tables { get; }
@@ -238,12 +243,12 @@ namespace NetBlameCustomDataSource.Tables
 				// TODO: race condition / concurrency problem?
 			}
 
-			builder.AppendFormat(" ({0})", proc?.Id ?? 0);
+			builder.AppendFormat(" ({0})", NetBlameTableBase.StringFromInt(proc?.Id ?? PID.Unknown));
 
 			return builder.ToString();
 		}
 
-		public static IDVal Thread(T obj) => obj.TidOpen;
+		public static string Thread(T obj) => NetBlameTableBase.StringFromInt(obj.TidOpen);
 
 		public static IStackSnapshot OpenStack(T obj) => obj.Stack;
 
@@ -283,8 +288,8 @@ namespace NetBlameCustomDataSource.Tables
 		// int -> IProcess -> cached string (proc name, friendly name, pid)
 		public readonly IProjection<int, string> processCachedFullNameProjector;
 
-		// int -> IDVal: Thread
-		public readonly IProjection<int, IDVal> threadProjector;
+		// int -> numeric string: Thread
+		public readonly IProjection<int, string> threadProjector;
 
 		// int -> uint
 		public readonly IProjection<int, uint> linkIndexProjector;
@@ -321,7 +326,7 @@ namespace NetBlameCustomDataSource.Tables
 			var processFullNameProjector = Projection.Project(processProjector, GeneratorCommon<T>.ProcFullName);
 			this.processCachedFullNameProjector = Projection.CacheOnFirstUse(cTableBase, processFullNameProjector);
 
-			// int -> IDVal: Thread
+			// int -> numeric string: Thread
 			this.threadProjector = Projection.Project(baseProjector, GeneratorCommon<T>.Thread);
 
 			this.linkTypeProjector = Projection.Project(baseProjector, GeneratorCommon<T>.LinkType);

@@ -6,6 +6,7 @@ REM Licensed under the MIT License.
 REM Download symbols based on those referenced in the given ETW log file (.etl).
 REM Optionally limit downloads to the given modules (faster).
 REM EnvVar OVerbose=1 : report commands executed
+REM EnvVar WPT_PATH : find XPerf here
 
 setlocal
 
@@ -37,6 +38,9 @@ call :SetSymDir
 if not defined _NT_SYMBOL_PATH set _NT_SYMBOL_PATH=%SYMPATH_DFT%
 if not defined _NT_SYMCACHE_PATH set _NT_SYMCACHE_PATH=%SYMCACHE_DFT%
 
+if defined WPT_PATH set path=%WPT_PATH:"=%;%path%
+if defined OVerbose echo XPERF: & where xperf & echo:
+
 REM Older versions of XPerf.exe copy PDB files to the current directory, which will be _SYMDIR.
 
 pushd "%_SYMDIR%"
@@ -50,7 +54,7 @@ echo:
 
 rem XPerf.exe is often adjacent to WPA.exe, or available in the ADK / Windows Performance Toolkit: https://aka.ms/adk
 
-set _filter=findstr /r "bytes.*SYMSRV.*RESULT..0x00000000"
+set _filter=findstr /r /c:"[0-9] bytes -"
 set _filter1=2^>^&1 ^| %_filter%
 set _filter2=2^^^>^^^&1 ^^^| %_filter%
 
@@ -230,4 +234,10 @@ echo Download all referenced modules, or (faster) the modules listed and depende
 echo See: https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#deeper
 echo See: https://github.com/microsoft/MSO-Scripts/wiki/Symbol-Resolution#native
 echo See: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/xperf/symbols
+echo:
+echo Optional Environment Variables:
+echo _NT_SYMBOL_PATH=cache*%SystemDrive%\Symbols;srv*https://msdl.microsoft.com/download/symbols
+echo _NT_SYMCACHE_PATH=%SystemDrive%\SymCache
+echo WPT_PATH=^<path containing XPerf.exe^> (no quotes)
+echo OVerbose=1 (diagnostic output)
 exit /b 1

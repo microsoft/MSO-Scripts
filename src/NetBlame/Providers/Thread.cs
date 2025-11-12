@@ -380,8 +380,10 @@ namespace NetBlameCustomDataSource.Thread
 				Then there will be a Thread Create event followed by a Rundown event.
 				But the Thread pre-dispatcher queues all of the Rundown events before the Create events.
 				If that happens here, ignore this thread's Rundown event/record.
+				Also, thread events can duplicate in a merged trace: xperf/wpr -merge ...
 			*/
-				AssertImportant(!FTestThreadItem(evt.ThreadEvt.ThreadId) || IsRundownThread(evt.ThreadEvt.ThreadId));
+				if (FTestThreadItem(evt.ThreadEvt.ThreadId) && !IsRundownThread(evt.ThreadEvt.ThreadId))
+					break;
 
 				tItem = AddThread(in evt);
 
@@ -399,6 +401,7 @@ namespace NetBlameCustomDataSource.Thread
 
 			case TEID.Rundown:
 				// Feed the Thread Oracle with every thread we can find.
+				// (Thread events can duplicate in a merged trace: xperf/wpr -merge ...)
 				AssertImportant(!FTestThreadItem(evt.ThreadEvt.ThreadId));
 				AddThread(in evt);
 				break;

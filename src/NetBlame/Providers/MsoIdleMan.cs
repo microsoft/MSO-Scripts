@@ -256,7 +256,6 @@ namespace NetBlameCustomDataSource.MsoIdleMan
 			case TaskID.IdleDeregisterTask:
 				dwID = evt.GetUInt32("dwID");
 				cookie = (int)evt.GetUInt64("cookie");
-// TODO: Sometimes the dwID is invalid here.
 				imTask = FindTask(dwID, cookie, evt.ProcessId);
 				if (imTask != null)
 				{
@@ -313,8 +312,10 @@ namespace NetBlameCustomDataSource.MsoIdleMan
 #if DEBUG
 				case IdleFlag.ChangeDeleteTask:
 					// This could fail when the trace missed the app launch.
+					// The cookie is occasionally invalid.
+					QWord cookieQ = evt.GetUInt64("cookie");
 					int cookiePrev = this.cookieDispenser.GetPrevCookie(evt.ProcessId);
-					AssertImportant(cookiePrev >= cookie || cookiePrev == 0);
+					AssertImportant(cookiePrev >= cookie || cookiePrev == 0 || cookieQ != (QWord)cookie);
 					break;
 #endif // DEBUG
 				}

@@ -377,6 +377,7 @@ Param ( # $ViewerParams 'parameter splat'
 		# Case 2: Do not proceed.
 
 		Write-Err "Found an older version of the Windows Performance Analyzer (WPA): $Version"
+		Write-Err "`"$WpaPath`""
 		Write-Err "The minimum version for this analysis is: $VersionMinForAddin"
 		WriteWPTInstallMessage "WPA.exe"
 		exit 1
@@ -390,9 +391,9 @@ Param ( # $ViewerParams 'parameter splat'
 	$ExtraParams = $Null
 	$Processors = $Null
 
-	if (!$Version -or ($Version -ge $VersionForProcessors) -or !$WpaPath.EndsWith('.exe'))
+	if (!$Version -or !(IsRealVersion $Version) -or ($Version -ge $VersionForProcessors))
 	{
-		# Required for WPA.bat or WPA.exe v11.8+ to bypass the New WPA Launcher
+		# Required for WPA.bat or WindowsApps\WPA.exe (stub) or WPA.exe v11.8+ to bypass the New WPA Launcher.
 		$Processors = GetPluginsList $Version
 		$ExtraParams += GetArgs -processors $Processors
 	}

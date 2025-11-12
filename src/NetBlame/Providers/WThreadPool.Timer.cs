@@ -60,11 +60,9 @@ namespace NetBlameCustomDataSource.WThreadPool.Timer
 
 		public WTP Status { get => (WTP)status; set { status = (byte)value; } }
 
-		// TODO: Are these 8 functions needed?
-		public TimestampUI TimeSet { get => timeCreate; set { timeCreate = value; } }
-		public TimestampUI TimeExpire { get => timeStartExec; set { timeStartExec = value; } }
-		public IDVal TidSet { get => tidCreate; set { tidCreate = value; } }
 		public IDVal TidExpire { get => tidExec; set { tidExec = value; } }
+
+		public const IDVal tidUnknown = -1;
 
 		public WTPTimer(/*in*/ TIMER_1<Addr32> evt)
 				: base(evt.idProcess, evt.idThread/*Set*/, /*timeSet*/evt.timeStamp.ToGraphable())
@@ -127,7 +125,7 @@ namespace NetBlameCustomDataSource.WThreadPool.Timer
 					if (timer.Recurring)
 					{
 						// TODO: How does this work with accumulating execution time, capturing references, etc?
-						timer.TidExpire = 0;
+						timer.TidExpire = WTPTimer.tidUnknown;
 						timer.Status = WTP.TimerSet;
 					}
 					else

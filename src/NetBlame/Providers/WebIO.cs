@@ -48,7 +48,7 @@ namespace NetBlameCustomDataSource.WebIO
 			RequestClose_Start = 19, // unused
 			SessionClose_Stop = 29, // unused
 			RequestClose_Stop = 30,
-			RequestHeader_Send = 100, // unused
+			RequestHeader_Send = 100,
 			RequestHeader_Recv = 101,
 			RequestWaitingForConnection_Stop = 104,
 			RequestSend_Start = 130, // unused
@@ -113,26 +113,61 @@ namespace NetBlameCustomDataSource.WebIO
 		}
 
 
+		/*
+			Get a value which represents a Request handle, derived from the ActivityId.
+			This value is not always the handle of the true corresponding Request.
+		*/
 		static public QWord GetHReq(in IGenericEvent evt)
 		{
-			AssertCritical(evt.Id == (int)WIO.RequestWaitingForConnection_Stop
+			AssertCritical(evt.Id == (int)WIO.RequestWaitingForConnection_Stop // always valid?
 					|| evt.Id == (int)WIO.ConnectionSocketCreate
 					|| evt.Id == (int)WIO.ConnectionSocketConnect_Start
 					|| evt.Id == (int)WIO.ConnectionSocketConnect_Stop
 					|| evt.Id == (int)WIO.ConnectionSocketConnect_Stop2
 					|| evt.Id == (int)WIO.ConnectionSocketClose // valid in one case
-					|| evt.Id == (int)WIO.RequestHeader_Recv // sometimes invalid
-					|| evt.Id == (int)WIO.ConnectionSocketSend_Start // rarely invalid
-					|| evt.Id == (int)WIO.ConnectionSocketSend_Stop  // rarely invalid
+					|| evt.Id == (int)WIO.RequestHeader_Send
+					|| evt.Id == (int)WIO.RequestHeader_Recv
+					|| evt.Id == (int)WIO.ConnectionSocketSend_Start
+					|| evt.Id == (int)WIO.ConnectionSocketSend_Stop
 					|| evt.Id == (int)WIO.ConnectionSocketReceive_Start
 					|| evt.Id == (int)WIO.ConnectionSocketReceive_Stop
-					|| evt.Id == (int)WIO.ConnectionNameResolutionRequest_Start
+					|| evt.Id == (int)WIO.ConnectionNameResolutionRequest_Start // always valid?
 					|| evt.Id == (int)WIO.ConnectionNameResolutionRequest_Stop
 					|| evt.Id >= (int)ThreadAction.First && evt.Id <= (int)ThreadAction.Last);
 
 			// Return the first 8 bytes of the ActivityId Guid.
 			return BitConverter.ToUInt64(evt.ActivityId.ToByteArray());
 		}
+
+		/*
+			Get a value which is probably the Request Id.
+			The low 32 bits are in the ActivityId.
+			The high 32 bits are inferred from an adjacent allocation within the same heap.
+		*/
+		static public QWord GuessRequest(in IGenericEvent evt, QWord qw)
+		{
+			uint dw = BitConverter.ToUInt32(evt.ActivityId.ToByteArray(), 8);
+			qw = (qw & 0xFFFFFFFF00000000) | dw;
+			return qw;
+		}
+
+		Request RestoreRequest(in IGenericEvent evt, QWord qwReq)
+		{
+			Request req = new Request(evt, GetHReq(in evt)); // GetHReq not always dependable here, bit it's the best we've got.
+			req.qwRequest = qwReq;
+			req.xlink.ReGetLink(evt.ThreadId, in req.timeOpen, in allTables.threadTable); // Useful??
+			this.requestTable.Add(req);
+			return req;
+		}
+
+		Request RestoreRequestCxn(in IGenericEvent evt, QWord qwCxn)
+		{
+			Request req = RestoreRequest(in evt, GuessRequest(in evt, qwCxn));
+			req.qwConnectionCur = qwCxn;
+			req.ConfirmValidity();
+			return req;
+		}
+
 
 		const uint S_OK = 0;
 
@@ -169,7 +204,26 @@ namespace NetBlameCustomDataSource.WebIO
 				timeStamp = evt.Timestamp.ToGraphable();
 				req = requestTable.CloseRequest(evt.GetAddrValue("ApiObject")/*qwReq*/, evt.GetUInt64("ApiHandle")/*hReq*/, evt.ProcessId, in timeStamp);
 				break;
-
+#if DEBUG
+			case WIO.RequestHeader_Send:
+				try
+				{
+					// Parses ALL of this event's fields.
+					qw = evt.GetAddrValue("Request");
+					req = requestTable.FindRequest(qw, evt.ProcessId, evt.Timestamp.ToGraphable());
+					AssertImportant(req != null);
+					req?.HandleValidity(in evt, true);
+				}
+				catch
+				{
+					// Parsing the "Headers" field threw an exception.
+					hReq = GetHReq(in evt); // not a field
+					req = requestTable.FindOpenRequestByHReq(hReq, evt.ProcessId);
+					AssertImportant(req != null);
+					req?.HandleValidity(in evt, false);
+				}
+				break;
+#endif // DEBUG
 			case WIO.RequestHeader_Recv:
 				requestTable.AddHeader(in evt);
 				break;
@@ -182,12 +236,11 @@ namespace NetBlameCustomDataSource.WebIO
 
 				AssertInfo(req != null);
 				if (req == null)
-				{
-					req = new Request(in evt, GetHReq(in evt)); // GetHReq not always dependable here, bit it's the best we've got.
-					req.qwConnectionCur = qw;
-				}
+					req = RestoreRequestCxn(in evt, qw);
 
+				AssertInfo(req.qwRequest == GuessRequest(in evt, qw));
 				AssertImportant(req.FOpen);
+				req.ConfirmValidity(); // valid qwConnectionCur
 
 				if (req.rgConnection == null)
 					req.rgConnection = new List<Connection>((int)evt.GetUInt64("RemainingAddressCount"));
@@ -236,8 +289,15 @@ namespace NetBlameCustomDataSource.WebIO
 			case WIO.ConnectionSocketSend_Start:
 				AssertImportant(evt.GetUInt32("Error") == S_OK);
 				AssertImportant(evt.GetUInt64("Information") == 0);
+
 				cxn = requestTable.GetConnection(in evt);
-				if (cxn == null) break;
+				if (cxn == null)
+				{
+					qw = evt.GetAddrValue("Connection");
+					req = RestoreRequestCxn(in evt, qw);
+					cxn = requestTable.SetRequestConnection(in evt, req, qw, -1);
+					AssertCritical(req.rgConnection[^1] == cxn);
+				}
 
 				// Unfortunately we can't get a cbSend directly (in older versions of Windows), like we can for cbRecv.
 				// Attract a TCB correlation via TCP.SendPosted.  See SendSocketTCB.
@@ -245,13 +305,12 @@ namespace NetBlameCustomDataSource.WebIO
 				AssertImportant(cxn.cbSendTCB == 0);
 				AssertImportant(cxn.tidSend == 0);
 				cxn.tidSend = evt.ThreadId;
+				cxn.ctxSend = evt.GetAddrValue("Context");
 				break;
 
 			case WIO.ConnectionSocketSend_Stop:
 				cxn = requestTable.GetConnection(in evt);
 				if (cxn == null) break;
-
-				AssertImportant(FImplies(cxn.tidSend != 0, cxn.tidSend == evt.ThreadId)); // Start & Stop are on the same thread!
 
 				AssertImportant(cxn.error == S_OK);
 				cxn.error = evt.GetUInt32("Error");
@@ -272,6 +331,7 @@ namespace NetBlameCustomDataSource.WebIO
 				// Stop attracting a TCB correlation via TCP.SendPosted.
 				cxn.cbSendTCB = 0;
 				cxn.tidSend = 0;
+				cxn.ctxSend = 0;
 				break;
 
 			case WIO.ConnectionSocketReceive_Start:
@@ -279,9 +339,16 @@ namespace NetBlameCustomDataSource.WebIO
 				AssertImportant(evt.GetUInt64("Information") == 0);
 
 				cxn = requestTable.GetConnection(in evt);
-				if (cxn == null) break;
+				if (cxn == null)
+				{
+					qw = evt.GetAddrValue("Connection");
+					req = RestoreRequestCxn(in evt, qw);
+					cxn = requestTable.SetRequestConnection(in evt, req, qw, -1);
+					AssertCritical(req.rgConnection[^1] == cxn);
+				}
 
 				cxn.tidRecv = evt.ThreadId; // for correlation with WebIO, not necessarily with Stop
+				cxn.ctxRecv = evt.GetAddrValue("Context");
 				break;
 
 			case WIO.ConnectionSocketReceive_Stop:
@@ -291,10 +358,15 @@ namespace NetBlameCustomDataSource.WebIO
 				if (cbRecv == 0) break;
 
 				cxn = requestTable.GetConnection(in evt);
-				if (cxn == null) break;
+				if (cxn == null)
+				{
+					qw = evt.GetAddrValue("Connection");
+					req = RestoreRequestCxn(in evt, qw);
+					cxn = requestTable.SetRequestConnection(in evt, req, qw, -1);
+					AssertCritical(req.rgConnection[^1] == cxn);
+				}
 
 				// NOTE: The Socket can continue to receive data even after the Request is closed!
-
 				// Even if the server sent some more data, it doesn't count for a closed Socket.
 				if (cxn.socket.FClosed) break;
 
@@ -303,18 +375,17 @@ namespace NetBlameCustomDataSource.WebIO
 #if DEBUG
 				cxn.socket.cbRecv += (uint)cbRecv;
 #endif // DEBUG
+				cxn.ctxRecv = 0;
 				break;
 
 			case WIO.RequestWaitingForConnection_Stop:
 				timeStamp = evt.Timestamp.ToGraphable();
 				qw = evt.GetAddrValue("Request");
 				req = requestTable.FindRequest(qw, evt.ProcessId, timeStamp);
-				AssertImportant(req == requestTable.FindOpenRequestByHReq(GetHReq(in evt), evt.ProcessId));
 				if (req == null)
-				{
-					req = new Request(evt, GetHReq(in evt));
-					req.qwRequest = qw;
-				}
+					req = RestoreRequest(in evt, qw);
+
+				AssertImportant(req == requestTable.FindOpenRequestByHReq(GetHReq(in evt), evt.ProcessId));
 
 				// This Connection value may later be abandoned in an abbreviated Connection (PATTERN 4B).
 				// This Connection might already exist, and it (its Socket) needs to be transferred from another Request.
@@ -344,6 +415,7 @@ namespace NetBlameCustomDataSource.WebIO
 					cxn.fOutdated = false;
 					cxn.fTransferred = true;
 #endif // DEBUG
+					cxn.fDuplicate = true;
 				}
 				// else this Connection will be added later: ConnectionSocketConnect_Start
 
@@ -354,12 +426,8 @@ namespace NetBlameCustomDataSource.WebIO
 				qw = evt.GetAddrValue("DnsQuery"); // DnsQuery = Connection
 				hReq = GetHReq(in evt);
 				req = requestTable.FindOpenRequestByHReq(hReq, evt.ProcessId);
-				AssertInfo(req != null);
 				if (req == null)
-				{
-					req = new Request(in evt, hReq);
-					req.qwConnectionCur = qw;
-				}
+					req = RestoreRequestCxn(in evt, qw);
 
 				AssertImportant(req.FOpen);
 				AssertImportant(req.qwConnectionCur == qw);
@@ -380,12 +448,9 @@ namespace NetBlameCustomDataSource.WebIO
 			case WIO.ConnectionNameResolutionRequest_Stop:
 				qw = evt.GetAddrValue("DnsQuery"); // DnsQuery = Connection
 				req = requestTable.FindOpenRequestByConnection(qw, evt.ProcessId);
-				AssertInfo(req != null);
 				if (req == null)
-				{
-					req = new Request(in evt, GetHReq(in evt)); // GetHReq not always dependable here, but it's the best we've got.
-					req.qwConnectionCur = qw;
-				}
+					req = RestoreRequestCxn(in evt, qw);
+
 				AssertImportant(req.FOpen);
 
 				req.strServer = allTables.dnsTable.ConnectNameResolution(in evt, req.strServer);
@@ -395,7 +460,7 @@ namespace NetBlameCustomDataSource.WebIO
 				if ((ThreadAction)evt.Id >= ThreadAction.First && (ThreadAction)evt.Id <= ThreadAction.Last)
 				{
 					// OverlappedIO records are useful. WorkItem records, too. Timer records are not.
-					
+
 					ActionType actionType = (ActionType)evt.GetUInt32("EtwQueueActionType");
 					AssertImportant(actionType == ActionType.OverlappedIO ||
 							actionType == ActionType.Timer ||
