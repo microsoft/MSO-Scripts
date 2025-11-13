@@ -34,7 +34,7 @@
                 <Column Guid="e6b391a8-d2c4-d459-02a2-3a8b6585703d" Name="URL" SortPriority="2" Width="386" IsVisible="true" HelpText="Full URL Path" />
                 <Column Guid="da5cd305-10bf-285c-61e2-493e6f232fb3" Name="IPAddr:Port" SortPriority="2" Width="170" IsVisible="true" HelpText="Remote IP Address &amp; Port" />
                 <Column Guid="ec53a8c4-f07b-aed5-d882-5072c89799be" Name="Status" SortPriority="0" Width="150" IsVisible="false" HelpText="Last non-zero status of the transaction" />
-                <Column Guid="6c2c4e61-8f05-ab1d-567a-d53851e77c3d" Name="GeoLocation" SortPriority="0" Width="180" IsVisible="false" HelpText="IP Geolocation by geoPlugin:&#xA; https://www.geoplugin.com/ &#xA;This product includes GeoLite data created by MaxMind,&#xA;available from: https://www.maxmind.com" />
+                <Column Guid="6c2c4e61-8f05-ab1d-567a-d53851e77c3d" Name="GeoLocation" SortPriority="0" Width="180" IsVisible="false" HelpText="IP Geolocation provided by ip-api:&#xA; https://ip-api.com" />
                 <Column Guid="e02d2ae0-3de9-d493-df2b-6b2d2813d302" Name="Duration" AggregationMode="Max" SortPriority="2" TextAlignment="Right" Width="96" CellFormat="mN" IsVisible="true" HelpText="Time from Open to Close (ms)">
                   <DurationInViewOptionsParameter TimeStampColumnGuid="c2a764ec-9a6c-eb16-8137-cf1b6b8b8bea" TimeStampType="Start" InViewEnabled="false" />
                 </Column>

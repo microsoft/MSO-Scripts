@@ -17,7 +17,7 @@ This add-in analyzes and summarizes network and thread pool ETW events:
 
 It is based on the [Microsoft Performance Toolkit SDK](https://github.com/microsoft/microsoft-performance-toolkit-sdk)
 
-This product includes GeoLite2 data created by MaxMind, available from https://www.maxmind.com
+This product includes GeoLocation data created by ip-api, available at https://ip-api.com
 
 # Build
 

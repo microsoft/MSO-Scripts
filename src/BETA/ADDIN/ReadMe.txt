@@ -1,7 +1,6 @@
 Copyright (c) Microsoft Corporation. Licensed under the MIT License.
 
-This product includes GeoLite2 data created by MaxMind, available from
-  https://www.maxmind.com
+This component uses the free IP-GeoLocation API from ip-api at: https://ip-api.com
 
 This is the _only_ folder with binary executable code, consisting of WPA add-ins.
 It can be removed with only limited loss of functionality for the WPA viewer.
