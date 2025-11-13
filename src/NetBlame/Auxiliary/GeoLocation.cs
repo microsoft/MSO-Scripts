@@ -3,32 +3,47 @@
 
 using System.Net;
 using System.Net.Http;
-using System.Xml;
 using System.IO;
+
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 using static NetBlameCustomDataSource.Util;
 
 namespace NetBlameCustomDataSource
 {
-	// IP Geolocation by geoPlugin: http://www.geoplugin.com/
-	// This product includes GeoLite data created by MaxMind, available from: http://www.maxmind.com
-
+/*
+	This component uses the free IP-GeoLocation API from ip-api.
+	- Service:      https://ip-api.com
+	- Attribution:  Geolocation data provided by ip-api.com
+	- License:      Free for non-commercial use only
+	- Rate limit:   45 requests per minute (free tier)
+*/
 	static class GeoLocation
 	{
-		public static string Attribution => "IP Geolocation by geoPlugin:\n http://www.geoplugin.com/ \nThis product includes GeoLite data created by MaxMind,\navailable from: http://www.maxmind.com";
+		public static string Attribution => "\nIP GeoLocation powered by ip-api.com – the free, non-commercial API.\nhttps://www.ip-api.com";
 
-		static string strGetXmlService = "http://www.geoplugin.net/xml.gp?ip=";
+		static string strGeoService = "ip-api.com";
+		static string strGetGeoService1 = "http://ip-api.com/json/";
+		static string strGetGeoService2 = "?fields=status,message,country,regionName,city";
 
-		enum XmlName
+		public class Place
 		{
-			none =        0x00,
-			bitfCountry = 0x01,
-			bitfRegion =  0x02,
-			bitfCity =    0x04,
-			bitfStatus =  0x08,
-			bitfAll = bitfCountry | bitfRegion | bitfCity | bitfStatus
-		};
+			[JsonPropertyName("status")]
+			public string Status { get; set; }
 
+			[JsonPropertyName("message")]
+			public string Message { get; set; }
+
+			[JsonPropertyName("country")]
+			public string Country { get; set; }
+
+			[JsonPropertyName("regionName")]
+			public string Region { get; set; }
+
+			[JsonPropertyName("city")]
+			public string City { get; set; }
+		}
 
 		/*
 			Return a string representing the geolocation of this IPAddress.
@@ -47,107 +62,68 @@ namespace NetBlameCustomDataSource
 			if (ipAddr.IsIPv4MappedToIPv6)
 				ipAddr = ipAddr.MapToIPv4();
 
-			string strRequest = strGetXmlService + ipAddr.ToString();
+			string strRequest = strGetGeoService1 + ipAddr.ToString() + strGetGeoService2;
+
+			Place place = null;
 
 			try
 			{
 				HttpClient client = new HttpClient();
 				using HttpResponseMessage response = client.GetAsync(strRequest).GetAwaiter().GetResult();
+
+				if (response.StatusCode == HttpStatusCode.TooManyRequests)
+					return "Too Many Requests: " + strGeoService;
+
+				AssertImportant(response.StatusCode == HttpStatusCode.OK);
+
 				response.EnsureSuccessStatusCode(); // may throw
+
 				Stream stream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
+				AssertImportant(stream?.CanRead ?? false);
 
-				// Parse the response XML into: Country / Region / City
+				// Parse the response JSON into: Country / Region / City
 
-				XmlReader xmlReader = new XmlTextReader(stream);
-
-				string strCountryName = null;
-				string strRegionName = null;
-				string strCityName = null;
-				string strStatus = null;
-
-				XmlName grbitName = XmlName.none;
-				string strXmlName = string.Empty;
-				while (xmlReader.Read())
-				{
-					string strValue = null;
-
-					switch (xmlReader.NodeType)
-					{
-					case XmlNodeType.Element:
-						strXmlName = xmlReader.Name;
-						continue; // no break test needed
-
-					case XmlNodeType.Text:
-						strValue = xmlReader.Value;
-						goto case XmlNodeType.Whitespace;
-
-					case XmlNodeType.Whitespace:
-						switch (strXmlName)
-						{
-						case "geoplugin_countryName":
-							grbitName |= XmlName.bitfCountry;
-							strCountryName = strValue;
-							break;
-						case "geoplugin_region":
-							grbitName |= XmlName.bitfRegion;
-							strRegionName = strValue;
-							break;
-						case "geoplugin_city":
-							grbitName |= XmlName.bitfCity;
-							strCityName = strValue;
-							break;
-						case "geoplugin_status":
-							grbitName |= XmlName.bitfStatus;
-							strStatus = strValue;
-							break;
-						default:
-							continue; // no break test needed
-						}
-						strXmlName = null;
-						break;
-					default:
-						continue; // no break test needed
-					} // switch xmlReader.NodeType
-
-					if (grbitName == XmlName.bitfAll)
-						break;
-				} // while mlReader.Read
-
-				AssertImportant(grbitName == XmlName.bitfAll); // Saw the expected XML records.
-
-				// Turn the three location strings into one.
-
-				System.Text.StringBuilder sbLocation = new System.Text.StringBuilder(32);
-
-				if (strCountryName != null)
-				{
-					if (strRegionName != null && strCountryName == "United States")
-						strCountryName = "USA";
-
-					sbLocation.Append(strCountryName);
-				}
-				if (strRegionName != null) // This is the State if the Country is USA.
-				{
-					sbLocation.Append(" / ");
-					sbLocation.Append(strRegionName);
-				}
-				if (strCityName != null)
-				{
-					sbLocation.Append(" / ");
-					sbLocation.Append(strCityName);
-				}
-				if (strStatus != null && sbLocation.Length == 0)
-				{
-					sbLocation.Append("Geo status: ");
-					sbLocation.Append(strStatus);
-				}
-
-				return sbLocation.ToString();
+				if (stream?.CanRead ?? false)
+					place = JsonSerializer.Deserialize<Place>(stream);
 			}
-			catch
+			catch (System.Exception x)
 			{
-				return string.Empty;
+				return x.Message;
 			}
+
+			if (place == null)
+				return Util.strNA; // N/A
+
+			if (!place.Status.Equals("success"))
+				return place.Message;
+
+			// Turn the three location strings into one.
+
+			System.Text.StringBuilder sbLocation = new System.Text.StringBuilder(32);
+
+			if (!string.IsNullOrWhiteSpace(place.Country))
+			{
+				if (!string.IsNullOrWhiteSpace(place.Region) && place.Country.Equals("United States"))
+					place.Country = "USA";
+
+				sbLocation.Append(place.Country);
+			}
+			if (!string.IsNullOrWhiteSpace(place.Region)) // This is the State if the Country is USA.
+			{
+				sbLocation.Append(" / ");
+				sbLocation.Append(place.Region);
+			}
+			if (!string.IsNullOrWhiteSpace(place.City))
+			{
+				sbLocation.Append(" / ");
+				sbLocation.Append(place.City);
+			}
+
+			AssertImportant(sbLocation.Length > 0);
+			if (sbLocation.Length == 0)
+				return Util.strNA; // N/A
+
+			return sbLocation.ToString();
 		} // GetGeoLocation
 	} // class GeoLocation
 }
