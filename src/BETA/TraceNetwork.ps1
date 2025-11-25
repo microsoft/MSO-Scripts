@@ -173,15 +173,16 @@ function GetAddinPath
 
 	$moduleName = 'NetBlameAddIn.dll'
 	$paths = Resolve-Path -Path $AddInPaths -ErrorAction:SilentlyContinue
-	$pathIOs = $paths | ForEach-Object { Get-ChildItem -Path $_ -Filter $moduleName -File -Recurse -ErrorAction:SilentlyContinue }
+	$pathIOs = $paths | ForEach-Object { Get-ChildItem -Path $_ -Filter $moduleName -Recurse -ErrorAction:SilentlyContinue }
 
 	if (!$pathIOs)
 	{
-		Write-Err "The `"NetBlame`" WPA Plug-in ($moduleName) was not be found at any of these locations:"
-		foreach ($path in $AddInPaths) { Write-Err "`t$path" }
-		foreach ($path in $paths) { Write-Err "`t$($path.Path)" }
+		[string[]]$uPaths = ($paths.Path + $AddInPaths) | Sort-Object -Unique -Descending
 
-		Write-Info "Please see: https://github.com/Microsoft/MSO-Scripts/wiki/Network-Activity"
+		Write-Err "The `"NetBlame`" WPA Plug-in ($moduleName) was not be found at any of these locations:"
+		foreach ($path in $uPaths) { Write-Err "`t$($path)" }
+
+		Write-Info 'Please see: https://github.com/Microsoft/MSO-Scripts/wiki/Network-Activity#plugin'
 
 		# No reason to go on!
 		exit 1
@@ -199,7 +200,7 @@ function GetAddinPath
 
 
 <#
-	Return a quoted, comma-separated string of WPA Plug-ins needed for this script.
+	Return a string array of WPA Plug-ins needed for this script.
 	Usually: "Event Tracing for Windows","Office_NetBlame"
 #>
 function GetPluginsList
@@ -211,7 +212,7 @@ Param (
 	if ($WpaVersion)   { $ETW_Plugins = GetRegistryValue $WPA_Version_RegPath $WpaVersion.ToString() }
 	if (!$ETW_Plugins) { $ETW_Plugins = $ETW_Plugins_Default }
 
-	return ($ETW_Plugins | ForEach-Object { "`"$_`"" }) -join ','
+	return $ETW_Plugins
 }
 
 
@@ -230,13 +231,13 @@ Param (
 )
 	Write-Status "Querying WPA for a list of available plug-ins."
 
-	# Query WPA for the list of available plug-ins.
+	if (IsShellPath $WpaPath) { $WpaPath = ShimPathFromShellPath $WpaPath }
 
+	# Query WPA for the list of available plug-ins.
 	$WpaPath2 = $Null
 	$timeStart = Get-Date
 	$WpaListArgs = GetArgs -listplugins -addsearchdir $SearchDir
 	$Result = InvokeExe $WpaPath @WpaListArgs
-
 	if (!$Result -and ($global:LastExitCode -eq 329)) # ERROR_OPERATION_IN_PROGRESS
 	{
 		# Running a batch file process wrapper, so no result available.
@@ -277,9 +278,21 @@ Param (
 	Write-Status $PluginList
 
 	# Compare the queried plug-ins agains the default or previously registered plug-ins.
+	# If there is no difference then return $False : nothing changed.
 
 	$PluginsPrev = GetPluginsList $WpaVersion
-	if ((Compare-Object -ReferenceObject $Plugins -DifferenceObject $PluginsPrev -IncludeEqual).Count -eq 0) { return $False }
+
+	if ($PluginsPrev -and ($PluginsPrev.Count -ne 0) -and ($PluginsPrev.Count -eq $Plugins.Count))
+	{
+		[bool]$fSame = $True
+		for ($i = 0; $i -lt $Plugins.Count; $i = $i + 1)
+		{
+			if ($Plugins[$i] -ne $PluginsPrev[$i]) { $fSame = $False; break }
+		}
+		if ($fSame) { return $False }
+	}
+
+	Write-Status "Resetting WPA Plug-in Names from [ $PluginsPrev ] to [ $Plugins ]."
 
 	# The list of plug-ins is different from the default, or what was previously registered.
 
@@ -349,17 +362,18 @@ Param ( # $ViewerParams 'parameter splat'
 
 	# Find the most recent version of the viewer: Windows Performance Analyzer (WPA)
 
-	$WpaPath = GetWptExePath "WPA.exe"
+	$WPA = 'WPA.exe'
+	$WpaPath = GetWptExePath $WPA
 	$Version = GetFileVersion $WpaPath
 
 	if ((IsRealVersion $Version) -and !$env:WPT_PATH)
 	{
 		# Find an even newer version, maybe.
 
-		$WpaPath2 = GetWptExePath "WPA.exe" -Silent -AltPath
+		$WpaPath2 = GetWptExePath $WPA -Silent -NoShell -AltPath
 		$Version2 = GetFileVersion $WpaPath2
 
-		if ($Version2 -and ($Version2 -gt $Version))
+		if ((IsRealVersion $Version2) -and ($Version2 -gt $Version))
 		{
 			$WpaPath = $WpaPath2
 			$Version = $Version2
@@ -369,7 +383,7 @@ Param ( # $ViewerParams 'parameter splat'
 <#
 	1. Found a recent WPA
 	2. Found an old WPA
-	3. Found WPA.bat or stub WPA.exe without 'real' version info
+	3. Found WPA.bat or AppExecAlias shim file WPA.exe without 'real' version info
 	4. Found no WPA (but try to launch "WPA" anyway)
 #>
 	if ((IsRealVersion $Version) -and ($Version -lt $VersionMinForAddin))
@@ -393,12 +407,16 @@ Param ( # $ViewerParams 'parameter splat'
 
 	if (!$Version -or !(IsRealVersion $Version) -or ($Version -ge $VersionForProcessors))
 	{
-		# Required for WPA.bat or WindowsApps\WPA.exe (stub) or WPA.exe v11.8+ to bypass the New WPA Launcher.
+		# Required for WPA.bat or WPA.exe v11.8+ to bypass the New WPA Launcher.
 		$Processors = GetPluginsList $Version
-		$ExtraParams += GetArgs -processors $Processors
+		foreach ($Processor in $Processors)
+		{
+			$ExtraParams += GetArgs -processors "`"$Processor`""
+		}
 	}
 
-	$ExtraParams += GetArgs -addsearchdir "`"$(GetAddinPath)`"" -NoSymbols
+	$AddInPath = GetAddinPath
+	$ExtraParams += GetArgs -addsearchdir "`"$AddInPath`"" -NoSymbols
 
 	# Now load LaunchViewerCommand and related.
 
@@ -419,7 +437,7 @@ Param ( # $ViewerParams 'parameter splat'
 				Write-Warn
 				Write-Warn "WPA did not launch."
 				Write-Warn "The issue has been corrected with an updated list of WPA plug-ins."
-				Write-Action "Please simply re-run the command: $(GetScriptCommand) View ..."
+				Write-Action "Please simply re-run the same command: $(GetScriptCommand) View ..."
 			}
 			else
 			{
