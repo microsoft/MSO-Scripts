@@ -102,7 +102,7 @@ Param (
 		$CacheFolder = ($CacheFolder[0] -split "[*]")[1] # <cache_folder>
 
 		mkdir $CacheFolder -ErrorAction:SilentlyContinue >$Null
-		if (Test-Path -PathType container -Path $CacheFolder -ErrorAction:SilentlyContinue)
+		if (Test-FolderPath $CacheFolder)
 		{
 			$script:SymbolDrive = ('{0}:' -f ($CacheFolder -split ":")[0])
 			$script:PdbCacheFolder = $CacheFolder
@@ -133,7 +133,7 @@ Param (
 	{
 		mkdir $script:PdbCacheFolder -ErrorAction:SilentlyContinue >$Null
 
-		if (Test-Path -PathType container -Path $script:PdbCacheFolder -ErrorAction:SilentlyContinue)
+		if (Test-FolderPath $script:PdbCacheFolder)
 		{
 			$env:_NT_SYMBOL_PATH = $PdbPathDefault -replace $PDB_CACHE_FOLDER,$script:PdbCacheFolder
 
@@ -157,7 +157,7 @@ Param (
 	{
 		mkdir $script:SymCacheFolder -ErrorAction:SilentlyContinue >$Null
 
-		if (Test-Path -PathType container -Path $script:SymCacheFolder -ErrorAction:SilentlyContinue)
+		if (Test-FolderPath $script:SymCacheFolder)
 		{
 			$env:_NT_SYMCACHE_PATH = $SymCacheDefault -replace $SYM_CACHE_FOLDER,$script:SymCacheFolder
 
@@ -229,8 +229,9 @@ function CheckFileUserPrivilege
 	if (!$Args) { return $True } # PSv2
 
 	# If any of these users have ReadData access, then it's accessible by a non-admin.
-	$UserList = @("$Env:USERDOMAIN\$Env:USERNAME", "BUILTIN\Users", "NT AUTHORITY\Authenticated Users", "Everyone")
+	$UserList = @("$Env:USERDOMAIN\$Env:USERNAME", "BUILTIN\Users", "NT AUTHORITY\Authenticated Users", "NT AUTHORITY\Interactive", "Everyone")
 	$ReadData = [int][System.Security.AccessControl.FileSystemRights]::ReadData # 1
+	$ExecFile = [int][System.Security.AccessControl.FileSystemRights]::ExecuteFile # 32
 
 	EnsureSecurity 'Get-Acl'
 
@@ -238,19 +239,32 @@ function CheckFileUserPrivilege
 	{
 		# Skip the switches and non-path args.
 		if ($Arg -like "-*") { continue }
-		$FilePath = $Arg.Trim('"')
-		if (!(Test-Path -LiteralPath $FilePath -ErrorAction:SilentlyContinue)) { continue }
+		$FilePath = $Arg.ToString().Trim('"')
+
+		if (!(Test-FilePath $FilePath)) { continue }
+
+		$Right = Ternary $FilePath.EndsWith('.exe', [StringComparison]::OrdinalIgnoreCase) $ExecFile $ReadData
 
 		$Readable = $False
-		$Acl = Get-Acl $FilePath
+		try
+		{
+			$Acl = Get-Acl $FilePath
+		}
+		catch
+		{
+			Write-Err "Cannot open in this security context: $FilePath"
+			return $False
+		}
+
 		foreach ($Access in $Acl.Access)
 		{
 			if (!$Access) { break } # PSv2
 
 			# BuiltIn\Users or Authenticated Users or Current User or Everyone
-			if (($UserList -contains $Access.IdentityReference) -and ([int]$Access.FileSystemRights -band $ReadData))
+			if (($UserList -contains $Access.IdentityReference) -and ([int]$Access.FileSystemRights -band $Right))
 			{
 				if ($Access.AccessControlType -eq 'Deny') { break }
+
 				$Readable = $True
 				break
 			}
@@ -288,7 +302,7 @@ function WaitForProcessResponsive
 Param (
 	[System.Diagnostics.Process]$Process
 )
-	$MaxWait = 20 # seconds
+	$MaxWait = 30 # seconds
 
 	ResetError
 
@@ -324,6 +338,7 @@ Param (
 
 			# else quick exit
 			Write-Info # End Progress
+
 			$global:LastExitCode = $Process.ExitCode
 			if (!$global:LastExitCode) { return "Early exit." }
 
@@ -346,7 +361,7 @@ Param (
 	$global:LastExitCode = 258 # WAIT_TIMEOUT
 	Write-Status "WPA: Launch timed out"
 	return 'Timed Out'
-}
+} # WaitForProcessResponsive
 
 
 <#
@@ -355,15 +370,18 @@ Param (
 #>
 function LaunchAsStandardUser
 {
+	# Must not invoke a 'shell:' path here. (Store apps already launch as Standard User.)
+	if (IsShellPath $Args[0]) { Write-Dbg "RunAs $($Args[0])" }
+
 	# Build the command string, replacing quotes with escaped quotes.
 
 	$Command = $Null
 	foreach ($Param in $Args) { $Command += "$($Param.Replace('`"','\`"')) " }
 
-	# Some versions of WPA download the .PDB files to the working directory, independent of the symbol cache path.
+	# Some old versions of WPA download the .PDB files to the working directory, independent of the symbol cache path.
 
 	$WorkingDir = $script:TracePath
-	if (Test-Path -PathType container -Path $script:PdbCacheFolder -ErrorAction:SilentlyContinue) { $WorkingDir = $script:PdbCacheFolder }
+	if (Test-FolderPath $script:PdbCacheFolder) { $WorkingDir = $script:PdbCacheFolder }
 	Write-Status "Working Directory: $WorkingDir"
 
 	# Some versions of Win11 before build 25247 require the /machine switch, else RunAs fails with 87: Invalid Parameter.
@@ -451,7 +469,7 @@ Param(
 	# Some versions of WPA download the .PDB files to the working directory, independent of the symbol cache path.
 
 	$WorkingDir = $script:TracePath
-	if (Test-Path -PathType container -Path $script:PdbCacheFolder -ErrorAction:SilentlyContinue) { $WorkingDir = $script:PdbCacheFolder }
+	if (Test-FolderPath $script:PdbCacheFolder) { $WorkingDir = $script:PdbCacheFolder }
 	Write-Status "Working Directory: $WorkingDir"
 
 	$ProcessCommand =
@@ -460,12 +478,12 @@ Param(
 		ArgumentList = $Args # all other parameters
 		WorkingDirectory = $WorkingDir
 		WindowStyle = "Maximized"
-		PassThru = $True
+		PassThru = !(IsShellPath $Viewer) # Returns $Process -eq $Null for 'shell:' process!
 		Wait = $False
 	}
 
 	# If the viewer command is WPA.bat or something other than WPA.exe or "WPA.exe", don't maximize that window.
-	if ($Viewer.TrimEnd('"') -notlike '*.exe') { $ProcessCommand.WindowStyle = "Minimized" }
+	if (!$Viewer.EndsWith('.exe', [StringComparison]::OrdinalIgnoreCase)) { $ProcessCommand.WindowStyle = "Minimized" }
 
 	Write-Status "Launching as Current User."
 
@@ -496,15 +514,6 @@ function BackgroundResolveSymbols
 Param (
 	[string]$ETL
 )
-	$XPerfPath = GetWptExePath 'XPerf.exe' -TestRun -Shallow
-
-	if (!$XPerfPath)
-	{
-		Write-Status "Not downloading symbols in the background. Did not find: XPerf.exe"
-		Write-Status 'Install the Windows Performance Toolkit from: https://aka.ms/adk'
-		return $False
-	}
-
 	# Limit background symbol downloads to one window.
 
 	$Downloading = Get-Process | Where-Object {$_.ProcessName -eq "xperf"}
@@ -512,7 +521,47 @@ Param (
 	{
 		Write-Status "Symbols are already downloading in another window."
 		return $False
-	}  
+	}
+
+	# Find XPerf.exe, XPerf.bat, etc.
+
+	$XPerfPath = GetWptExePath 'XPerf.exe' -TestRun -NoShell -Silent
+
+	if (!$XPerfPath -or ($XPerfPath -eq 'XPerf'))
+	{
+		# Try again to find XPerf:...
+		# Is it adjacent to the Store version of WPA?
+
+		$XPerfPath = ShimPathFromPackageName $script:PackageNameWPA
+		if ($XPerfPath)
+		{
+			$XPerfPath = "$XPerfPath\XPerf.exe"
+			if (!(Test-FilePath $XPerfPath)) { $XPerfPath = $Null }
+		}
+
+		# Can we find XPerf.bat or some such using Get-Command?
+
+		if (!$XPerfPath)
+		{
+			$XPerfPath = Get-Command -CommandType Application -ErrorAction:SilentlyContinue 'XPerf' | Sort-Object Version -Descending | Select-Object -First 1
+		}
+	}
+
+	if (!$XPerfPath)
+	{
+		Write-Info
+		Write-Info "Not downloading symbols in the background. Did not find: XPerf.exe"
+		Write-Info 'Install the Windows Performance Toolkit from: https://aka.ms/adk'
+		Write-Info "Or XPerf.exe may be included with the Windows Performance Analyzer:"
+		Write-Info "`thttps://apps.microsoft.com/detail/9n0w1b2bxgnz"
+		if (Get-Command -CommandType Application 'winget' -ErrorAction:SilentlyContinue)
+		{
+			Write-Info "Or run: winget install `"Windows Performance Analyzer`""
+		}
+		Write-Info
+
+		return $False
+	}
 
 	$File = split-path -leaf -path $ETL
 
@@ -599,6 +648,7 @@ Param (
 <#
 	Launch WPA on the given path using the given parameters.
 	Return the process object on success (if the caller should perhaps try again), else warn and return $Null.
+	Can return $Null, such as when $ViewerPath is a 'shell:' path.
 	Caller should: $Process.Close()
 #>
 function LaunchViewerCommand
@@ -612,6 +662,8 @@ Param (
 	# Optional WPA parameters, or pseudo-param: -KeepRundown, -NoSymbols
 	[string[]]$ExtraParams
 )
+	if ($ViewerPath.StartsWith('"', [StringComparison]::Ordinal)) { Write-Dbg "LaunchViewerCommand: Should not quote the path: $ViewerPath" }
+
 	$KeepRundown = HandlePseudoParam ([ref]$ExtraParams) '-KeepRundown'
 	$NoSymbols = HandlePseudoParam ([ref]$ExtraParams) '-NoSymbols'
 
@@ -727,6 +779,29 @@ Param (
 		}
 	}
 
+	if (!(CheckFileUserPrivilege @ViewerCmd))
+	{
+		# The file likely requires Administrator privilege to load.
+
+		if (IsShellPath $ViewerPath)
+		{
+			# Store apps launched as 'shell:' don't get Administrator privilege.
+
+			$ViewerPath = ShimPathFromShellPath $ViewerPath
+			Write-Status "Launching the store app directly as Current User:`n$ViewerPath"
+		}
+
+		if (!(CheckAdminPrivilege))
+		{
+			# Yikes! This file requires Administrator privilege, which we don't have!
+			# Warn, but try it anyway.
+
+			Write-Err "WARNING: Administrator Privilege may be required to access some of these files!"
+			if (!(DoVerbose)) { Write-Warn "For details, re-run with: -verbose" }
+			Write-Warn
+		}
+	}
+
 	Write-Msg "Launching Windows Performance Analyzer (WPA) ..."
 	WriteCmdVerbose $ViewerPath $ViewerCmd
 
@@ -738,7 +813,7 @@ Param (
 	$Process = $Null
 	$ErrResult = $True
 
-	if ((CheckAdminPrivilege) -and (CheckFileUserPrivilege $ViewerPath @ViewerCmd))
+	if (!(IsShellPath $ViewerPath) -and (CheckAdminPrivilege) -and (CheckFileUserPrivilege $ViewerPath @ViewerCmd))
 	{
 		# Admin, but all file paths are acccessible as Standard User.
 
@@ -760,7 +835,7 @@ Param (
 			}
 			else
 			{
-				Write-Status "WPA apparently did not launch as StandardUser (non-Admin)."
+				Write-Status "WPA apparently did not successfully launch as StandardUser (non-Admin)."
 				Write-Status "Retrying as Current User (Admin)."
 				$ErrResult = $True
 			}
@@ -772,7 +847,6 @@ Param (
 		if ($Process) { $Process.Close() }
 
 		$PreStartTime = Get-Date
-
 		$Process = LaunchAsCurrentUser $ViewerPath @ViewerCmd
 		if ($Process)
 		{
@@ -783,6 +857,11 @@ Param (
 				$Process = GetRunningProcess 'WPA' $PreStartTime
 			}
 		}
+		elseif (IsShellPath $ViewerPath)
+		{
+			# Because: Start-Process -PassThru:$False
+			$Process = GetRunningProcess 'WPA' $PreStartTime
+		}
 
 		if ($Process)
 		{
@@ -791,12 +870,13 @@ Param (
 			$ErrResult = WaitForProcessResponsive $Process
 			if ($ErrResult) { Write-Status "WPA as Current User: $ErrResult" }
 
+			if (($global:LastExitCode -eq $Null) -and (IsShellPath $ViewerPath)) { $global:LastExitCode = -1 } # 'shell:' process with Bad Parameters, probably.
 			if ($global:LastExitCode -eq -1) { return $Process } # Bad Parameters, probably.
 		}
 		else
 		{
 			if ($Error -and $Error.Count) { $ErrResult = $Error[0] }
-			else { $ErrResult = "Failed to run: $Viewer" }
+			else { $ErrResult = "Failed to run: $ViewerPath" }
 		}
 	}
 
@@ -816,7 +896,7 @@ Param (
 	{
 		Write-Err (GetCmdVerbose $ViewerPath $ViewerCmd)
 		Write-Err
-		Write-Err "Windows Performance Analyzer did not launch."
+		Write-Err "Windows Performance Analyzer did not successfully launch."
 		Write-Err $ErrResult
 		if (!(DoVerbose))
 		{

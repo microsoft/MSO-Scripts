@@ -131,6 +131,20 @@ function Write-Vars
 	Write-Host # NewLine
 }
 
+<#
+	For debugging: ReportDbg 'Label' '$foo'
+	*** Write-Dbg below must not appear in released code. ***
+#>
+function ReportDbg
+{
+Param (
+	[string]$label,
+	[string]$var
+)
+	#### REMOVE BEFORE RELEASE ####
+	# Write-Dbg "$Label`t$(IEX $Var)"
+}
+
 
 <#
 	Verbose mode enabled!
@@ -239,6 +253,21 @@ Param ( [string]$Function,
 		Write-Status "$Function returned:" System.String[$Result.Count]
 		foreach ($val in $Result) { Write-Status "  [$($val.GetType())]" $val }
 	}
+}
+
+
+function Test-FilePath
+{
+Param ( [string]$FilePath
+)
+	return Test-Path -PathType leaf -LiteralPath $FilePath -ErrorAction:SilentlyContinue
+}
+
+function Test-FolderPath
+{
+Param ( [string]$FolderPath
+)
+	return Test-Path -PathType container -LiteralPath $FolderPath -ErrorAction:SilentlyContinue
 }
 
 
@@ -795,7 +824,7 @@ Param (
 	$WinDir32 = "$($Env:SystemRoot)\System32"
 	$WPRPath32 = "$WinDir32\WPR.exe"
 
-	if (($script:WPR_Path -ne $WPRPath32) -and (Test-Path -PathType leaf -Path $WPRPath32 -ErrorAction:SilentlyContinue))
+	if (($script:WPR_Path -ne $WPRPath32) -and (Test-FilePath $WPRPath32))
 	{
 		Write-Warn "Try setting the WPT_PATH environment variable to: $WinDir32"
 	}
@@ -1108,7 +1137,7 @@ function SetLoggedOnUserEnv
 
 	# Automatically Expanded: REG_MULTI_SZ %USERPROFILE%\AppData\Local\Temp[\N]
 	$LoggedOnTemp = GetRegistryValue "Registry::HKEY_USERS\$LoggedOnSID\Volatile Environment\$SessionId" "TEMP"
-	if ($LoggedOnTemp -and (!(Test-Path -PathType container -LiteralPath $LoggedOnTemp -ErrorAction:SilentlyContinue))) { $LoggedOnTemp = $Null } # sanity check
+	if ($LoggedOnTemp -and !(Test-FolderPath $LoggedOnTemp)) { $LoggedOnTemp = $Null } # sanity check
 	if (!$LoggedOnTemp) { $LoggedOnTemp = GetRegistryValue "Registry::HKEY_USERS\$LoggedOnSID\Environment" "TEMP" }
 	if (!$LoggedOnTemp) { $LoggedOnTemp = "$LoggedOnAppData\Temp" }
 
@@ -1149,7 +1178,7 @@ Param (
 	$ProviderPath = "$script:WinevtPublishers\{$ProviderId}"
 	$ResFilePath = GetRegistryValue $ProviderPath "ResourceFileName"
 	if ([string]::IsNullOrEmpty($ResFilePath)) { return $False }
-	return (Test-Path -PathType leaf -Path $ResFilePath -ErrorAction:SilentlyContinue)
+	return (Test-FilePath $ResFilePath)
 }
 
 
@@ -1258,7 +1287,7 @@ Param (
 		if (Get-Member -InputObject $Provider -Name "resourceFileName" -MemberType Properties)
 		{
 			$FileT = $Provider.resourceFileName
-			if (Test-Path -PathType leaf -Path "$ResPath\$FileT" -ErrorAction:SilentlyContinue)
+			if (Test-FilePath "$ResPath\$FileT")
 			{
 				if ($ResFile -and ($ResFile -ne $FileT)) { Write-Status "Inconsistent resourceFileNames in $ManifestName" }
 				$ResFile = $FileT
@@ -1271,7 +1300,7 @@ Param (
 		if (Get-Member -InputObject $Provider -Name "messageFileName" -MemberType Properties)
 		{
 			$FileT = $Provider.messageFileName
-			if (Test-Path -PathType leaf -Path "$ResPath\$FileT" -ErrorAction:SilentlyContinue)
+			if (Test-FilePath "$ResPath\$FileT")
 			{
 				if ($MsgFile -and ($MsgFile -ne $FileT)) { Write-Status "Inconsistent messageFileNames in: $ManifestName" }
 				$MsgFile = $FileT
@@ -1284,7 +1313,7 @@ Param (
 		if (Get-Member -InputObject $Provider -Name "parameterFileName" -MemberType Properties)
 		{
 			$FileT = $Provider.parameterFileName
-			if (Test-Path -PathType leaf -Path "$ResPath\$FileT" -ErrorAction:SilentlyContinue)
+			if (Test-FilePath "$ResPath\$FileT")
 			{
 				if ($PrmFile -and ($PrmFile -ne $FileT)) { Write-Status "Inconsistent parameterFileNames in: $ManifestName" }
 				$PrmFile = $FileT
@@ -1324,7 +1353,7 @@ Param (
 		$global:LastExitCode = 2 # Not Found
 
 		# Double-check that the resource file ended up in the right place.
-		if (Test-Path -PathType leaf -Path "$ResPath\$ResFile" -ErrorAction:SilentlyContinue)
+		if (Test-FilePath "$ResPath\$ResFile")
 		{
 			[array]$cmd = GetArgs im $ManifestPath /rf:$ResPath\$ResFile
 			if ($MsgFile) { $cmd += GetArgs /mf:$ResPath\$MsgFile }
@@ -1464,13 +1493,33 @@ Param (
 
 	$Out = GetCmdVerbose $Cmd $Params
 
+	$fShellPath = IsShellPath($Cmd)
+
 	if (InvokedFromCMD)
 	{
+		if ($fShellPath)
+		{
+			$Out = "Start `"WPA`" /Max $Out"
+		}
+
 		Write-Status "Executing Command:`n$Out"
 	}
 	else
 	{
-		Write-Status "Executing PowerShell Command:`n& $Out"
+		if ($fShellPath)
+		{
+			# Copy/Paste-able to launch with: Start-Process
+			$SplitCmd = $Out -split '(?<="[^"]*")\s+'
+			$ArgList = "$($SplitCmd[1..99])" -replace '"','`"'
+			$Out = "Start-Process $($SplitCmd[0]) -WindowStyle Maximized -ArgumentList `"$ArgList`""
+		}
+		else
+		{
+			# Copy/Paste-able to launch with: &
+			$Out = "& $Out"
+		}
+
+		Write-Status "Executing PowerShell Command:`n$Out"
 	}
 }
 
@@ -1502,7 +1551,7 @@ Param (
 			if (DoVerbose)
 			{
 				Write-Status "Running:" $Process.ProcessName "v$($Process.MainModule.FileVersionInfo.FileVersion)" "PID =" $Process.id "Running since:" $Process.StartTime
-				Write-Status "Path =" (ReplaceEnv $Process.MainModule.FileName)
+				Write-Status "Path:" (ReplaceEnv $Process.MainModule.FileName)
 			}
 			return $Process
 		}
@@ -1655,6 +1704,12 @@ Param (
 		$Message += "`thttps://apps.microsoft.com/detail/9n0w1b2bxgnz`n"
 		$Message += "Or the public preview:`n"
 		$Message += "`thttps://apps.microsoft.com/detail/9n58qrw40dfw`n"
+
+		if (Get-Command -CommandType Application 'winget' -ErrorAction:SilentlyContinue)
+		{
+			$Message += "`nOr run: winget install `"Windows Performance Analyzer`"`n"
+			$Message += "`nOr: winget install `"Windows Performance Analyzer (Preview)`"`n"
+		}
 	}
 	elseif (!$Recent)
 	{
@@ -1697,7 +1752,7 @@ Param (
 		}
 	} # !(WPA && Win8.1+)
 
-	$Message += "`nYou might need to set the WPT_PATH environment variable to the folder which contains $Exe"
+	$Message += "`nOtherwise you might need to set the WPT_PATH environment variable to the folder which contains $Exe"
 
 	Write-Warn $Message
 } # WriteWPTInstallMessage
@@ -1788,7 +1843,7 @@ function TestTraceFilePath
 Param (
 	[string]$TraceFilePath
 )
-	if (Test-Path -PathType leaf -LiteralPath $TraceFilePath -ErrorAction:SilentlyContinue) { return }
+	if (Test-FilePath $TraceFilePath) { return }
 
 	Write-Err "Error: The ETL trace file does not exist:"
 	Write-Err $TraceFilePath
@@ -1832,7 +1887,7 @@ Param (
 	[string]$ExtraParam
 )
 	$TraceFilePath = GetTraceFilePathString $TraceName
-	if (!(Test-Path -PathType leaf -Path $TraceFilePath -ErrorAction:SilentlyContinue))
+	if (!(Test-FilePath $TraceFilePath))
 	{
 		Write-Warn
 		Write-Warn "The trace file was not created: $TraceName.etl"
@@ -1873,6 +1928,203 @@ Param (
 }
 
 
+<# ###### Package / Shell ###### #>
+
+$script:PackageNameWPA = 'Microsoft.WindowsPerformanceAnalyzer'
+$script:PackageNameWPAPreview = 'Microsoft.WindowsPerformanceAnalyzerPreview'
+
+$script:AppPathKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\App Paths\'
+
+function IsShellPath { Param ( [string]$Path ) return ($Path -and $Path.StartsWith('shell:', [StringComparison]::OrdinalIgnoreCase)) }
+
+
+<#
+	Accepts $script:PackageNameWPA or $script:PackageNameWPAPreview
+	Returns object type: Microsoft.Windows.Appx.PackageManager.Commands.AppxPackage
+	Returns $Null if the Package (Store App) is not installed.
+#>
+function PackageFromName
+{
+Param (
+	[string]$PackageName
+)
+	if ($Host.Version.Major -lt 3) { return $Null }
+
+	if ([Environment]::OSVersion.Version -lt '10.0.10240.0') { return $Null }
+
+	return Get-AppxPackage -ErrorAction:SilentlyContinue $PackageName
+}
+
+
+<#
+	Given a package name:
+		Microsoft.WindowsPerformanceAnalyzer ($script:PackageNameWPA or $script:PackageNameWPAPreview)
+	construct the 'shell:' path:
+		shell:AppsFolder\Microsoft.WindowsPerformanceAnalyzer_8wekyb3d8bbwe!Microsoft.WindowsPerformanceAnalyzer
+
+	Returns $Null if the $PackageName is not installed.	
+#>
+function ShellPathFromPackageName
+{
+Param (
+	[string]$PackageName
+)
+	$Package = PackageFromName $PackageName
+
+	if ($Package -and $Package.PackageFamilyName)
+	{
+		return "shell:AppsFolder\$($Package.PackageFamilyName)!$PackageName"
+	}
+	return $Null
+}
+
+
+<#
+	Convert a 'shell:' path to a real path: the actual, non-.
+	*** Currently implemented only for Windows Performance Analyzer (WPA) :
+		shell:AppsFolder\Microsoft.WindowsPerformanceAnalyzer*_8wekyb3d8bbwe!Microsoft.WindowsPerformanceAnalyzer*
+
+	On failure, returns $Null
+
+	See: https://github.com/microsoft/MSO-Scripts/issues/46
+#>
+function RealPathFromShellPath
+{
+Param (
+	# Not enclosed with quotes.
+	[string]$ShellPath
+)
+	if (!(IsShellPath $ShellPath) -or !$ShellPath.Contains("!$script:PackageNameWPA"))
+	{
+		Write-Dbg "Unrecognized Shell Path: $ShellPath"
+		return $Null
+	}
+
+	if ($Host.Version.Major -lt 3) { return $Null }
+
+	if ([Environment]::OSVersion.Version -lt '10.0.10240.0') { return $Null }
+
+	$PackageName = ($ShellPath -split '!')[-1]
+
+	return RealPathFromPackageName $PackageName
+}
+
+
+<#
+	Given a package name:
+		Microsoft.WindowsPerformanceAnalyzer ($script:PackageNameWPA or $script:PackageNameWPAPreview)
+	return the true path of the executable: WPA.exe
+#>
+function RealPathFromPackageName
+{
+Param (
+	[string]$PackageName
+)
+	$Package = PackageFromName $PackageName
+
+	if (!$Package) { return $Null }
+
+	# Currently recognized: WPA.exe - Windows Performance Analyzer or (Preview)
+	$Exe = 'WPA.exe'
+
+	$FileInfo = Get-ChildItem -Path $Package.InstallLocation -Recurse -Include $Exe -ErrorAction:SilentlyContinue | Select-Object -First 1
+
+	if (!$FileInfo) { return $Null }
+
+	return $FileInfo.FullName
+}
+
+
+<#
+	Convert a 'shell:' path to a AppExecAlias shim path on disk.
+	*** Currently implemented only for Windows Performance Analyzer (WPA).
+
+	Tries to return the AppExecAlias shim path corresponding to the 'shell:' path:
+		$Env:LocalAppData\Microsoft\WindowsApps\wpa.exe
+
+	If that doesn't match or is not found then it returns the version-specific AppExecAlias shim path:
+		$Env:LocalAppData\Microsoft\WindowsApps\Microsoft.WindowsPerformanceAnalyzer*_8wekyb3d8bbwe\wpa.exe
+
+	On failure, returns the original 'shell:' path.
+		shell:AppsFolder\Microsoft.WindowsPerformanceAnalyzer*_8wekyb3d8bbwe!Microsoft.WindowsPerformanceAnalyzer*
+
+	Note that App Execution Alias shim files can be disabled via the Windows UI:
+		Settings > Apps > Advanced app settings > App execution aliases
+
+	See: https://github.com/microsoft/MSO-Scripts/issues/46
+#>
+function ShimPathFromShellPath
+{
+Param (
+	# Not enclosed with quotes.
+	[string]$ShellPath
+)
+	# Currently recognized: WPA.exe - Windows Performance Analyzer or (Preview)
+	$Exe = 'WPA.exe'
+
+	$RealPath = RealPathFromShellPath $ShellPath
+
+	# Get the redirected, "true path" of the AppExecAlias shim file: $Env:LocalAppData\Microsoft\WindowsApps\WPA.exe
+	# If they match then use this shim file.
+
+	$AppPathFileKey = $script:AppPathKey + $Exe
+	$TruePath = GetRegistryValue $AppPathFileKey $Null
+
+	if ($RealPath -and ($RealPath -eq $TruePath))
+	{
+		$ShimPath = "$Env:LocalAppData\Microsoft\WindowsApps\$Exe"
+
+		if (Test-FilePath $ShimPath) { return $ShimPath }
+
+		Write-Status "AppExecAlias shim file does not exist: $ShimPath"
+	}
+
+	# Extract the middle portion of $ShellPath: "Microsoft.WindowsPerformanceAnalyzerPreview*_8wekyb3d8bbwe"
+	# Construct the version-specific AppExecAlias shim path:
+	# $Env:LocalAppData\Microsoft\WindowsApps\Microsoft.WindowsPerformanceAnalyzer*_8wekyb3d8bbwe\wpa.exe
+
+	$ShimPath = $Null
+	$SplitPath = $ShellPath -split '[\\!]'
+	if ($SplitPath.Count -eq 3)
+	{
+		$ShimPath = "$Env:LocalAppData\Microsoft\WindowsApps\$($SplitPath[1])\$Exe"
+	}
+
+	if ($ShimPath -and (Test-FilePath $ShimPath))
+	{
+		return $ShimPath
+	}
+
+	if ($RealPath) { return $RealPath }
+
+	Write-Dbg "Package not installed: $PackageName"
+	return $ShellPath
+}
+
+
+<#
+	Returns a confirmed AppExecAlias shim path (only).
+	Does not return a path of the form: $Env:LocalAppData\Microsoft\WindowsApps
+	Does return: $Env:LocalAppData\Microsoft\WindowsApps\Microsoft.WindowsPerformanceAnalyzer_8wekyb3d8bbwe
+#>
+function ShimPathFromPackageName
+{
+Param (
+	[string]$PackageName
+)
+	$Package = PackageFromName $PackageName
+
+	if ($Package -and $Package.PackageFamilyName)
+	{
+		$ShimPath = "$Env:LocalAppData\Microsoft\WindowsApps\$($Package.PackageFamilyName)"
+		if (Test-FolderPath $ShimPath) { return $ShimPath }
+	}
+	return $Null
+}
+
+<# ###### End Package / Shell ###### #>
+
+
 <#
 	Check for the existence of PATH\EXE, and optionally do a test run.
 	If $AltPath then skip this path ($False) and capture the next one ($True).
@@ -1883,9 +2135,12 @@ function TestExePath
 Param (
 	[string]$ExePath,
 	[bool]$TestRun,
+	[string]$key, # debug
 	[ref]$AltPath
 )
-	if (!(Test-Path -PathType leaf -Path $ExePath -ErrorAction:SilentlyContinue)) { return $False }
+	ReportDbg $key '$ExePath'
+
+	if (!(Test-FilePath $ExePath)) { return $False }
 
 	if ($TestRun)
 	{
@@ -1915,7 +2170,7 @@ Param (
 
 		if ($Env:WPT_PATH)
 		{
-			return !$ExePath.StartsWith($Env:WPT_PATH, 'CurrentCultureIgnoreCase')
+			return !$ExePath.StartsWith($Env:WPT_PATH, [StringComparison]::OrdinalIgnoreCase)
 		}
 		else
 		{
@@ -1940,7 +2195,7 @@ function GetWptExePath
 Param (
 	[string]$Exe,
 	[switch]$Silent,
-	[switch]$Shallow,
+	[switch]$NoShell, # Exclude 'shell:' paths.
 	[switch]$AltPath,
 	[switch]$TestRun
 )
@@ -1951,34 +2206,52 @@ Param (
 	{
 		$WptPath = $env:WPT_PATH.Trim('"').TrimEnd('\')
 		$WptPath = "$WptPath\$Exe"
-		if (TestExePath $WptPath -TestRun:$False ([ref]$AltPath)) { return $WptPath }
+		if (TestExePath $WptPath -TestRun:$False 'Custom' ([ref]$AltPath)) { return $WptPath }
 
-		# Sanity check: If $env:WPT_PATH does not exist then reset is to null for this script.
-		if (!(Test-Path -PathType container -Path $env:WPT_PATH -ErrorAction:SilentlyContinue)) { $env:WPT_PATH = $Null }
+		# Sanity check: If $env:WPT_PATH does not exist then reset it to null for this script.
+		if (!(Test-FolderPath $env:WPT_PATH)) { $env:WPT_PATH = $Null }
 	}
 
-	# Test Windows Apps (not executable stubs)
+	# Check installed WPA Store apps, which may prefer to run via a 'shell:' path.
+	#	shell:AppsFolder\Microsoft.WindowsPerformanceAnalyzer_8wekyb3d8bbwe!Microsoft.WindowsPerformanceAnalyzer
+	#	shell:AppsFolder\Microsoft.WindowsPerformanceAnalyzerPreview_8wekyb3d8bbwe!Microsoft.WindowsPerformanceAnalyzerPreview
 
-	# $Exe should exist in the folder registered under WPA.exe
-	$WptPath = $PathReg = $Null
-	$WpaOpenPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\App Paths\wpa.exe"
-	if (!$Shallow) { $WptPath = GetRegistryValue $WpaOpenPath "Path" }
-	if ($WptPath)
+	if (!$NoShell -and ($Exe -eq 'WPA.exe') -and ($Host.Version.Major -ge 3))
 	{
-		$WptPath = $PathReg = "$WptPath\$Exe"
-		if (TestExePath $WptPath $TestRun ([ref]$AltPath)) { return $WptPath }
+		$WptPath = ShellPathFromPackageName $script:PackageNameWPAPreview
+		if (!$WptPath -or $AltPath)
+		{
+			if ($WptPath) { $AltPath = $False }
+			$WptPath = ShellPathFromPackageName $script:PackageNameWPA
+		}
+		if ($WptPath)
+		{
+			ReportDbg 'Shell' '$WptPath'
+			if (!$AltPath) { return $WptPath  }
+			$AltPath = $False
+		}
 	}
 
-	# Test the registry class
+	# Try the installed WindowsApps store (AppExecAlias shim file, but GetFileVersion understands).
+
+	$WptApp = $Null
+	if ($Env:LOCALAPPDATA)
+	{
+		$WptApp = $WptPath = "$Env:LOCALAPPDATA\Microsoft\WindowsApps\$Exe"
+		if (TestExePath $WptPath $TestRun 'Local' ([ref]$AltPath)) { return $WptPath }
+	}
+
+	# Test the registry class: Windows Performance Toolkit
 
 	$WpaOpenPath = "Registry::HKEY_CLASSES_ROOT\wpa\shell\open\command"
 	$WptPath = GetRegistryValue $WpaOpenPath $Null
+	$WptPrev = $Null
 
 	# $Exe should exist adjacent to WPA.exe
 	if ($WptPath -and ($WptPath -match ".+wpa\.exe"))
 	{
-		$WptPath = $Matches[0] -replace "wpa.exe",$Exe
-		if (TestExePath $WptPath $TestRun ([ref]$AltPath)) { return $WptPath }
+		$WptPrev = $WptPath = $Matches[0] -replace "wpa.exe",$Exe
+		if (TestExePath $WptPath $TestRun 'Reg' ([ref]$AltPath)) { return $WptPath }
 	}
 
 	# Test various default install paths for the Windows Performance Toolkit (x86/x64)
@@ -1988,53 +2261,25 @@ Param (
 	if ($PGF)
 	{
 		$WptPath = "$PGF\Windows Kits\10\Windows Performance Toolkit\$Exe"
-		if (TestExePath $WptPath $TestRun ([ref]$AltPath)) { return $WptPath }
+		if (($WptPath -ne $WptPrev) -and (TestExePath $WptPath $TestRun 'Kit10' ([ref]$AltPath))) { return $WptPath }
 
 		$WptPath = "$PGF\Windows Kits\8.1\Windows Performance Toolkit\$Exe"
-		if (([Environment]::OSVersion.Version -lt [Version]'10.0.0.0') -and (TestExePath $WptPath $TestRun ([ref]$AltPath))) { return $WptPath }
+		if (([Environment]::OSVersion.Version -lt [Version]'10.0.0.0') -and (TestExePath $WptPath $TestRun 'Kit8' ([ref]$AltPath))) { return $WptPath }
 
 		# Too old!
 		# "$PGF\Windows Kits\8.0\Windows Performance Toolkit\$Exe"
 	}
 
-	# App store paths require Admin privilege to walk, unless you land directly on the app folder.
-	# Look up the path of the app folder(s) via the registry.
-	# This may only work for WPA.
+	# Test the system path, which may include WindowsApps (AppExecAlias shim files).
 
-	[string[]]$RegPaths = $Null
-	if (!$Shallow)
-	{
-		$WildPath = 'Registry::HKEY_CLASSES_ROOT\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages\Microsoft.WindowsPerformanceAnalyzer*'
-		$RegPaths = Get-Item -Path $WildPath -ErrorAction:SilentlyContinue
-	}
-	foreach ($RegPath in $RegPaths)
-	{
-		$Path = GetRegistryValue "Registry::$RegPath" 'PackageRootFolder'
-		if (!$Path -or !($Path -is [string])) { continue }
-
-		$WptCmd = Get-ChildItem -Recurse -Path $Path -Filter $Exe | Select-Object -First 1
-		if ($WptCmd)
-		{
-			$WptPath = $WptCmd.FullName
-			if (($WptPath -ne $PathReg) -and (TestExePath $WptPath $TestRun ([ref]$AltPath))) { return $WptPath }
-		}
-	}
-
-	# Test the system path, which may include WindowsApps (executable stubs, NO VERSION)
-
-	$WptCmd = Get-Command -TotalCount 1 -CommandType Application $Exe -ErrorAction:SilentlyContinue
+	$WptPath = $WptApp
+	$WptCmd = Get-Command -CommandType Application $Exe -ErrorAction:SilentlyContinue
 	foreach ($Cmd in $WptCmd)
 	{
-		$WptPath = $PathApps = $Cmd.Path
-		if (TestExePath $WptPath $TestRun ([ref]$AltPath)) { return $WptPath }
-	}
+		if ($WptPath -eq $Cmd.Path) { continue } # wait for unique path
 
-	# Search the installed WindowsApps store (executable stubs, NO VERSION)
-
-	if ($Env:LOCALAPPDATA)
-	{
-		$WptPath = "$Env:LOCALAPPDATA\Microsoft\WindowsApps\$Exe"
-		if (!($WptCmd -contains $WptPath) -and (TestExePath $WptPath $TestRun ([ref]$AltPath))) { return $WptPath }
+		$WptPath = $Cmd.Path
+		if (TestExePath $WptPath $TestRun 'System' ([ref]$AltPath)) { return $WptPath }
 	}
 
 	# Try the Side-by-Side path for WPR
@@ -2046,7 +2291,7 @@ Param (
 		foreach ($Path in $Paths)
 		{
 			$WptPath = "$Path\$Exe"
-			if (TestExePath $WptPath $TestRun ([ref]$AltPath)) { return $WptPath }
+			if (TestExePath $WptPath $TestRun 'WinSxS' ([ref]$AltPath)) { return $WptPath }
 		}
 	}
 
@@ -2063,18 +2308,19 @@ Param (
 		$WptPath = "$WptPath\$Exe"
 		[string[]]$PathStar = ($WptPath -replace '.exe$','.bat'),($WptPath -replace '.exe$','.cmd')
 		$WptPath = Get-Command -TotalCount 1 -CommandType Application -Name $PathStar -ErrorAction:SilentlyContinue
-		if ($WptPath -and (TestExePath $WptPath.Path $TestRun ([ref]$AltPath))) { return $WptPath.Path }
+		if ($WptPath -and (TestExePath $WptPath.Path $TestRun 'Custom2' ([ref]$AltPath))) { return $WptPath.Path }
 	}
 
 	# Test the system path for *.bat, etc.
 
 	[string[]]$ExeStar = ($Exe -replace ".exe$","?.bat"),($Exe -replace ".exe$","?.cmd")
 	$WptPath = Get-Command -TotalCount 1 -CommandType Application -Name $ExeStar -ErrorAction:SilentlyContinue
-	if ($WptPath -and (TestExePath $WptPath.Path $TestRun ([ref]$AltPath))) { return $WptPath.Path }
+	if ($WptPath -and (TestExePath $WptPath.Path $TestRun 'Batch' ([ref]$AltPath))) { return $WptPath.Path }
 
 	# Let the OS decide what to do.
 
 	$WptPath = $Exe -replace ".exe"
+	ReportDbg 'Last' '$WptPath'
 
 	if (!$Silent)
 	{
@@ -2142,9 +2388,9 @@ function FileVersionFromFileInfo
 Param (
 	[Diagnostics.FileVersionInfo]$FileInfo
 )
-	if ((!$FileInfo) -or (!$FileInfo.FileName)) { return $Null }
+	if (!$FileInfo -or !$FileInfo.FileName) { return $Null }
 
-	$FileName = $(Split-Path -Leaf -Path $FileInfo.FileName -ErrorAction:SilentlyContinue)
+	$FileName = Split-Path -Leaf -Path $FileInfo.FileName -ErrorAction:SilentlyContinue
 
 	if ($FileInfo.FileVersion)
 	{
@@ -2169,14 +2415,40 @@ Param (
 		}
 
 		Write-Status "Version Check: $FileName - FileVersion $($FileInfo.FileVersion) - (v$FileVersion)`n" (ReplaceEnv $FileInfo.FileName) # path
-	}
-	else
-	{
-		$FileVersion = (DefaultVersion)
 
-		# The Windows Store version of WPA has no file version in its launcher: wpa.exe  Likewise: WPA.bat
-		Write-Status "Version Check: $FileName - No file version available. Assuming v$FileVersion`n" (ReplaceEnv $FileInfo.FileName) # path
+		return $FileVersion
 	}
+
+	# If this is the AppExecAlias shim file $Env:LocalAppData\Microsoft\WindowsApps\WPA.exe (for example)
+	# then find the corresponding  real executable and get its version info.
+
+	$FilePath = $Null
+	$FolderPath = Split-Path -Parent -Path $FileInfo.FileName -ErrorAction:SilentlyContinue
+	if ($FolderPath -and $FolderPath.EndsWith('Microsoft\WindowsApps', [StringComparison]::OrdinalIgnoreCase))
+	{
+		$AppPathFileKey = $script:AppPathKey + $FileName
+		$FilePath = GetRegistryValue $AppPathFileKey $Null
+	}
+	elseif ($FolderPath -eq (ShimPathFromPackageName $script:PackageNameWPA))
+	{
+		$FilePath = RealPathFromPackageName $script:PackageNameWPA
+	}
+	elseif ($FolderPath -eq (ShimPathFromPackageName $script:PackageNameWPAPreview))
+	{
+		$FilePath = RealPathFromPackageName $script:PackageNameWPAPreview
+	}
+
+	if ($FilePath -and ($FilePath -ne $FileInfo.FileName) -and (Test-FilePath $FilePath))
+	{
+		Write-Status "Checking: $FilePath"
+
+		# Recursive!
+		return GetFileVersion $FilePath
+	}
+
+	$FileVersion = (DefaultVersion)
+
+	Write-Status "Version Check: $FileName - No file version available. Assuming v$FileVersion`n" (ReplaceEnv $FileInfo.FileName) # path
 
 	return $FileVersion
 } # FileVersionFromFileInfo
@@ -2191,6 +2463,12 @@ function GetFileVersion
 Param (
 	[string]$TargetPath
 )
+	if (IsShellPath $TargetPath)
+	{
+		$TargetPath = RealPathFromShellPath $TargetPath
+		if (!$TargetPath) { return $Null }
+	}
+
 	$CommandInfo = Get-Command -TotalCount 1 -CommandType Application -ErrorAction:SilentlyContinue $TargetPath
 
 	if (!$CommandInfo)
@@ -2252,7 +2530,7 @@ function RelaunchAsPreWin10
 	# Relaunch using the PreWin10 version of the scripts.
 	$PreWin10Script = "$(ScriptPreWin10Path)\$($script:MyInvocation.MyCommand)"
 
-	if (!(Test-Path -PathType leaf -Path $PreWin10Script -ErrorAction:SilentlyContinue))
+	if (!(Test-FilePath $PreWin10Script))
 	{
 		Write-Err "Error: Cannot find path:" $PreWin10Script
 		Write-Err "Not continuing with this older version of WPR:`n`"$script:WPR_Path`""
@@ -2282,7 +2560,7 @@ Param(
 	# Get the path for WPR
 	# Check whether we can successfully invoke wpr.exe
 
-	$script:WPR_Path = GetWptExePath "wpr.exe" -TestRun
+	$script:WPR_Path = GetWptExePath "WPR.exe" -TestRun
 
 	$script:WPR_Win10Ver = $Null # WPR's Win10 version info
 	$script:WPR_PreWin10 = $True
@@ -2301,7 +2579,7 @@ Param(
 
 			Write-Err "A very old version of the Windows Performance Toolkit was found here:`n$script:WPR_Path"
 			Write-Err "Please uninstall it.  Then..."
-			WriteWPTInstallMessage "wpr.exe"
+			WriteWPTInstallMessage "WPR.exe"
 			exit 1
 		}
 
@@ -2457,7 +2735,7 @@ Param (
 		$ProfilePath = StripProfileName $Profile
 
 		# It has a valid path?
-		if (!(Test-Path -PathType leaf -Path $ProfilePath -ErrorAction:SilentlyContinue))
+		if (!(Test-FilePath $ProfilePath))
 		{
 			Write-Warn "Warning: Cannot find: `"$ProfilePath`""
 			Write-Warn "Ignoring this recording profile."
@@ -3191,7 +3469,7 @@ Param (
 
 		0
 		{
-			if ($Boot -and $Result.Trim().EndsWith("Canceling the Autologger."))
+			if ($Boot -and $Result.Trim().EndsWith("Canceling the Autologger.", [StringComparison]::OrdinalIgnoreCase))
 			{
 				Write-Warn $Result
 				return [ResultValue]::Success # Canceled. No problem.
@@ -3432,7 +3710,7 @@ Param ( # $ViewerParams 'parameter splat'
 	{
 		# Relaunch the Pre-Win10 script...if its folder exists.
 
-		if (Test-Path -PathType container -Path $(ScriptPreWin10Path) -ErrorAction:SilentlyContinue)
+		if (Test-FolderPath $(ScriptPreWin10Path))
 		{
 			$CmdPath = "$(ScriptPreWin10Path)\$($script:MyInvocation.MyCommand)"
 			Write-Warn "Using an older version of the Windows Performance Analyzer (WPA)."
@@ -3457,7 +3735,7 @@ Param ( # $ViewerParams 'parameter splat'
 
 		$CustomProfile = "CustomEvents.wpaProfile"
 		$CustomProfilePath = MakeFullPath "..\WPAP\$CustomProfile" # Relative to root of script-set
-		if (Test-Path -PathType leaf -Path $CustomProfilePath -ErrorAction:SilentlyContinue)
+		if (Test-FilePath $CustomProfilePath)
 		{
 			# Put the Custom WPA Profile first, for the tab to appear on the left and not disturb UI & stacktags priority.
 			$ViewerConfigs = [string[]]$CustomProfilePath + $ViewerConfigs
@@ -3559,7 +3837,18 @@ function CheckMarkOfTheWeb
 Param (
 	$Path
 )
-	if ($Path -and (Get-Item -Path $Path -Stream 'Zone.Identifier' -ErrorAction:SilentlyContinue))
+	$Zone = $Null
+
+	try
+	{
+		$Zone = Get-Item -Path $Path -Stream 'Zone.Identifier' -ErrorAction:SilentlyContinue
+	}
+	catch
+	{
+		return
+	}
+
+	if ($Zone)
 	{
 		Write-Warn 'Unblocking all downloaded PowerShell scripts in this folder: *.ps1'
 		$Path = Split-Path -Parent -Path $Path

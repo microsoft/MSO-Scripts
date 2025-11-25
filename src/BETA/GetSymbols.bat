@@ -75,6 +75,19 @@ if defined OVerbose echo Running: %_cmd% %_filter2%
 
 %_cmd% %_filter1%
 
+REM If XPerf could not be found on the System Path, give it one last try...
+
+REM This is the versionless path of the App Execution Alias for XPerf.exe in the Windows Performance Analyzer, Windows Store installation.
+set XPerfStore=%LocalAppData%\Microsoft\WindowsApps\Microsoft.WindowsPerformanceAnalyzer_8wekyb3d8bbwe
+
+if not defined _verbose if %ERRORLEVEL%==9009 if not defined WPT_PATH if exist "%XPerfStore%\xperf.exe" (
+	set WPT_PATH=%XPerfStore%
+	echo Re-invoking %~nx0 with WPT_PATH=%XPerfStore%
+	echo:
+	call %~dpnx0 %*
+	exit /b errorlevel
+)
+
 REM If _verbose then the errorlevel is from findsym, else it is from xperf.
 if not defined _verbose goto :Finished
 
@@ -158,20 +171,30 @@ exit /b 0
 
 if not %ERRORLEVEL%==0 (
 	echo Failed with %ERRORLEVEL%:
+
+	REM 0x80070005 ... cannot access the input file
+	if %ERRORLEVEL%==-2147024891 echo Access Denied: %_ETL%
+
+	REM 0x8000FFFF ... catastrophic failure
+	if %ERRORLEVEL%==-2147418113 echo Catastrophic Failure, perhaps inaccessible: %_ETL%
+
+	REM 9009 ... MSG_DIR_BAD_COMMAND_OR_FILE
+	if %ERRORLEVEL%==9009 (
+		echo XPerf was not found. It is often adjacent to WPA.exe, or available in the ADK ^> Windows Performance Toolkit.
+		echo WPA: https://apps.microsoft.com/detail/9n0w1b2bxgnz
+		echo ADK: https://aka.ms/adk  ^>  Windows Performance Toolkit
+		echo Or : winget install "Windows Performance Analyzer"
+		echo:
+	)
+
 	echo %_cmd%
+	echo:
 
 	REM 0xC0000409 ... suspicious, but intermittent.
 	if %ERRORLEVEL%==-1073740791 echo Please try again.
 
 	REM 0xC0000005 ... intermittent access violation.
 	if %ERRORLEVEL%==-1073741819 echo Please try again.
-
-	REM 9009 ... MSG_DIR_BAD_COMMAND_OR_FILE
-	if %ERRORLEVEL%==9009 (
-		echo XPerf was not found. It is often adjacent to WPA.exe, or available in the ADK ^> Windows Performance Toolkit.
-		echo WPA: https://apps.microsoft.com/detail/9n0w1b2bxgnz
-		echo ADK: https://aka.ms/adk
-	)
 ) else (
 	echo Completed without error.
 )
