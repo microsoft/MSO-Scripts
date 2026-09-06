@@ -2,3 +2,12 @@
 
 # IDE0024: Use block body for operators
 csharp_style_expression_bodied_operators = false:silent
+
+# Flag methods that can be static as warnings
+# dotnet_diagnostic.CA1822.severity = warning
+
+# Require 'this.' for methods and show a warning if it is missing
+# dotnet_style_qualification_for_method = true:warning
+# dotnet_style_qualification_for_field = true:warning
+# dotnet_style_qualification_for_property = true:warning
+

@@ -182,7 +182,7 @@ namespace NetBlameCustomDataSource.Tables
 
 			public static string Server(Connection cxnObj, DNSClient.DNSTable dnsTable) => dnsTable.DNSEntryFromI(cxnObj.iDNS)?.strServer ?? strNA;
 
-			public static string Protocol(Connection cxnObj) => Prominent((Protocol)cxnObj.grbitType).ToString(); // pinned enum names
+			public static string Protocol(Connection cxnObj) => cxnObj.Protocol.ToString(); // pinned enum names
 
 			public static string IPProto(Connection cxnObj) => cxnObj.ipProtocol.ToString(); // pinned enum names
 

@@ -28,7 +28,7 @@ namespace NetBlameCustomDataSource.Tables
 
 	public abstract class NetBlameTableBase
 	{
-		public static string StringFromInt(IDVal val) => (val >= 0) ? val.ToString("N0") : Util.strNA;
+		public static string StringFromInt(IDVal val) => (val >= 0) ? val.ToString("N0") : strNA;
 
 		protected PendingSources Sources { get; }
 

@@ -42,9 +42,13 @@ namespace NetBlameCustomDataSource
 
 		public static string ToGraphable(this IPAddress ipAddr) => ipAddr?.ToString() ?? String.Empty;
 
-		public static string ToGraphable(this IPEndPoint ipEndPoint) => !ipEndPoint.Empty() ? ipEndPoint.ToString() : String.Empty;
-		public static string AddrGraphable(this IPEndPoint ipEndPoint) => !ipEndPoint.Empty() ? ipEndPoint.Address.ToString() : String.Empty;
+		public static string ToGraphable(this IPEndPoint ipEndPoint) => !ipEndPoint.Empty() ? ((ipEndPoint.Port != 0) ? ipEndPoint.ToString() : ipEndPoint.AddrGraphable()) : String.Empty;
+		public static string AddrGraphable(this IPEndPoint ipEndPoint) => !(ipEndPoint?.Address).Empty() ? ipEndPoint.Address.ToString() : String.Empty;
 		public static uint PortGraphable(this IPEndPoint ipEndPoint) => (uint?)ipEndPoint?.Port ?? 0;
+
+		public static string ToStringOrBlank(this ushort val) => (val > 0) ? val.ToString() : string.Empty;
+		public static string ToStringOrBlank(this ushort? val) => (val > 0) ? val.ToString() : string.Empty;
+		public static string ToHexOrBlank(this uint val) => (val > 0) ? val.ToString("X") : string.Empty;
 
 		public static bool Empty(this SocketAddress socket) => (socket == null || socket[0]/*family*/ == 0);
 
@@ -111,6 +115,8 @@ namespace NetBlameCustomDataSource
 
 		public static SocketAddress GetRemoteAddress(this IGenericEvent evt) => (evt.GetUInt32("RemoteAddressLength") != 0) ? evt.GetSocketAddress("RemoteAddress") : null;
 
+		public static bool Contains(this ReadOnlySpan<char> span, string substr) => span.IndexOf(substr) >= 0;
+
 		// Simple hash of all addresses in the stack. Returns 0 if none.
 		public static int Hash(this IStackSnapshot ss)
 		{
@@ -122,6 +128,6 @@ namespace NetBlameCustomDataSource
 
 			return hash;
 		}
-	}
+	} // Extensions
 
 } // NetBlameCustomDataSource.Events

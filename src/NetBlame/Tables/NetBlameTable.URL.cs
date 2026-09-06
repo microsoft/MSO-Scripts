@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright(c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using System;
 
 using Microsoft.Performance.SDK.Processing;
 
@@ -58,8 +61,8 @@ namespace NetBlameCustomDataSource.Tables
 			DeclareColumn
 			(
 				"Protocol",
-				"WinHTTP, WinINet, WinSock, LDAP",
-				width: 70,
+				"Chromium, WinHTTP, WinINet, WinSock, LDAP",
+				width: 76,
 				visible: true
 			);
 
@@ -67,7 +70,7 @@ namespace NetBlameCustomDataSource.Tables
 			DeclareColumn
 			(
 				"Method",
-				"HTTP/WinINet Method or WinSock IPProtocol",
+				"HTTP Method or WinSock IPProtocol",
 				width: 62,
 				visible: true
 			);
@@ -85,7 +88,7 @@ namespace NetBlameCustomDataSource.Tables
 			DeclareColumn
 			(
 				"Status",
-				"Last non-zero status of the transaction",
+				"HTTP status of the transaction",
 				width: 150,
 				visible: false
 			);
@@ -146,8 +149,8 @@ namespace NetBlameCustomDataSource.Tables
 			DeclareColumn
 			(
 				"Request ID",
-				"WebIO or WinINet Request ID, or WinSock Endpoint (reusable)",
-				width: 126,
+				"WebIO or WinINet or Chromium Request ID (reusable)",
+				width: 130,
 				format: ColumnFormats.HexFormat,
 				visible: false
 			);
@@ -156,7 +159,7 @@ namespace NetBlameCustomDataSource.Tables
 			DeclareColumn
 			(
 				"Connection ID",
-				"WebIO or WinINet Connection ID",
+				"WebIO or WinINet Connection ID, or WinSock Endpoint (reusable)",
 				width: 126,
 				format: ColumnFormats.HexFormat,
 				visible: false
@@ -333,7 +336,7 @@ namespace NetBlameCustomDataSource.Tables
 			{
 				// Implement a simple caching optimization to reduce network requests.
 				System.Net.IPAddress addrCur = urlObj.ipAddrPort?.Address;
-				if (addrCur == null) return String.Empty;
+				if (addrCur.Empty()) return String.Empty;
 				return geoCache.Cache(addrCur);
 			}
 

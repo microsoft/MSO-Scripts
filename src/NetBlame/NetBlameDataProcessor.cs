@@ -31,6 +31,7 @@ using NetBlameCustomDataSource.WinINet;
 using NetBlameCustomDataSource.WinsockAFD;
 using NetBlameCustomDataSource.WinsockNameRes;
 using NetBlameCustomDataSource.WThreadPool;
+using NetBlameCustomDataSource.Chromium;
 
 using static NetBlameCustomDataSource.Util;
 
@@ -207,6 +208,7 @@ namespace NetBlameCustomDataSource
 		public ODispatchQTable odqTable;
 		public IdleManTable idleTable;
 		public ThreadTable threadTable;
+		public ChromiumTable chromiumTable;
 
 		// Final Aggregated Results
 		public URLTable urlTable;
@@ -215,14 +217,18 @@ namespace NetBlameCustomDataSource
 		public List<DNSIndex> dnsIndexTable;
 		// References to all threadpool objects: Office TP, WinHTTP TP, Windows TP, Windows Timers
 		public List<ThreadPoolItem> tpTable;
+		// Aggegation of Chromium Streams
+		public List<StreamEntry> streamTable;
 #endif // AUX_TABLES
 
 		// Get a stack for a Classic event: stackSource?.GetStack(timestampETW, tid);
 		public IStackDataSource stackSource;
 
+		public ITraceMetadata2 traceMetadata;
+
 		public AllTables()
 		{
-			// TODO: smart capacity in each of these?
+			// empirical table capacity values
 			// DNS Info Tables
 			this.dnsTable = new DNSTable(64);
 			this.wsName = new WinsockNameResolution(this);
@@ -231,6 +237,7 @@ namespace NetBlameCustomDataSource
 			this.tcpTable = new TcpTable(1024, this);
 			this.webioTable = new WebIOTable(512, this);
 			this.winetTable = new WinINetTable(128, this);
+			this.chromiumTable = new ChromiumTable(4096, this);
 			// Thread/TaskPool Tables
 			this.httpTable = new WinHttpTable(4096, this);
 			this.wtpTable = new WThreadPoolTable(1024, this);
@@ -249,6 +256,7 @@ namespace NetBlameCustomDataSource
 		{
 			return this.wsTable.Count
 					+ this.tcpTable.Count
+					+ this.chromiumTable.Count
 					+ this.webioTable.sessionTable.Count
 					+ this.winetTable.Count;
 		}
@@ -381,7 +389,14 @@ namespace NetBlameCustomDataSource
 			DNSTable.guid,              // Microsoft-Windows-DNS-Client
 			WinINetTable.guid,          // Microsoft-Windows-WinINet
 			WinHttpTable.guid,          // Microsoft-Windows-WinHttp
-			WebIOTable.guid             // Microsoft-Windows-WebIO
+			WebIOTable.guid,            // Microsoft-Windows-WebIO
+			// For the Chromium events and their DNS records:
+			ChromiumTable.rgGuid[0],    // Microsoft.MSEdgeStable
+			ChromiumTable.rgGuid[1],    // Microsoft.MSEdgeBeta
+			ChromiumTable.rgGuid[2],    // Microsoft.MSEdgeWebView2
+			ChromiumTable.rgGuid[3],    // Microsoft.MSEdgeCanary
+			ChromiumTable.rgGuid[4],    // Microsoft.MSEdgeDev
+			ChromiumTable.rgGuid[5]     // Google.Chrome
 		};
 
 		// These providers will get processed in the ClassicEventConsumer callback.
@@ -392,7 +407,7 @@ namespace NetBlameCustomDataSource
 		};
 
 
-		bool FSymbolsEnabled()
+		static bool FSymbolsEnabled()
 		{
 			// If both of these are null/empty then LoadSymbolsAsync won't do anything anyway, it appears.
 			// But if _NT_SYMCACHE_PATH or _NT_SYMBOL_PATH were empty then default values will appear here.
@@ -529,6 +544,8 @@ namespace NetBlameCustomDataSource
 
 			allTables.threadTable.SetThreadRundown(eventConsumer.threadEventConsumer.FHaveRundown);
 
+			allTables.traceMetadata = this.sources.traceMetadata as ITraceMetadata2;
+
 			var traceWThreadPool = eventConsumer.wtpEventConsumer.traceWThreadPool;
 			var threadEventQueue = eventConsumer.threadEventConsumer.threadEventQueue;
 
@@ -618,6 +635,10 @@ namespace NetBlameCustomDataSource
 
 					// Lower frequency event for polling.
 					if (cancellationToken.IsCancellationRequested) return null;
+				}
+				else if (Array.IndexOf(Chromium.ChromiumTable.rgGuid, evtGeneric.ProviderId) >= 0)
+				{
+					allTables.chromiumTable.PreDispatch(evtGeneric);
 				}
 			} // foreach evtGeneric
 

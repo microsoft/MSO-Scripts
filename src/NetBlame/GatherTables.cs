@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net; // IPAddress
-
 using Microsoft.Windows.EventTracing.Symbols; // IStackSnapshot
 
 using NetBlameCustomDataSource.Link;
@@ -99,6 +98,31 @@ namespace NetBlameCustomDataSource.Tables
 	} // TPCompare
 
 
+	public class StreamEntry
+	{
+		public string type;
+		public string url;
+		public string domain;
+		public string anon_key;
+		public string method;
+		public string origin;
+		public string referer;
+		public string error; // Socket.Status()
+		public string status; // HTTP Status
+		public ushort socket; // Socket.WSSocket()
+		public ushort port;
+		public uint cbSend, cbRecv;
+		public IDVal pid, tid;
+		public int stream_id;
+		public int source_id;
+		public QWord request_id;
+		public QWord id;
+		public IPEndPoint addrRemote;
+		public TimestampUI timeFirst;
+		public TimestampUI timeLast;
+	}
+
+
 	/*
 		This is the master table entry, accumulating data from all other tables.
 	*/
@@ -179,15 +203,17 @@ namespace NetBlameCustomDataSource.Tables
 		}
 
 
-		URL AddURL(string strURL, string strMethod, IDVal pid, IDVal tid, uint cbSend, uint cbRecv, in TcbRecord tcb, Protocol netType)
+		URL AddURL(string strURL, string strMethod, IDVal pid, IDVal tid, uint cbSend, uint cbRecv, TcbRecord tcb, Protocol netType)
 		{
 			if (tcb != null)
+			{
+				tcb.SetType(netType);
 				tcb.fGathered = true;
+			}
 
 			URL url = new URL(strURL, strMethod, pid, tid, in tcb, netType);
 			this.Add(url);
 
-			// TODO: compare TCB, tcb.cbSend/Recv ?
 			url.cbSend += cbSend;
 			url.cbRecv += cbRecv;
 
@@ -203,7 +229,7 @@ namespace NetBlameCustomDataSource.Tables
 				AssertCritical(tcbR == null || tcbR.pid == req.pid);
 			}
 
-			URL url = AddURL(req.strURL, req.strMethod, req.pid, req.tidStack, cxn.cbSend, cxn.cbRecv, in tcbR, Protocol.WinHTTP);
+			URL url = AddURL(req.strURL, req.strMethod, req.pid, req.tidStack, cxn.cbSend, cxn.cbRecv, tcbR, Protocol.WinHTTP);
 			url.strServer = this.allTables.dnsTable.GetServerNameAndAlt(tcbR?.addrRemote?.Address, req.strURL, req.strServer, out url.strServerAlt);
 			url.strStatus = cxn.strHeader ?? String.Empty;
 			url.qwConnection = cxn.qwConnection;
@@ -242,7 +268,7 @@ namespace NetBlameCustomDataSource.Tables
 
 		void AddURL(in WinINet.Request req, in TcbRecord tcb)
 		{
-			URL url = AddURL(req.strURL, req.strMethod, req.pid, req.tid1, req.cbSend, req.cbRecv, in tcb, Protocol.WinINet);
+			URL url = AddURL(req.strURL, req.strMethod, req.pid, req.tid1, req.cbSend, req.cbRecv, tcb, Protocol.WinINet);
 
 			url.strServer = this.allTables.dnsTable.GetServerNameAndAlt(req.addrRemote?.Address, req.strURL, req.strServerName, out url.strServerAlt);
 			url.strStatus = req.Status;
@@ -269,32 +295,170 @@ namespace NetBlameCustomDataSource.Tables
 #endif // DEBUG
 		}
 
+
+		void AddURL(Chromium.Request req)
+		{
+			AssertCritical(!req.IsSpeculative);
+
+			Chromium.Socket socket = req.Session?.socket;
+			TcbRecord tcbr = this.allTables.tcpTable.TcbrFromI(socket?.cxn?.iTCB ?? 0);
+
+			URL url = AddURL(req.URL, req.method, req.pid, req.tid, req.cbUpload, req.cbDownload, tcbr, Protocol.Chromium);
+
+			url.strServer = req.Domain;
+			url.strServerAlt = req.Canon;
+			url.timeOpen = req.timeStampBeginJob;
+			url.timeClose = req.timeStampEndJob;
+			url.timeRef = req.timeRef;
+			url.qwRequest = req.uidRequest;
+			url.strStatus = req.Error();
+
+			ushort port = req.port;
+
+			if (socket != null)
+			{
+				port = (ushort)socket.addrRemote.PortGraphable();
+				url.qwConnection = socket.cxn?.qwEndpoint ?? 0;
+				url.dwSocket = socket.WSSocket(); // ushort
+
+				socket.fGathered = true;
+			}
+
+			IPAddress ipAddr = req.IPAddress(socket);
+			if (!ipAddr.Empty())
+				url.ipAddrPort = new IPEndPoint(ipAddr, port);
+
+			url.myStack = new MyStackSnapshot(in req.stack, in req.xlink, req.tid); // aggregated stacks
+#if DEBUG
+			req.fGathered = true;
+#endif // DEBUG
+		}
+
+		void AddURL(Chromium.Session session, Chromium.Session.Stream stream)
+		{
+			AssertCritical(!stream.fAbandoned && !stream.fIgnore);
+			AssertInfo(stream.request != null); // handled, but... late trace start?
+
+			Chromium.Request req = stream.request;
+			Chromium.Socket socket = session.socket;
+			WinsockAFD.Connection cxn = socket?.cxn;
+			TcbRecord tcbr = this.allTables.tcpTable.TcbrFromI(cxn?.iTCB ?? 0);
+
+			URL url = null;
+
+			if (req != null)
+			{
+				url = AddURL(req.URL, req.method, req.pid, req.tid, stream.CbSend(), stream.CbRecv(), tcbr, Protocol.Chromium);
+
+				url.strServer = req.Domain;
+				url.strServerAlt = req.Canon;
+				url.timeOpen = req.timeStampBeginJob;
+				url.timeClose = req.timeStampEndJob;
+				url.timeRef = req.timeRef;
+				url.qwRequest = req.uidRequest;
+
+				url.myStack = new MyStackSnapshot(in req.stack, in req.xlink, req.tid); // aggregated stacks
+			}
+			else
+			{
+				url = AddURL(stream.strURL, stream.strMethod, session.pid, session.tid, stream.CbSend(), stream.CbRecv(), tcbr, Protocol.Chromium);
+
+				string strCanon = session.resolver?.rgstrCanon?[0] ?? string.Empty;
+				url.strServerAlt = !strCanon.Equals(session.domain) ? strCanon : string.Empty;
+				url.strServer = session.domain;
+				url.timeRef = session.timeReference;
+				url.timeOpen = stream.timeFirst;
+				url.timeClose = stream.timeLast;
+			}
+
+			url.strStatus = stream.strHTTPStatus;
+
+			IPEndPoint ipEP = socket?.addrRemote;
+			AssertImportant(FImplies(ipEP.Empty(), cxn?.addrRemote == null));
+
+			if (ipEP.Empty())
+			{
+				IPAddress ipAddr = req?.IPAddress(socket);
+				ushort port = (req?.port > session.port) ? req.port : session.port;
+				if (!ipAddr.Empty())
+					ipEP = new IPEndPoint(ipAddr, port);
+			}
+			url.ipAddrPort = ipEP;
+
+			if (socket != null)
+			{
+				url.qwConnection = cxn?.qwEndpoint ?? 0;
+				url.dwSocket = socket.WSSocket(); // ushort
+
+				socket.fGathered = true;
+			}
+		}
+
+		// This Socket is attached to no Request.
+		void AddURL(Chromium.Socket socket)
+		{
+			WinsockAFD.Connection cxn = socket.cxn;
+			AssertImportant(cxn != null);
+			if (cxn == null)
+				return;
+
+			TcbRecord tcbr = this.allTables.tcpTable.TcbrFromI(cxn.iTCB);
+
+			URL url = AddURL(string.Empty, Util.ComposeMethod(cxn), socket.pid, socket.tid, cxn.cbSend, cxn.cbRecv, tcbr, Protocol.Chromium);
+
+			url.timeOpen = socket.timeStampConnect;
+			url.timeClose = socket.timeStampClose;
+			url.timeRef = cxn.timeRef;
+			url.qwConnection = cxn.qwEndpoint;
+			url.dwSocket = socket.WSSocket(); // ushort
+
+			AssertImportant(socket.addrRemote.Equals(cxn.addrRemote));
+			IPEndPoint ipEP = socket.addrRemote;
+			if (ipEP.Empty())
+				ipEP = cxn.addrRemote;
+
+			url.ipAddrPort = ipEP;
+
+			if (!ipEP.Empty() && !ipEP.Address.Empty())
+				url.strServer = this.allTables.dnsTable.GetServerNameAndAlt(ipEP.Address, null, strNA, out url.strServerAlt);
+
+			url.myStack = new MyStackSnapshot(in cxn.stack, in cxn.xlink, cxn.tidOpen); // aggregated stacks
+
+			socket.fGathered = true;
+		}
+
 		void AddURL(WinsockAFD.Connection cxn)
 		{
 			TcbRecord tcb = this.allTables.tcpTable.TcbrFromI(cxn.iTCB);
 
 			// WinSock is a mid-level protocol. This TCB may have already been 'gathered' by a higher level protocol.
-			if (tcb?.fGathered ?? false)
+			if (tcb == null)
 			{
-				AssertImportant(Prominent((Protocol)cxn.grbitType) > Protocol.Winsock);
+				if (cxn.Protocol > Protocol.Winsock)
+					return;
+			}
+			else if (tcb.fGathered)
+			{
+				AssertImportant(cxn.Protocol > Protocol.Winsock);
 				return;
 			}
 
-			AssertImportant(Prominent((Protocol)cxn.grbitType) == Protocol.Winsock);
+			// Any Connection with another protocol should have already been 'gathered'.
+			AssertImportant(cxn.Protocol == Protocol.Winsock);
 
-			URL url = AddURL(null, Util.ComposeMethod(cxn), cxn.pid, cxn.tidOpen, cxn.cbSend, cxn.cbRecv, in tcb, Protocol.Winsock);
+			URL url = AddURL(null, Util.ComposeMethod(cxn), cxn.pid, cxn.tidOpen, cxn.cbSend, cxn.cbRecv, tcb, Protocol.Winsock);
 
-			uint iAddr = this.allTables.dnsTable.IFindAddress(cxn.iDNS, uint.MaxValue, cxn.addrRemote.Address); // 1-based
+			uint iAddr = this.allTables.dnsTable.IFindAddress(cxn.iDNS, cxn.addrRemote.Address); // 1-based
 			url.strServer = this.allTables.dnsTable.GetServerNameAndAlt(cxn.iDNS, iAddr, null, strNA, out url.strServerAlt);
 			url.timeOpen = cxn.timeCreate;
 			url.timeClose = cxn.timeClose;
 			url.timeRef = cxn.timeRef;
-			url.qwRequest = cxn.qwEndpoint;
+			AssertCritical(url.TimeRef.HasValue);
+			url.qwConnection = cxn.qwEndpoint;
 			url.dwSocket = cxn.socket; // ushort
-			url.strStatus = cxn.status.ToString("X");
+			url.strStatus = cxn.status.ToHexOrBlank();
 			url.xlink = cxn.xlink;
 			url.myStack = new MyStackSnapshot(in cxn.stack, in cxn.xlink, cxn.tidOpen);
-			AssertCritical(url.TimeRef.HasValue);
 
 			if (tcb == null)
 			{
@@ -330,7 +494,7 @@ namespace NetBlameCustomDataSource.Tables
 				}
 			}
 
-			URL url = AddURL(null, strMethod, tcb.Pid, tcb.TidOpen, tcb.cbSend, tcb.cbRecv, in tcb, Prominent((Protocol)tcb.grbitProtocol));
+			URL url = AddURL(null, strMethod, tcb.Pid, tcb.TidOpen, tcb.cbSend, tcb.cbRecv, tcb, Prominent((Protocol)tcb.grbitProtocol));
 
 			url.strServer = this.allTables.dnsTable.GetServerNameAndAlt(tcb.addrRemote?.Address, null, strNA, out url.strServerAlt);
 
@@ -404,6 +568,79 @@ namespace NetBlameCustomDataSource.Tables
 				AddURL(req);
 			}
 		}
+
+
+		/*
+			Finalize the Chromium records.
+			Incorporate into the URL table.
+		*/
+		void GatherChromium()
+		{
+			TimestampUI timeStampEnd = this.allTables.traceMetadata.LastEventTime.ToGraphable();
+
+			foreach (var session in this.allTables.chromiumTable.sessionTable)
+			{
+				if (session.FMigrated)
+					session.AdjustForMigration(this.allTables.chromiumTable);
+
+				IPEndPoint _addrRemote = session.RemoteAddress();
+
+				foreach (var kvp in session.rgStream)
+				{
+					var stream = kvp.Value;
+					AssertImportant(stream != null);
+					if (stream == null) continue;
+
+					if (!session.ValidStream(stream)) continue;
+
+					if (stream.request != null)
+					{
+						AssertCritical(stream.request.FAttachedToStream); // else the Request shows up twice
+						AssertCritical(FImplies(!session.fPreMigrate, stream.request.Session == session));
+						stream.request.Close(session.resolver, this.allTables.dnsTable, in timeStampEnd);
+#if DEBUG
+						stream.request.fGathered = true;
+#endif // DEBUG
+					}
+
+					AddURL(session, stream);
+				}
+#if DEBUG
+				session.fGathered = true;
+#endif // DEBUG
+			} // foreach session
+
+			// Now add incomplete Requests not added above (not linked to a Stream).
+			foreach (var req in this.allTables.chromiumTable)
+			{
+#if DEBUG
+				AssertCritical(req.fGathered == (req.stream != null));
+#endif // DEBUG
+				if (req.stream != null) continue;
+
+				// REVIEW: Should these Speculative Preconnect placeholder Requests be removed from the list for the Chromium Requests table?
+				if (req.IsSpeculative) continue;
+
+				// It should be only incomplete or preconnect placeholder Requests (or some error conditions) that have no Stream.
+				AssertImportant(req.Type == Chromium.StreamType.Unknown || req.IsPreconnect || req.iError != 0 || req.fCanceled || req.fRedirect);
+
+				req.Close(in timeStampEnd);
+
+				AddURL(req);
+			} // foreach req
+
+			// Gather the Sockets not enumerated with the Requests above.
+
+			foreach (Chromium.Socket sock in this.allTables.chromiumTable.socketTable)
+			{
+				sock.Close(timeStampEnd);
+
+				if (!sock.fGathered)
+					AddURL(sock);
+			}
+
+			this.allTables.chromiumTable.EmitViewProfileAnnotationQueriesDB();
+		} // GatherChromium
 
 
 		void GatherWinSock()
@@ -537,11 +774,80 @@ namespace NetBlameCustomDataSource.Tables
 		}
 
 
+		/*
+			Populate the Chromium Streams table.
+		*/
+		[Conditional("AUX_TABLES")]
+		void GatherChromiumStreams()
+		{
+			int count = 0;
+			foreach (var session in this.allTables.chromiumTable.sessionTable)
+				count += session.rgStream.Count;
+
+			var streamTable = new List<StreamEntry>(count);
+
+			foreach (var session in this.allTables.chromiumTable.sessionTable)
+			{
+				if (session.rgStream.Count == 0) continue;
+
+				IPEndPoint _addrRemote = session.RemoteAddress();
+
+				string _anon_key = (session.anon_key != null) ? session.anon_key : session.resolver?.anon_key;
+
+				string _type = session.Type.ToString();
+
+				ushort _socket = session.socket?.WSSocket() ?? 0;
+
+				foreach (var kvp in session.rgStream)
+				{
+					var stream = kvp.Value;
+					AssertImportant(stream != null);
+					if (stream == null) continue;
+
+					if (!session.ValidStream(stream)) continue;
+
+					StreamEntry entry = new StreamEntry()
+					{
+						stream_id = kvp.Key,
+						error = session.Error(stream),
+						domain = session.domain,
+						port = session.port,
+						pid = session.pid,
+						tid = session.tid,
+						id = session.uidVal,
+						source_id = session.srcdep,
+						url = stream.strURL,
+						method = stream.strMethod,
+						origin = stream.strOrigin,
+						referer = stream.strReferer,
+						cbSend = stream.CbSend(),
+						cbRecv = stream.CbRecv(),
+						status = stream.strHTTPStatus,
+						request_id = stream.request?.uidRequest ?? 0,
+						timeFirst = stream.timeFirst,
+						timeLast = stream.timeLast,
+						addrRemote = _addrRemote,
+						socket = _socket,
+						anon_key = _anon_key,
+						type = _type
+					};
+
+					streamTable.Add(entry);
+				}
+			}
+
+			this.allTables.streamTable = streamTable;
+		}
+
+
 		public void GatherAll()
 		{
 			GatherDNS();
 
 			GatherThreadPools();
+
+			GatherChromium();
+			GatherChromiumStreams();
 
 			GatherWinINet();
 
