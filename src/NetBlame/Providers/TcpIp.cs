@@ -122,6 +122,7 @@ namespace NetBlameCustomDataSource.TcpIp
 			if (!FImplies(pid != pidUnknown, this.pid == pid)) return false;
 			if (!FImplies(socket != 0, this.socket == socket)) return false;
 			if (this.addrRemote.Empty() || !this.addrRemote.Equals(address)) return false;
+			if (this.FClosed) return false;
 			return true;
 		}
 

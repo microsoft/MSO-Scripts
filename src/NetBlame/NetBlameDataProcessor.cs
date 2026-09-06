@@ -256,6 +256,7 @@ namespace NetBlameCustomDataSource
 		{
 			return this.wsTable.Count
 					+ this.tcpTable.Count
+					+ this.chromiumTable.Count
 					+ this.webioTable.sessionTable.Count
 					+ this.winetTable.Count;
 		}

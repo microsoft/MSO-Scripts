@@ -1991,8 +1991,8 @@ namespace NetBlameCustomDataSource.Chromium
 		public IPEndPoint RemoteAddress()
 		{
 			IPEndPoint addrRemote;
-			if (this.socket == null && this.resolver?.rgstrAddress?.Length > 0)
-				addrRemote = new(IPAddress.Parse(this.resolver.rgstrAddress[0]), this.port);
+			if (this.socket == null && this.resolver?.rgstrAddress?.Length > 0 && IPAddress.TryParse(this.resolver.rgstrAddress[0], out IPAddress addrParse))
+				addrRemote = new(addrParse, this.port);
 			else
 				addrRemote = this.socket?.addrRemote;
 
@@ -2124,6 +2124,10 @@ namespace NetBlameCustomDataSource.Chromium
 				req.SessionQUIC = this;
 			else
 				req.SessionHTTP2 = this;
+#if DEBUG
+			if (this.socket != null)
+				req.AddUID(this.socket.uidDB);
+#endif // DEBUG
 		}
 
 
@@ -4549,9 +4553,9 @@ namespace NetBlameCustomDataSource.Chromium
 				stream = session.EnsureStream(iStream, evt.Timestamp.ToGraphable());
 
 				if (evt.TaskName.Equals("HTTP3_DATA_SENT"))
-					stream.cbSend = cb;
+					stream.cbSend += cb;
 				else
-					stream.cbRecv = cb;
+					stream.cbRecv += cb;
 
 				AssertCritical(FImplies(stream.request != null, stream.request?.Session == session));
 
@@ -5664,6 +5668,21 @@ namespace NetBlameCustomDataSource.Chromium
 			switch (evt.TaskName)
 			{
 			// ID -> SOCKET_POOL_CONNECT_JOB_CREATED
+			// source_type: SSL_CONNECT_JOB, TRANSPORT_CONNECT_JOB
+			// NOTE: What happens between CONNECT_JOB.Begin/.End is known to be connection overhead, not HTTP object/data transfer.
+			// NOTE: Due to Chromium optimizations, this Socket could get abandoned, and we don't want to leave the impression of HTTP data traffic being orphaned.
+			case "CONNECT_JOB":
+				if (!evt.IsEndPhase()) break;
+
+				soc = this.SocketFromUID(in evt);
+				if (soc?.cxn == null) break;
+
+				// Zero the connection overhead traffic. These values surface only if the Socket doesn't ultimately attach to a Session, in which case there should be zero non-overhead traffic.
+				soc.cxn.cbSend = soc.cxn.cbRecv = 0;
+
+				break;
+
+			// ID -> SOCKET_POOL_CONNECT_JOB_CREATED
 			// srcdep -> TRANSPORT_CONNECT_JOB_CONNECT_ATTEMPT, SOCKET_POOL_BOUND_TO_SOCKET
 			// source_type: SSL_CONNECT_JOB, TRANSPORT_CONNECT_JOB
 			case "CONNECT_JOB_SET_SOCKET":
@@ -5915,6 +5934,9 @@ namespace NetBlameCustomDataSource.Chromium
 					break;
 
 				case "HOST_RESOLVER_IMPL_JOB":
+					break;
+
+				case "SSL_CONNECT_JOB":
 					break;
 
 				case "CERT_VERIFIER_JOB":

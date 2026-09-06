@@ -448,7 +448,7 @@ namespace NetBlameCustomDataSource.Tables
 
 			URL url = AddURL(null, Util.ComposeMethod(cxn), cxn.pid, cxn.tidOpen, cxn.cbSend, cxn.cbRecv, tcb, Protocol.Winsock);
 
-			uint iAddr = this.allTables.dnsTable.IFindAddress(cxn.iDNS, uint.MaxValue, cxn.addrRemote.Address); // 1-based
+			uint iAddr = this.allTables.dnsTable.IFindAddress(cxn.iDNS, cxn.addrRemote.Address); // 1-based
 			url.strServer = this.allTables.dnsTable.GetServerNameAndAlt(cxn.iDNS, iAddr, null, strNA, out url.strServerAlt);
 			url.timeOpen = cxn.timeCreate;
 			url.timeClose = cxn.timeClose;

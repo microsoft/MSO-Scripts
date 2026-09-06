@@ -157,6 +157,7 @@ namespace NetBlameCustomDataSource.WinsockAFD
 			cxn.addrRemote = ipAddr;
 			cxn.cxnNext = null;
 			cxn.iTCB = 0;
+			cxn.iDNS = 0;
 			return cxn;
 		}
 
@@ -498,7 +499,7 @@ namespace NetBlameCustomDataSource.WinsockAFD
 
 			AssertImportant(!ipAddr.Empty() || cxn.socktype == SOCKTYPE.SOCK_RAW);
 
-			if (cxn.addrRemote == null)
+			if (cxn.addrRemote.Empty())
 			{
 				cxn.addrRemote = ipAddr;
 			}
@@ -573,7 +574,7 @@ namespace NetBlameCustomDataSource.WinsockAFD
 					cxn.tidClose = evt.ThreadId;
 					cxnPrev = cxn;
 
-					if (cxn.addrRemote == null)
+					if (cxn.addrRemote.Empty())
 						cxn.addrRemote = new IPEndPoint(0, 0);
 					else if (cxn.iDNS == 0)
 						cxn.iDNS = this.allTables.dnsTable.IDNSFromAddress(cxn.addrRemote.Address);
@@ -1011,6 +1012,7 @@ namespace NetBlameCustomDataSource.WinsockAFD
 
 					cxn.timeConnect = evt.Timestamp.ToGraphable();
 
+					AssertCritical(cxn.addrRemote.Empty());
 					cxn.addrRemote = NewEndPoint(in evt);
 					cxn.iDNS = allTables.dnsTable.IDNSFromAddress(cxn.addrRemote.Address);
 
@@ -1286,7 +1288,7 @@ namespace NetBlameCustomDataSource.WinsockAFD
 					else
 					{
 						// This could still be a RAW socket (and we missed the Create event). So no associated TcpIp event.
-						AssertImportant(iTCB != 0 || tid == tidUnknown);
+						AssertImportant(FImplies(iTCB == 0, tid == tidUnknown));
 					}
 				}
 				else

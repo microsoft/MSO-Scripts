@@ -138,7 +138,7 @@ namespace NetBlameCustomDataSource.DNSClient
 		/*
 			Find the given address in the given DNS entry and return the 1-based index, else 0.
 		*/
-		public uint IFindAddress(uint iDNS, uint grbitAddrDNS, IPAddress ipAddr)
+		public uint IFindAddress(uint iDNS, IPAddress ipAddr)
 	   	{
 			if (iDNS == 0)
 				return 0;
@@ -148,19 +148,11 @@ namespace NetBlameCustomDataSource.DNSClient
 			if (ipAddr.IsIPv4MappedToIPv6)
 				ipAddr = ipAddr.MapToIPv4();
 
-			for (int iAddr = 0; iAddr < dnsE.rgIpAddr.Count; ++iAddr, grbitAddrDNS >>= 1)
-			{
-				// The 32-bit grbit thing is an optimization. If there are more than 32 addresses, test them all.
-				if ((grbitAddrDNS & 1) == 0 && iAddr < 32)
-					continue;
+			int iAddr = dnsE.rgIpAddr.IndexOf(ipAddr);
 
-				if (dnsE.rgIpAddr[iAddr].Equals(ipAddr))
-					return (uint)iAddr + 1;
-			}
+			AssertImportant(iAddr >= 0); // The address was here, but it's not here!?
 
-			AssertImportant(grbitAddrDNS == 0); // Tested all the addresses?
-
-			return 0;
+			return (uint)(iAddr + 1); // 1-based, 0==null
 		}
 
 		/*
