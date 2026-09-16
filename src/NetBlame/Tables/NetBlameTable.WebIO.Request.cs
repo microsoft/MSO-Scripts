@@ -1,4 +1,7 @@
-﻿#if AUX_TABLES
+﻿// Copyright(c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+#if AUX_TABLES
 
 using System;
 

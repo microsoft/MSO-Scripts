@@ -56,7 +56,7 @@ using IStackSnapshotAccessProvider = Microsoft.Performance.SDK.Processing.IColle
 namespace NetBlameCustomDataSource.Stack
 {
 	static class PID { public const IDVal Unknown = -1; } // Process ID
-	static class TID { public const IDVal Unknown = -1; } // Thrread ID
+	static class TID { public const IDVal Unknown = -1; } // Thread ID
 	static class PROC { public const IDVal Unknown = -1; } // Processor ID
 
 	public class MyStackSnapshot : IStackSnapshot
@@ -344,7 +344,11 @@ namespace NetBlameCustomDataSource.Stack
 			return Array.TrueForAll(stack.rgStack, s => s?.Frames == null);
 		}
 
-		public bool IsNull(IStackSnapshot stack) => IsEmpty((MyStackSnapshot)stack);
+		public bool IsNull(IStackSnapshot stack)
+		{
+			MyStackSnapshot myStack = stack as MyStackSnapshot;
+			return (myStack != null) ? IsEmpty(myStack) : GetFrameCount(stack) == 0;
+		}
 
 		protected static int CountAll(MyStackSnapshot stack) => stack?.rgStack?.Length ?? 0;
 
@@ -394,11 +398,18 @@ namespace NetBlameCustomDataSource.Stack
 		// Invoked for Last Stack
 		public int GetCount(IStackSnapshot stack)
 		{
-			MyStackSnapshot myStack = (MyStackSnapshot)stack;
+			MyStackSnapshot myStack = stack as MyStackSnapshot;
 
-			AssertCritical(myStack?.StackLast == null || Equals(stack, myStack.StackLast));
+			if (myStack != null)
+			{
+				AssertCritical(myStack.StackLast == null || Equals(stack, myStack.StackLast));
 
-			if (IsEmpty(myStack)) return 0;
+				if (IsEmpty(myStack)) return 0;
+			}
+			else
+			{
+				if (GetFrameCount(stack) == 0) return 0;
+			}
 
 			int count = _GetCount(stack);
 #if StackTitle
@@ -410,17 +421,27 @@ namespace NetBlameCustomDataSource.Stack
 			return count;
 		}
 
+		static readonly MyStackSnapshot.Attributes s_attrib = default;
+
 		// Invoked for Last Stack
 		public string GetValue(IStackSnapshot stack, int index)
 		{
-			MyStackSnapshot myStack = (MyStackSnapshot)stack;
+			MyStackSnapshot myStack = stack as MyStackSnapshot;
 
-			AssertCritical(myStack?.StackLast == null || Equals(stack, myStack.StackLast));
+			if (myStack != null)
+			{
+				AssertCritical(myStack.StackLast == null || Equals(stack, myStack.StackLast));
 
-			if (IsEmpty(myStack)) return PastEndValue;
+				if (IsEmpty(myStack)) return PastEndValue;
 
-			return _GetValue(stack, in ((MyStackSnapshot)stack).rgAttrib[^1], index);
+				return _GetValue(stack, in myStack.rgAttrib[^1], index);
+			}
+			else
+			{
+				if (GetFrameCount(stack) == 0) return PastEndValue;
 
+				return _GetValue(stack, in s_attrib, index);
+			}
 		}
 
 
@@ -666,8 +687,6 @@ namespace NetBlameCustomDataSource.Stack
 
 		public new string GetValue(IStackSnapshot stack, int index)
 		{
-			AssertImportant(stack != null);
-
 			MyStackSnapshot myStack = (MyStackSnapshot)stack;
 
 			if (IsEmpty(myStack)) return PastEndValue;
