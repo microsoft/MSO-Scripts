@@ -20,6 +20,10 @@ namespace NetBlameCustomDataSource
 	[System.Diagnostics.DebuggerStepThrough()]
 	public static class Extensions
 	{
+		public static bool IsNullOrEmpty<T>(this T[] array) => !(array?.Length > 0);
+
+		public static bool IsSingleElement<T>(this T[] array) => array?.Length == 1 && array[0] != null;
+
 		public static bool IsNA(this string str) => System.String.IsNullOrWhiteSpace(str) || str == Util.strNA; // "N/A"
 
 		public static bool HasValue(this in TimestampUI time) => (time.ToNanoseconds != 0); // zero-initialized struct

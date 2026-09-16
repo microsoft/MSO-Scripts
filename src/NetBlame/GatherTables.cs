@@ -363,7 +363,7 @@ namespace NetBlameCustomDataSource.Tables
 			{
 				url = AddURL(stream.strURL, stream.strMethod, session.pid, session.tid, stream.CbSend(), stream.CbRecv(), tcbr, Protocol.Chromium);
 
-				string strCanon = session.resolver?.rgstrCanon?[0] ?? string.Empty;
+				string strCanon = session.resolver?.StrCanon ?? string.Empty;
 				url.strServerAlt = !strCanon.Equals(session.domain) ? strCanon : string.Empty;
 				url.strServer = session.domain;
 				url.timeRef = session.timeReference;

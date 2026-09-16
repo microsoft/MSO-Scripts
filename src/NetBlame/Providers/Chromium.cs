@@ -50,6 +50,7 @@ namespace NetBlameCustomDataSource.Chromium
 		public static decimal MyGetDecimal(in this JsonElement jsonE, decimal iDefault = (decimal)jsonIntDefault) => (jsonE.ValueKind == JsonValueKind.Number) ? jsonE.GetDecimal() : iDefault;
 
 		// Convert an array kind (of String) to string[]
+		// Never returns null. Returns: empty string array or string[jsonE.GetArrayLength()]
 		public static string[] MyGetStringArray(in this JsonElement jsonE)
 		{
 			if (jsonE.ValueKind != JsonValueKind.Array || jsonE.GetArrayLength() == 0 || jsonE[0].ValueKind != JsonValueKind.String)
@@ -63,6 +64,7 @@ namespace NetBlameCustomDataSource.Chromium
 		}
 
 		// Convert an array kind (of Object) to string[] by extracting the given property from each object: [{"prop1":"string1", "prop2":"string2"}, {"prop1":"string1", "prop2":"string2"}]
+		// Never returns null. Returns: empty string array or string[jsonE.GetArrayLength()]
 		public static string[] MyGetStringArray(in this JsonElement jsonE, string strProp)
 		{
 			if (jsonE.ValueKind != JsonValueKind.Array || jsonE.GetArrayLength() == 0 || jsonE[0].ValueKind != JsonValueKind.Object)
@@ -76,6 +78,7 @@ namespace NetBlameCustomDataSource.Chromium
 		}
 
 		// Convert an array kind (of String) of the form [":name1: value1", "name2: value2", ...] to a correspondingly ordered array of selected strings { "value1", "value2", ... }
+		// Never returns null. Returns: empty string array or string[rgstrProp.Length]
 		public static string[] MyGetStringArray(in this JsonElement jsonE, string[] rgstrProp)
 		{
 			if (jsonE.ValueKind != JsonValueKind.Array || jsonE.GetArrayLength() == 0 || jsonE[0].ValueKind != JsonValueKind.String)
@@ -391,7 +394,7 @@ namespace NetBlameCustomDataSource.Chromium
 		*/
 		public static JsonElement[] ParseSimpleJsonString(string json, string[] rgstrProperty)
 		{
-			AssertCritical(rgstrProperty?.Length > 0);
+			AssertCritical(!rgstrProperty.IsNullOrEmpty());
 
 			if (string.IsNullOrWhiteSpace(json))
 				return null;
@@ -934,6 +937,13 @@ namespace NetBlameCustomDataSource.Chromium
 		public string[] rgstrAddress; // { "XX.XX.XX.XX", ... }
 		public string[] rgstrCanon;   // { "www.google.com" } // or alternate DNS name
 
+		public bool HasAddress => !this.rgstrAddress.IsNullOrEmpty() && !string.IsNullOrWhiteSpace(this.rgstrAddress[0]);
+		public bool HasCanon => !this.rgstrCanon.IsNullOrEmpty() && !string.IsNullOrWhiteSpace(this.rgstrCanon[0]);
+
+		// Never return null:
+		public string StrAddress => this.HasAddress ? this.rgstrAddress[0] : string.Empty;
+		public string StrCanon => this.HasCanon ? this.rgstrCanon[0] : string.Empty;
+
 		public bool Gone { get; set; }
 	} // ResolverManager
 
@@ -1302,7 +1312,6 @@ namespace NetBlameCustomDataSource.Chromium
 			set
 			{
 				AssertImportant(!string.IsNullOrWhiteSpace(this.Domain));
-				AssertImportant(!string.IsNullOrWhiteSpace(value));
 				AssertImportant(!value.IsNA());
 
 				if (!value.Equals(this.Domain))
@@ -1729,11 +1738,11 @@ namespace NetBlameCustomDataSource.Chromium
 
 			if (resolver != null)
 			{
-				if (string.IsNullOrWhiteSpace(this.Canon) && resolver.rgstrCanon?.Length > 0)
-					this.Canon = resolver.rgstrCanon[0];
+				if (string.IsNullOrWhiteSpace(this.Canon) && resolver.HasCanon)
+					this.Canon = resolver.StrCanon;
 
-				if (string.IsNullOrWhiteSpace(this.ipAddr) && resolver.rgstrAddress?.Length > 0)
-					this.ipAddr = resolver.rgstrAddress[0];
+				if (string.IsNullOrWhiteSpace(this.ipAddr) && resolver.HasAddress)
+					this.ipAddr = resolver.StrAddress;
 			}
 
 			if (!string.IsNullOrWhiteSpace(this.ipAddr) && !string.IsNullOrWhiteSpace(this.Canon)) return;
@@ -1991,7 +2000,7 @@ namespace NetBlameCustomDataSource.Chromium
 		public IPEndPoint RemoteAddress()
 		{
 			IPEndPoint addrRemote;
-			if (this.socket == null && this.resolver?.rgstrAddress?.Length > 0 && IPAddress.TryParse(this.resolver.rgstrAddress[0], out IPAddress addrParse))
+			if (this.socket == null && !(this.resolver?.rgstrAddress).IsNullOrEmpty() && IPAddress.TryParse(this.resolver.StrAddress, out IPAddress addrParse))
 				addrRemote = new(addrParse, this.port);
 			else
 				addrRemote = this.socket?.addrRemote;
@@ -2176,23 +2185,38 @@ namespace NetBlameCustomDataSource.Chromium
 			if (stream.strURL == null)
 			{
 				string[] rgstrHeaders = rgje[2].MyGetStringArray(rgstrAttrib);
-
-				stream.strURL = URLFromHeaders(rgstrHeaders);
-				stream.strMethod = rgstrHeaders[0];
-				stream.strOrigin = rgstrHeaders[4];
-				stream.strReferer = rgstrHeaders[5];
-				stream.strDomain = rgstrHeaders[2];
+				if (!rgstrHeaders.IsNullOrEmpty())
+				{
+					AssertCritical(rgstrHeaders.Length == 6);
+					stream.strURL = URLFromHeaders(rgstrHeaders);
+					stream.strMethod = rgstrHeaders[0];
+					stream.strOrigin = rgstrHeaders[4];
+					stream.strReferer = rgstrHeaders[5];
+					stream.strDomain = rgstrHeaders[2];
+				}
+				else
+				{
+					stream.strURL = //
+					stream.strMethod = //
+					stream.strOrigin = //
+					stream.strReferer = //
+					stream.strDomain = string.Empty;
+				}
 			}
 			else
 			{
 #if DEBUG
 				string[] rgstrHeaders = rgje[2].MyGetStringArray(rgstrAttrib);
-				AssertImportant(stream.strURL == URLFromHeaders(rgstrHeaders));
-				AssertImportant(stream.strMethod == rgstrHeaders[0]);
-				AssertImportant(stream.strOrigin == rgstrHeaders[4]);
-				AssertImportant(stream.strReferer == rgstrHeaders[5]);
-				AssertImportant(stream.strDomain == rgstrHeaders[2]);
-				AssertCritical(stream.request?.Session == this);
+				if (!rgstrHeaders.IsNullOrEmpty())
+				{
+					AssertCritical(rgstrHeaders.Length == 6);
+					AssertImportant(stream.strURL == URLFromHeaders(rgstrHeaders));
+					AssertImportant(stream.strMethod == rgstrHeaders[0]);
+					AssertImportant(stream.strOrigin == rgstrHeaders[4]);
+					AssertImportant(stream.strReferer == rgstrHeaders[5]);
+					AssertImportant(stream.strDomain == rgstrHeaders[2]);
+					AssertCritical(stream.request?.Session == this);
+				}
 #endif // DEBUG
 			}
 
@@ -2213,8 +2237,8 @@ namespace NetBlameCustomDataSource.Chromium
 			if (rgje == null) return;
 
 			string[] rgstrStatus = rgje[1].MyGetStringArray(rgstrHeaderStatus);
-			AssertImportant(rgstrStatus?.Length == 1);
-			if (!(rgstrStatus?.Length > 0)) return;
+			AssertImportant(rgstrStatus.IsSingleElement());
+			if (rgstrStatus.IsNullOrEmpty()) return;
 
 			int iStream = rgje[0].MyGetNumber(-1);
 			AssertCritical(iStream >= 0);
@@ -3633,19 +3657,19 @@ namespace NetBlameCustomDataSource.Chromium
 				if (resolver == null) break;
 
 				// There are usually two copies of this event. Ignore the 2nd.
-				if (resolver.rgstrAddress != null) break;
+				if (resolver.HasAddress) break;
 
 				resolver.rgstrAddress = rgje[1].MyGetStringArray("endpoint_address"); // exclude "endpoint_port":0
 				resolver.rgstrCanon = rgje[0].MyGetStringArray();
-				AssertImportant(resolver.rgstrCanon.Length == 1); // else what?
+				AssertImportant(resolver.rgstrCanon.IsSingleElement()); // else what?
 
 				req = this.RequestFromUID(in evt);
 				if (req == null) break;
 
 				// There may well be multiple IP Addresses. Take the first.
-				req.ipAddr = (resolver.rgstrAddress?.Length > 0) ? resolver.rgstrAddress[0] : string.Empty;
+				req.ipAddr = resolver.StrAddress; // resolver.rgstrAddress[0]
 
-				req.Canon = (resolver.rgstrCanon?.Length > 0) ? resolver.rgstrCanon[0] : string.Empty;
+				req.Canon = resolver.StrCanon; // resolver.rgstrCanon[0]
 
 				break;
 
@@ -4404,7 +4428,7 @@ namespace NetBlameCustomDataSource.Chromium
 				AssertInfo(session != null);
 				if (session == null)
 				{
-					session = new Session(StreamType.QUIC, in evt);
+					session = new Session(StreamType.HTTP2, in evt);
 					this.sessionTable.Add(session);
 					this.SessionAttachUID(session, in evt);
 				}
