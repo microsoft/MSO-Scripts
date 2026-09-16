@@ -130,7 +130,7 @@ Param(
 	@{
 		# The configuration files define the data tabs in the WPA viewer.
 		# https://learn.microsoft.com/en-us/windows-hardware/test/wpt/view-profiles
-		ViewerConfig = "..\WPAP\BasicInfo.wpaProfile", "..\WPAP\EdgeRegions.wpaProfile", ".\WPAP\Network.wpaProfile"
+		ViewerConfig = "..\WPAP\BasicInfo.wpaProfile", ".\WPAP\Network.wpaProfile"
 
 		# The trace file name is: <InstanceName>.etl
 		TraceName = $TraceParams.InstanceName

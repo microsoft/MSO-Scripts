@@ -1,0 +1,121 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes'?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+<!--
+  DISCLAIMER: Regions-of-Interest are based on internal logging mechanisms, which are subject to change.
+  These events and regions roughly correlate to what's happening in the browser from the web page's perspective, but have been added to aid browser development, not web development.
+  Before trusting what any event represents, you should look deeper into Chromium source (https://source.chromium.org/chromium) to understand the context of the event.
+  https://learn.microsoft.com/en-us/windows-hardware/test/wpt/creating-a-regions-of-interest-file
+-->
+<InstrumentationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Instrumentation>
+    <Regions>
+      <RegionRoot Name="Chromium Events" Guid="{685b79ee-f738-4d4c-bb61-6240814dd5b2}">
+
+        <!-- The data of most interest is the URL, buried within the JSON of the 'params' field. Unfortunately we cannot surface it better than this. -->
+
+        <Region Name="Google.Chrome" FriendlyName="URL Requests" Guid="{7f2600b3-25bc-4c50-a07a-dd21e3999c10}">
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <Event Provider="{d2d578d9-2936-45b6-a09f-30e32715f42d}" Name="REQUEST_ALIVE" />
+            <PayloadIdentifier FieldName="Phase" FieldValue="Begin" />
+          </Start>
+          <Stop>
+            <Event Provider="{d2d578d9-2936-45b6-a09f-30e32715f42d}" Name="REQUEST_ALIVE" />
+            <PayloadIdentifier FieldName="Phase" FieldValue="End" />
+          </Stop>
+          <Naming>
+            <PayloadBased NameField="Id" />
+          </Naming>
+        </Region>
+
+        <Region Name="Microsoft.MSEdge" FriendlyName="URL Requests" Guid="{7f2600b3-25bc-4c50-a07a-dd21e3999c11}">
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <Event Provider="{3a5f2396-5c8f-4f1f-9b67-6cca6c990e61}" Name="REQUEST_ALIVE" />
+            <PayloadIdentifier FieldName="Phase" FieldValue="Begin" />
+          </Start>
+          <Stop>
+            <Event Provider="{3a5f2396-5c8f-4f1f-9b67-6cca6c990e61}" Name="REQUEST_ALIVE" />
+            <PayloadIdentifier FieldName="Phase" FieldValue="End" />
+          </Stop>
+          <Naming>
+            <PayloadBased NameField="Id" />
+          </Naming>
+        </Region>
+
+        <Region Name="Microsoft.MSEdgeBeta" FriendlyName="URL Requests" Guid="{7f2600b3-25bc-4c50-a07a-dd21e3999c12}">
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <Event Provider="{BD089BAA-4E52-4794-A887-9E96868570D2}" Name="REQUEST_ALIVE" />
+            <PayloadIdentifier FieldName="Phase" FieldValue="Begin" />
+          </Start>
+          <Stop>
+            <Event Provider="{BD089BAA-4E52-4794-A887-9E96868570D2}" Name="REQUEST_ALIVE" />
+            <PayloadIdentifier FieldName="Phase" FieldValue="End" />
+          </Stop>
+          <Naming>
+            <PayloadBased NameField="Id" />
+          </Naming>
+        </Region>
+
+        <Region Name="Microsoft.MSEdgeCanary" FriendlyName="URL Requests" Guid="{7f2600b3-25bc-4c50-a07a-dd21e3999c13}">
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <Event Provider="{C56B8664-45C5-4E65-B3C7-A8D6BD3F2E67}" Name="REQUEST_ALIVE" />
+            <PayloadIdentifier FieldName="Phase" FieldValue="Begin" />
+          </Start>
+          <Stop>
+            <Event Provider="{C56B8664-45C5-4E65-B3C7-A8D6BD3F2E67}" Name="REQUEST_ALIVE" />
+            <PayloadIdentifier FieldName="Phase" FieldValue="End" />
+          </Stop>
+          <Naming>
+            <PayloadBased NameField="Id" />
+          </Naming>
+        </Region>
+
+        <Region Name="Microsoft.MSEdgeDev" FriendlyName="URL Requests" Guid="{7f2600b3-25bc-4c50-a07a-dd21e3999c14}">
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <Event Provider="{D30B5C9F-B58F-4DC9-AFAF-134405D72107}" Name="REQUEST_ALIVE" />
+            <PayloadIdentifier FieldName="Phase" FieldValue="Begin" />
+          </Start>
+          <Stop>
+            <Event Provider="{D30B5C9F-B58F-4DC9-AFAF-134405D72107}" Name="REQUEST_ALIVE" />
+            <PayloadIdentifier FieldName="Phase" FieldValue="End" />
+          </Stop>
+          <Naming>
+            <PayloadBased NameField="Id" />
+          </Naming>
+        </Region>
+
+        <Region Name="Microsoft.MSEdgeWebView2" FriendlyName="URL Requests" Guid="{7f2600b3-25bc-4c50-a07a-dd21e3999c15}">
+          <Match>
+            <Event PID="true" TID="true" />
+          </Match>
+          <Start>
+            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="REQUEST_ALIVE" />
+            <PayloadIdentifier FieldName="Phase" FieldValue="Begin" />
+          </Start>
+          <Stop>
+            <Event Provider="{E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D}" Name="REQUEST_ALIVE" />
+            <PayloadIdentifier FieldName="Phase" FieldValue="End" />
+          </Stop>
+          <Naming>
+            <PayloadBased NameField="Id" />
+          </Naming>
+        </Region>
+
+      </RegionRoot>
+    </Regions>
+  </Instrumentation>
+</InstrumentationManifest>

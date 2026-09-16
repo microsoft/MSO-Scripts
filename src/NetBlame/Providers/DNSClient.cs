@@ -138,7 +138,7 @@ namespace NetBlameCustomDataSource.DNSClient
 		/*
 			Find the given address in the given DNS entry and return the 1-based index, else 0.
 		*/
-		public uint IFindAddress(uint iDNS, uint grbitAddrDNS, IPAddress ipAddr)
+		public uint IFindAddress(uint iDNS, IPAddress ipAddr)
 	   	{
 			if (iDNS == 0)
 				return 0;
@@ -148,19 +148,11 @@ namespace NetBlameCustomDataSource.DNSClient
 			if (ipAddr.IsIPv4MappedToIPv6)
 				ipAddr = ipAddr.MapToIPv4();
 
-			for (int iAddr = 0; iAddr < dnsE.rgIpAddr.Count; ++iAddr, grbitAddrDNS >>= 1)
-			{
-				// The 32-bit grbit thing is an optimization. If there are more than 32 addresses, test them all.
-				if ((grbitAddrDNS & 1) == 0 && iAddr < 32)
-					continue;
+			int iAddr = dnsE.rgIpAddr.IndexOf(ipAddr);
 
-				if (dnsE.rgIpAddr[iAddr].Equals(ipAddr))
-					return (uint)iAddr + 1;
-			}
+			AssertImportant(iAddr >= 0); // The address was here, but it's not here!?
 
-			AssertImportant(grbitAddrDNS == 0); // Tested all the addresses?
-
-			return 0;
+			return (uint)(iAddr + 1); // 1-based, 0==null
 		}
 
 		/*
@@ -219,13 +211,13 @@ namespace NetBlameCustomDataSource.DNSClient
 			return strDNSName;
 		}
 
-		string DNSNameAndAlt(IPAddress ipAddr, ref string strDNSAlt)
+		public string DNSNameAndAlt(IPAddress ipAddr, ref string strDNSAlt)
 		{
 			uint iDNS = IFindDNSEntryByIPAddress0(ipAddr, out int iAddr);
 			return DNSNameAndAlt(iDNS, ref strDNSAlt, iAddr /*0-based*/);
 		}
 
-		string GetServerNameAndAlt(string strURL /*opt*/, string strServer /*opt*/, string strServer2 /*opt*/, string strServer3 /*opt*/, ref string strServerAlt)
+		static string GetServerNameAndAlt(string strURL /*opt*/, string strServer /*opt*/, string strServer2 /*opt*/, string strServer3 /*opt*/, ref string strServerAlt)
 		{
 			AssertImportant(strServer != null); // Should be at least String.Empty or strNA
 
@@ -251,8 +243,8 @@ namespace NetBlameCustomDataSource.DNSClient
 			if (strServer3 != null)
 				strServerAlt = strServer3;
 
-			AssertInfo(!strServer.IsNA());
-			AssertInfo(!strServerAlt.IsNA());
+			if (strServerAlt.IsNA())
+				strServerAlt = string.Empty;
 
 			if (string.IsNullOrEmpty(strServer))
 				strServer = Util.strNA;
@@ -596,6 +588,60 @@ namespace NetBlameCustomDataSource.DNSClient
 
 			return strServer;
 		} // ConnectNameResolution
+
+
+		/*
+			The Chromium DNS provider has been parsed from JSON to provide these values:
+				domain1   // "star-mini.c1q0r.facebook.com"
+				domain2   // "www.facebook.com" or null
+				rgAddress // never null, no missing or white-space elements, no port numbers
+		*/
+		public void AddServerAndAddress(string domain1, string domain2, string[] rgAddress)
+		{
+			string strServerName;
+			string strCanonical;
+
+			if (domain2 != null)
+			{
+				strServerName = domain2; // "www.facebook.com"
+				strCanonical = domain1;  // "star-mini.c1q0r.facebook.com"
+			}
+			else
+			{
+				strServerName = domain1; // "star-mini.c1q0r.facebook.com"
+				strCanonical = null;
+			}
+
+			uint iDNS = 0;
+
+			foreach (string strAddr in rgAddress)
+			{
+				if (TryParseEx(strAddr, out IPAddress ipAddress))
+				{
+					uint iAddr = this.AddDNSEntry(strServerName, ipAddress, ref iDNS);
+					AssertImportant(iAddr > 0); // 1-based
+				}
+				else
+				{
+					// All of these address strings should be parseable!
+					AssertImportant(false);
+				}
+			}
+
+			if (iDNS != 0 && strCanonical != null)
+			{
+				DNSClient.DNSEntry dnsEntry = this.DNSEntryFromI(iDNS);
+				if (dnsEntry.strNameAlt == null)
+				{
+					AssertImportant(!String.Equals(dnsEntry.strServer, strCanonical, StringComparison.OrdinalIgnoreCase));
+					dnsEntry.strNameAlt = strCanonical;
+				}
+				else
+				{
+					AssertInfo(String.Equals(dnsEntry.strNameAlt, strCanonical, StringComparison.OrdinalIgnoreCase));
+				}
+			}
+		} // AddServerAndAddress
 
 
 		/*

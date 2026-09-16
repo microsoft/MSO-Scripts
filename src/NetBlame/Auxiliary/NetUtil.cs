@@ -19,11 +19,12 @@ namespace NetBlameCustomDataSource
 		// Order of increasing priority
 		Unknown = 0, // anomalous
 		Rundown = 1, // preexisting connection
-		TCP     = 2,
-		UDP     = 4,
+		TCP = 2,
+		UDP = 4,
 		Winsock = 8,
 		WinINet = 16,
-		WinHTTP = 32 // WebIO
+		WinHTTP = 32, // WebIO
+		Chromium = 64
 	};
 
 	public static class Util
@@ -65,6 +66,9 @@ namespace NetBlameCustomDataSource
 			}
 		}
 
+		[Conditional("DEBUG")]
+		public static void DEBUG<T>(T e) { }
+
 #if DEBUG
 		// Must remove references to build RELEASE.
 		[DebuggerStepThrough()]
@@ -82,8 +86,6 @@ namespace NetBlameCustomDataSource
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool FImplies(bool a, bool b) => !a || b;
-
-		public static uint BitFromI(uint i) => (uint)1 << ((int)i - 1); // i: 1-based
 
 		// https://github.com/dotnet/runtime/issues/58378
 		public static AddressFamily AF_HYPERV = (AddressFamily)34;
@@ -177,31 +179,19 @@ namespace NetBlameCustomDataSource
 		}
 
 
-		static public readonly char[] rgchURLSplit = new char[] { ':', '/' };
 		static public readonly char[] rgchEOLSplit = new char[] { '\r', '\n' };
 
-		/*
-			Return the string "ServerName" from "http:// ServerName / Path"
-			Else return String.Empty (never null).
-		*/
+
 		static public string ServerNameFromURL(string strURL)
 		{
-			if (strURL.IsNA())
-				return String.Empty;
+			if (!strURL.IsNA())
+			{
+				if (Uri.TryCreate(strURL, UriKind.Absolute, out Uri uri))
+					return uri.Host;
+			}
 
-			// Skip past the "http://"
-
-			string[] rgstrURL = strURL.Split(rgchURLSplit, StringSplitOptions.RemoveEmptyEntries);
-
-			if (rgstrURL.Length == 0)
-				return String.Empty;
-
-			if (rgstrURL.Length > 1 && rgstrURL[0].StartsWith("http", StringComparison.OrdinalIgnoreCase))
-				return rgstrURL[1].ToLowerInvariant();
-
-			return rgstrURL[0].ToLowerInvariant();
+			return string.Empty;
 		}
-
 
 		/*
 			Return true if the server part of the URL strings is the same (case insensitive).
@@ -259,89 +249,46 @@ namespace NetBlameCustomDataSource
 		*/
 		static public string ServiceFromPort(int port)
 		{
-			switch (port)
+			return port switch
 			{
-			case 20:
-			case 21:
-				return "FTP";
-			case 22:
-				return "SSH/SCP/SFTP";
-			case 23:
-				return "TELNET";
-			case 25:
-				return "SMTP";
-			case 53:
-				return "DNS";
-			case 80:
-			case 8080:
-			case 8081:
-				return "HTTP";
-			case 88:
-				return "Kerberos";
-			case 110:
-				return "POP3";
-			case 119:
-				return "NNTP";
-			case 123:
-				return "NTP";
-			case 135:
-				return "DCE/DHCP/DNS/WINS/DCOM";
-			case 137:
-				return "NetBIOS";
-			case 143:
-				return "IMAP";
-			case portLDAP: // 389
-				return "LDAP";
-			case 443:
-			case 8443:
-				return "HTTPS";
-			case 445:
-				return "AD/SMB";
-			case 465:
-				return "SMTPS";
-			case 546:
-			case 547:
-				return "DHCPv6";
-			case 554:
-				return "RTSP";
-			case 563:
-				return "NNTPS";
-			case 636:
-				return "LDAPs";
-			case 989:
-			case 990:
-				return "FTPS";
-			case 993:
-				return "IMAPS";
-			case 995:
-				return "POP3S";
-			case 1433:
-				return "MSSQL";
-			case 1900:
-				return "SSDP";
-			case 2555:
-			case 2869:
-			case 5000:
-				return "UPnP";
-			case 3268:
-				return "LDAP/AD";
-			case 3269:
-				return "LDAPs/AD";
-			case 3389:
-				return "TS/RDP";
-			case 5353:
-				return "mDNS";
-			case 5355:
-				return "LLMNR";
-			case 5985:
-				return "CIM/DMTF";
-			case 7680:
-				return "DeliveryOpt";
-			case 8888:
-				return "HTTP/LocalHost";
-			default:
-				return null;
-			}
+				20 or 21 => "FTP",
+				22 => "SSH/SCP/SFTP",
+				23 => "TELNET",
+				25 => "SMTP",
+				53 => "DNS",
+				80 or 8080 or 8081 => "HTTP",
+				88 => "Kerberos",
+				110 => "POP3",
+				119 => "NNTP",
+				123 => "NTP",
+				135 => "DCE/DHCP/DNS/WINS/DCOM",
+				137 => "NetBIOS",
+				143 => "IMAP",
+				portLDAP => "LDAP", // 389
+				443 or 8443 => "HTTPS",
+				445 => "AD/SMB",
+				465 => "SMTPS",
+				546 or 547 => "DHCPv6",
+				554 => "RTSP",
+				563 => "NNTPS",
+				636 => "LDAPs",
+				853 => "DNS/TLS",
+				989 or 990 => "FTPS",
+				993 => "IMAPS",
+				995 => "POP3S",
+				1433 => "MSSQL",
+				1900 => "SSDP",
+				2555 or 2869 or 5000 => "UPnP",
+				3268 => "LDAP/AD",
+				3269 => "LDAPs/AD",
+				3389 => "TS/RDP",
+				5353 => "mDNS",
+				5355 => "LLMNR",
+				5985 => "CIM/DMTF",
+				7680 => "DeliveryOpt",
+				8888 => "HTTP/LocalHost",
+				_ => null
+			};
 		}
 
 
@@ -369,9 +316,39 @@ namespace NetBlameCustomDataSource
 			return service;
 		}
 
+		static class IPSpecial
+		{
+			const string strGoogleDNS = "Google DNS";
+			const string strCFlareDNS = "Cloudflare DNS";
+			const string strQuad9DNS = "Quad9 DNS";
+			const string strOpenDNS = "OpenDNS";
+
+			private static readonly System.Collections.Generic.Dictionary<IPAddress, string> _map =
+				new()
+				{
+					{ IPAddress.Parse("1.0.0.1"), strCFlareDNS },
+					{ IPAddress.Parse("1.1.1.1"), strCFlareDNS },
+					{ IPAddress.Parse("[2606:4700:4700::1001]"), strCFlareDNS },
+					{ IPAddress.Parse("[2606:4700:4700::1111]"), strCFlareDNS },
+					{ IPAddress.Parse("8.8.4.4"), strGoogleDNS},
+					{ IPAddress.Parse("8.8.8.8"), strGoogleDNS},
+					{ IPAddress.Parse("[2001:4860:4860::8844]"), strGoogleDNS },
+					{ IPAddress.Parse("[2001:4860:4860::8888]"), strGoogleDNS },
+					{ IPAddress.Parse("9.9.9.9"), strQuad9DNS},
+					{ IPAddress.Parse("[2620:fe::fe]"), strQuad9DNS},
+					{ IPAddress.Parse("[2620:fe::9]"), strQuad9DNS},
+					{ IPAddress.Parse("208.67.222.222"), strOpenDNS },
+					{ IPAddress.Parse("[2620:0:ccc::2]"), strOpenDNS },
+					{ IPAddress.Parse("[2620:0:ccd::2]"), strOpenDNS },
+					{ IPAddress.Parse("255.255.255.255"), "Broadcast"}
+				};
+
+			public static string Get(IPAddress ip) => _map.TryGetValue(ip, out var v) ? v : null;
+		}
+
 		static public string AddressType(IPAddress addr)
 		{
-			if (addr == null)
+			if (addr.Empty())
 				return null;
 
 			if (addr.IsIPv4MappedToIPv6)
@@ -398,16 +375,12 @@ namespace NetBlameCustomDataSource
 					if (bytes[1] == 168)
 						return "Private Network (C)";
 					break;
-				case 255:
-					if (bytes[1] == 255 && bytes[2] == 255 && bytes[3] == 255)
-						return "Broadcast";
-					break;
 				default:
 					if (bytes[0] >= 224 && bytes[0] < 240)
 						return "Multicast";
 					break;
 				}
-				return null;
+				return IPSpecial.Get(addr); // usually null
 			}
 
 			if ((int)addr.AddressFamily == 34)
@@ -428,23 +401,7 @@ namespace NetBlameCustomDataSource
 			if (addr.IsIPv6UniqueLocal)
 				return "Unique Local";
 
-			return null;
-		}
-
-		/*
-			qw.RotateLeft()
-			.NET Core 3:0 - System.Numerics.BitOperations.RotateLeft()
-		*/
-		static public void RotateLeft(ref this QWord ul) => ul = (ul << 1) | (ul >> 63);
-
-		/*
-			Return the 1-based index of the lowest bit, else return 0.
-		*/
-		static public uint BitScanLeft(uint grbit)
-		{
-			uint i = 0;
-			for (grbit &= (uint)-grbit /*isolate low bit*/; grbit != 0; grbit >>= 1) ++i;
-			return i;
+			return IPSpecial.Get(addr); // usually null
 		}
 	} // class Util
 }

@@ -122,6 +122,7 @@ namespace NetBlameCustomDataSource.TcpIp
 			if (!FImplies(pid != pidUnknown, this.pid == pid)) return false;
 			if (!FImplies(socket != 0, this.socket == socket)) return false;
 			if (this.addrRemote.Empty() || !this.addrRemote.Equals(address)) return false;
+			if (this.FClosed) return false;
 			return true;
 		}
 
@@ -356,7 +357,7 @@ namespace NetBlameCustomDataSource.TcpIp
 			tcbRCache = tcbr;
 		}
 
-		new void Remove(TcbRecord tcbr)
+		static new void Remove(TcbRecord tcbr)
 		{
 			throw(new Exception("Remove not allowed. Elements are reference by index."));
 		}
@@ -475,7 +476,7 @@ namespace NetBlameCustomDataSource.TcpIp
 
 
 		/*
-			Return the 1-based index if the most recent, UDP receive event's TcbRecord with the given IP Address, cb, etc.
+			Return the 1-based index of the most recent, UDP receive event's TcbRecord with the given IP Address, cb, etc.
 			Mark it as correlated with Winsock.
 		*/
 		public uint CorrelateUDPRecvEvent(IDVal pid, IDVal tid, uint cb, ushort socket, IPEndPoint ipAddr)
@@ -917,7 +918,7 @@ namespace NetBlameCustomDataSource.TcpIp
 				}
 
 				// Here the actual ThreadId matches the ThreadId of WebIO.AFD.AcceptExWithAddress
-				cxn =  this.allTables.wsTable.CorrelateListener(tcbr, pid, (pid==evt.ProcessId) ? evt.ThreadId : tidUnknown);
+				cxn = this.allTables.wsTable.CorrelateListener(tcbr, pid, (evt.ProcessId > TcbRecord.pidSystem) ? evt.ThreadId : tidUnknown);
 				break;
 
 			case TCP.CloseTcbRequest:

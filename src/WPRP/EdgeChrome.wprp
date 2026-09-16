@@ -49,7 +49,7 @@
         CHROME:
           Chrome     {D2D578D9-2936-45B6-A09F-30E32715F42D}
 
-	From: https://source.chromium.org/chromium/chromium/src/+/main:base/trace_event/trace_event_etw_export_win.cc
+	https://source.chromium.org/chromium/chromium/src/+/main:base/trace_event/etw_interceptor_win.cc
         KEYWORDS:
           benchmark         // 0x00001
           blink             // 0x00002
@@ -107,7 +107,14 @@
           </Keywords>
         </EventProvider>
 
+        <!-- Events used by the NetBlame Chromium Parser / WPA Plug-in -->
         <EventProvider Id="Edge-Basic" Name="3A5F2396-5C8F-4F1F-9B67-6CCA6C990E61" Stack="true">
+          <Keywords>
+            <Keyword Value="0x0000000000000080" /> <!-- netlog & DNS -->
+          </Keywords>
+        </EventProvider>
+
+        <EventProvider Id="Edge-Filtered" Name="3A5F2396-5C8F-4F1F-9B67-6CCA6C990E61" Stack="true">
           <Keywords>
             <Keyword Value="0x0000000000000001" /> <!-- benchmark -->
             <Keyword Value="0x0000000000000002" /> <!-- Blink -->
@@ -128,11 +135,15 @@
 
         <EventProvider Id="Edge_Beta-Basic" Name="BD089BAA-4E52-4794-A887-9E96868570D2" Base="Edge-Basic" />
 
+        <EventProvider Id="Edge_Beta-Filtered" Name="BD089BAA-4E52-4794-A887-9E96868570D2" Base="Edge-Filtered" />
+
         <!-- Microsoft.MSEdgeWebView2 -->
 
         <EventProvider Id="Edge_WebView2-Unfiltered" Name="E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D" Base="Edge-Unfiltered" />
 
         <EventProvider Id="Edge_WebView2-Basic" Name="E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D" Base="Edge-Basic" />
+
+        <EventProvider Id="Edge_WebView2-Filtered" Name="E16EC3D2-BB0F-4E8F-BDB8-DE0BEA82DC3D" Base="Edge-Filtered" />
 
         <!-- Microsoft.MSEdgeCanary -->
 
@@ -140,13 +151,17 @@
 
         <EventProvider Id="Edge_Canary-Basic" Name="C56B8664-45C5-4E65-B3C7-A8D6BD3F2E67" Base="Edge-Basic" />
 
+        <EventProvider Id="Edge_Canary-Filtered" Name="C56B8664-45C5-4E65-B3C7-A8D6BD3F2E67" Base="Edge-Filtered" />
+
         <!-- Microsoft.MSEdgeDev -->
 
         <EventProvider Id="Edge_Dev-Unfiltered" Name="D30B5C9F-B58F-4DC9-AFAF-134405D72107" Base="Edge-Unfiltered" />
 
         <EventProvider Id="Edge_Dev-Basic" Name="D30B5C9F-B58F-4DC9-AFAF-134405D72107" Base="Edge-Basic" />
 
-        <!-- CHROME -->
+        <EventProvider Id="Edge_Dev-Filtered" Name="D30B5C9F-B58F-4DC9-AFAF-134405D72107" Base="Edge-Filtered" />
+
+        <!-- Google.Chrome -->
 
         <EventProvider Id="Chrome-Unfiltered" Name="d2d578d9-2936-45b6-a09f-30e32715f42d" Stack="true">
           <Keywords>
@@ -154,7 +169,14 @@
           </Keywords>
         </EventProvider>
 
+        <!-- Events used by the NetBlame Chromium Parser / WPA Plug-in -->
         <EventProvider Id="Chrome-Basic" Name="d2d578d9-2936-45b6-a09f-30e32715f42d" Stack="true">
+          <Keywords>
+            <Keyword Value="0x8000000000000080" /> <!-- netlog & DNS -->
+          </Keywords>
+        </EventProvider>
+
+        <EventProvider Id="Chrome-Filtered" Name="d2d578d9-2936-45b6-a09f-30e32715f42d" Stack="true">
           <Keywords>
             <Keyword Value="0x0000000000000001" /> <!-- benchmark -->
             <Keyword Value="0x0000000000000002" /> <!-- Blink -->
@@ -171,7 +193,7 @@
 
         <!-- BASIC -->
 
-        <Profile Id="MSEdge_Basic.Verbose.File" LoggingMode="File" Name="MSEdge_Basic" DetailLevel="Verbose" Description="Basic MSEdge, WebView2, Chrome Events">
+        <Profile Id="MSEdge_Basic.Verbose.File" LoggingMode="File" Name="MSEdge_Basic" DetailLevel="Verbose" Description="Basic MSEdge, WebView2, Chrome Events for NetBlame plug-in">
             <Collectors>
 
                 <SystemCollectorId Value="SC_8-MB">
@@ -192,7 +214,7 @@
             </Collectors>
         </Profile>
 
-        <Profile Id="MSEdge_Basic.Verbose.Memory" Base="MSEdge_Basic.Verbose.File" LoggingMode="Memory" Name="MSEdge_Basic" DetailLevel="Verbose" Description="Basic MSEdge, WebView2, Chrome Events" />
+        <Profile Id="MSEdge_Basic.Verbose.Memory" Base="MSEdge_Basic.Verbose.File" LoggingMode="Memory" Name="MSEdge_Basic" DetailLevel="Verbose" Description="Basic MSEdge, WebView2, Chrome Events for NetBlame plug-in" />
 
         <!-- UNFILTERED -->
 
@@ -217,6 +239,30 @@
         </Profile>
 
         <Profile Id="MSEdge_Unfiltered.Verbose.Memory" Base="MSEdge_Unfiltered.Verbose.File" LoggingMode="Memory" Name="MSEdge_Unfiltered" DetailLevel="Verbose" Description="Unfiltered MSEdge, WebView2, Chrome Events" />
+
+        <!-- FILTERED --> <!-- Mutually Exclusive of BASIC -->
+
+        <Profile Id="MSEdge_Filtered.Verbose.File" LoggingMode="File" Name="MSEdge_Filtered" DetailLevel="Verbose" Description="Filtered MSEdge, WebView2, Chrome Events (excludes _Basic)">
+            <Collectors>
+
+                <SystemCollectorId Value="SC_8-MB">
+                    <SystemProviderId Value="SP_Base" />
+                </SystemCollectorId>
+
+                <EventCollectorId Value="EC_128-MB">
+                    <EventProviders>
+                        <EventProviderId Value="Edge_WebView2-Filtered" />
+                        <EventProviderId Value="Edge-Filtered" />
+                        <EventProviderId Value="Edge_Beta-Filtered" />
+                        <EventProviderId Value="Edge_Canary-Filtered" />
+                        <EventProviderId Value="Edge_Dev-Filtered" />
+                        <EventProviderId Value="Chrome-Filtered" />
+                    </EventProviders>
+                </EventCollectorId>
+            </Collectors>
+        </Profile>
+
+        <Profile Id="MSEdge_Filtered.Verbose.Memory" Base="MSEdge_Filtered.Verbose.File" LoggingMode="Memory" Name="MSEdge_Filtered" DetailLevel="Verbose" Description="Filtered MSEdge, WebView2, Chrome Events (excludes _Basic)" />
 
     </Profiles>
 
