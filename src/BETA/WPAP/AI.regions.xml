@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+  Regions emitted by Microsoft.ML.ONNXRuntime:
+    {3A26B1FF-7484-7484-7484-15261F42614D}
+
+  Hardware execution is intentionally not reconstructed as ROI intervals from
+  DxgKrnl packets. Use WPA's native NPU Utilization and GPU Utilization tables
+  beside these semantic regions to attribute CPU/GPU/NPU work.
+-->
+
+<InstrumentationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Instrumentation>
+    <Regions>
+      <RegionRoot Guid="{6C83AE3A-55A2-4FC3-B5D9-F930BBEE28C8}"
+                  Name="Office-AI"
+                  FriendlyName="Office AI">
+
+        <Region Guid="{45BB3F16-ED2C-481E-B9EC-202AE1158F44}"
+                Name="Office-AI-Model-Lifecycle"
+                FriendlyName="Model Lifecycle">
+
+          <Region Guid="{4DA70323-1EA3-466E-9039-79E73EF30D1D}"
+                  Name="Office-AI-Session-Creation"
+                  FriendlyName="Session Creation">
+            <Start>
+              <Event Provider="{3A26B1FF-7484-7484-7484-15261F42614D}"
+                     Name="SessionCreationStart" />
+            </Start>
+            <Stop>
+              <Event Provider="{3A26B1FF-7484-7484-7484-15261F42614D}"
+                     Name="SessionCreationEnd" />
+            </Stop>
+            <Match>
+              <Event PID="true">
+                <Payload FieldName="sessionId" TargetFieldName="sessionId" />
+              </Event>
+            </Match>
+            <Naming>
+              <PayloadBased NameField="sessionId" />
+            </Naming>
+          </Region>
+
+          <Region Guid="{D69781D1-20D7-48A0-8B69-E1203F8C6961}"
+                  Name="Office-AI-Model-Load"
+                  FriendlyName="Model Load">
+            <Start>
+              <Event Provider="{3A26B1FF-7484-7484-7484-15261F42614D}"
+                     Name="ModelLoadStart" />
+            </Start>
+            <Stop>
+              <Event Provider="{3A26B1FF-7484-7484-7484-15261F42614D}"
+                     Name="ModelLoadEnd" />
+            </Stop>
+            <Match>
+              <Event PID="true">
+                <Payload FieldName="sessionId" TargetFieldName="sessionId" />
+              </Event>
+            </Match>
+            <Naming>
+              <PayloadBased NameField="sessionId" />
+            </Naming>
+          </Region>
+
+          <Region Guid="{99EC4ED0-EF15-4F75-8A15-06BD82FD2519}"
+                  Name="Office-AI-Model-Compile"
+                  FriendlyName="Model Compile">
+            <Start>
+              <Event Provider="{3A26B1FF-7484-7484-7484-15261F42614D}"
+                     Name="CompileModelStart" />
+            </Start>
+            <Stop>
+              <Event Provider="{3A26B1FF-7484-7484-7484-15261F42614D}"
+                     Name="CompileModelComplete" />
+            </Stop>
+            <Match>
+              <Event PID="true">
+                <Payload FieldName="sessionId" TargetFieldName="sessionId" />
+              </Event>
+            </Match>
+            <Naming>
+              <PayloadBased NameField="sessionId" />
+            </Naming>
+          </Region>
+
+        </Region>
+
+        <Region Guid="{A8CA7FBD-737C-46DD-9185-B5535454D26C}"
+                Name="Office-AI-Inference"
+                FriendlyName="Inference">
+          <Region Guid="{85C7FBA6-A2AA-441D-8240-1FE7A55C9048}"
+                  Name="Office-AI-Inference-Evaluation"
+                  FriendlyName="Inference Evaluation">
+            <Start>
+              <Event Provider="{3A26B1FF-7484-7484-7484-15261F42614D}"
+                     Name="EvaluationStart" />
+            </Start>
+            <Stop>
+              <Event Provider="{3A26B1FF-7484-7484-7484-15261F42614D}"
+                     Name="EvaluationStop" />
+            </Stop>
+            <Match>
+              <Event PID="true">
+                <Payload FieldName="sessionId" TargetFieldName="sessionId" />
+              </Event>
+            </Match>
+            <Naming>
+              <PayloadBased NameField="sessionId" />
+            </Naming>
+          </Region>
+        </Region>
+
+        <Region Guid="{8A60DFC1-2F22-484F-A040-DBEC00E4DCA4}"
+                Name="Office-AI-Execution-Provider"
+                FriendlyName="Execution Provider">
+
+          <!--
+            EpAutoSelection is a point event. This interval measures from the
+            selection decision until the session becomes ready; it must not be
+            interpreted as the CPU cost of the selection algorithm alone.
+          -->
+          <Region Guid="{AE04CDDB-A8A8-4C97-966C-2937E61604DC}"
+                  Name="Office-AI-EP-Selection-To-Ready"
+                  FriendlyName="EP Selection to Session Ready">
+            <Start>
+              <Event Provider="{3A26B1FF-7484-7484-7484-15261F42614D}"
+                     Name="EpAutoSelection" />
+            </Start>
+            <Stop>
+              <Event Provider="{3A26B1FF-7484-7484-7484-15261F42614D}"
+                     Name="SessionCreationEnd" />
+            </Stop>
+            <Match>
+              <Event PID="true">
+                <Payload FieldName="sessionId" TargetFieldName="sessionId" />
+              </Event>
+            </Match>
+            <Naming>
+              <PayloadBased NameField="sessionId" />
+            </Naming>
+          </Region>
+
+          <Region Guid="{2A12D4B0-1378-449B-9BFC-35B53F30EE94}"
+                  Name="Office-AI-EP-Library-Registration"
+                  FriendlyName="EP Library Registration">
+            <Start>
+              <Event Provider="{3A26B1FF-7484-7484-7484-15261F42614D}"
+                     Name="RegisterEpLibraryStart" />
+            </Start>
+            <Stop>
+              <Event Provider="{3A26B1FF-7484-7484-7484-15261F42614D}"
+                     Name="RegisterEpLibraryEnd" />
+            </Stop>
+            <Match>
+              <Event PID="true">
+                <Payload FieldName="registrationName"
+                         TargetFieldName="registrationName" />
+              </Event>
+            </Match>
+            <Naming>
+              <PayloadBased NameField="registrationName" />
+            </Naming>
+          </Region>
+
+        </Region>
+
+      </RegionRoot>
+    </Regions>
+  </Instrumentation>
+</InstrumentationManifest>

@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?Copyright (c) Microsoft Corporation. Licensed under the MIT License.?>
+
+<!--
+    High-ROI Office scenario profile for ETW MCP analysis.
+
+    Validate and list profiles:
+        wpr -profiles OfficeAI.wprp
+
+    Capture a short scenario:
+        wpr -start OfficeAI.wprp!OfficeAI-Light -filemode
+        rem Reproduce the scenario.
+        wpr -stop OfficeAI.etl
+
+    This profile is derived from the provider and kernel-event selections in
+    microsoft/MSO-Scripts CPU.wprp, FileDiskIO.wprp, Memory.wprp, and
+    OfficeProviders.wprp.
+-->
+
+<WindowsPerformanceRecorder Version="1" Author="Office Trace Analysis Skill">
+  <Profiles>
+
+    <SystemCollector Id="OfficeAI_SC_Base" Name="OfficeAI System Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="8" />
+      <StackCaching BucketCount="256" CacheSize="3072" />
+    </SystemCollector>
+
+    <SystemCollector Id="OfficeAI_SC_512MB" Base="OfficeAI_SC_Base" Name="OfficeAI System Collector">
+      <Buffers Value="512" />
+    </SystemCollector>
+
+    <EventCollector Id="OfficeAI_EC_16MB" Name="OfficeAI Event Collector">
+      <BufferSize Value="1024" />
+      <Buffers Value="16" />
+    </EventCollector>
+
+    <!--
+        Core evidence for operation-scoped analysis:
+        - sampled CPU stacks and scheduler/ready delay;
+        - process, thread, image, CPU topology, and power context;
+        - hard faults for memory-pressure diagnosis;
+        - file/disk events with selective initiation stacks.
+
+        Full FileIO and mini-filter stackwalking are intentionally omitted because
+        they substantially increase trace volume and are better suited to a deep
+        follow-up profile.
+    -->
+    <SystemProvider Id="OfficeAI_SP_Core">
+      <Keywords Operation="Add">
+        <Keyword Value="ProcessThread" />
+        <Keyword Value="Loader" />
+        <Keyword Value="SampledProfile" />
+        <Keyword Value="CSwitch" />
+        <Keyword Value="ReadyThread" />
+        <Keyword Value="DPC" />
+        <Keyword Value="Interrupt" />
+        <Keyword Value="Power" />
+        <Keyword Value="CpuConfig" />
+        <Keyword Value="ProcessCounter" />
+        <Keyword Value="HardFaults" />
+        <Keyword Value="FileIOInit" />
+        <Keyword Value="FileIO" />
+        <Keyword Value="DiskIOInit" />
+        <Keyword Value="DiskIO" />
+        <Keyword Value="Filename" />
+      </Keywords>
+      <Stacks Operation="Add">
+        <Stack Value="SampledProfile" />
+        <Stack Value="CSwitch" />
+        <Stack Value="ReadyThread" />
+        <Stack Value="ProcessCreate" />
+        <Stack Value="ThreadCreate" />
+        <Stack Value="ImageLoad" />
+        <Stack Value="HardFault" />
+        <Stack Value="FileCreate" />
+        <Stack Value="DiskReadInit" />
+        <Stack Value="DiskWriteInit" />
+        <Stack Value="DiskFlushInit" />
+      </Stacks>
+    </SystemProvider>
+
+    <EventProvider Id="OfficeAI_EP_ImageLoad" Name="2cb15d1d-5fc1-11d2-abe1-00a0c911f518">
+      <Keywords Operation="Add">
+        <Keyword Value="0x10" />
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="OfficeAI_EP_KernelProcess" Name="22fb2cd6-0e7b-422b-a0c7-2fad1fd0e716" NonPagedMemory="true">
+      <Keywords>
+        <Keyword Value="0x0010" />
+        <Keyword Value="0x0200" />
+      </Keywords>
+    </EventProvider>
+
+    <EventProvider Id="OfficeAI_EP_AppLifecycle" Name="ee97cdc4-b095-5c70-6e37-a541eb74c2b5" Level="5" />
+    <EventProvider Id="OfficeAI_EP_DesktopAppx" Name="5526aed1-f6e5-5896-cbf0-27d9f59b6be7" />
+
+    <!-- UI delay and focus metadata without provider stackwalking. -->
+    <EventProvider Id="OfficeAI_EP_Win32k" Name="8c416c79-d49b-4f01-a467-e56d3aa8234c" NonPagedMemory="true">
+      <Keywords Operation="Add">
+        <Keyword Value="0x00002000" />
+        <Keyword Value="0x00020000" />
+        <Keyword Value="0x00040000" />
+      </Keywords>
+    </EventProvider>
+
+    <!-- Office scenario markers and low-traffic diagnostic providers. -->
+    <EventProvider Id="OfficeAI_EP_CodeMarkers" Name="8736922D-E8B2-47eb-8564-23E77E728CF3">
+      <Keywords Operation="Add">
+        <Keyword Value="4" />
+      </Keywords>
+    </EventProvider>
+    <EventProvider Id="OfficeAI_EP_Common" Name="8A3A9FD4-21D3-470B-B1D6-838B9FC8637B" Level="4" Stack="true" />
+    <EventProvider Id="OfficeAI_EP_Measurements" Name="a380209f-f500-586f-d5aa-1f15e23cefa5" Level="4" />
+    <EventProvider Id="OfficeAI_EP_SessionId" Name="e6aec961-a5e0-5560-a860-15edd6b70f6c" />
+    <EventProvider Id="OfficeAI_EP_Correlation" Name="fc15139c-ddf2-481f-9a9b-365919cb8ae5" />
+
+    <EventProvider Id="OfficeAI_EP_Excel" Name="6FD91573-4ABC-43A5-84EE-ACB8DC42888F" Level="4" Stack="true" />
+    <EventProvider Id="OfficeAI_EP_PowerPoint" Name="71B8AC9B-04B7-4216-82C0-DD54FEE06D2C" Level="4" Stack="true" />
+    <EventProvider Id="OfficeAI_EP_OneNote" Name="5FC204D3-EE49-47FE-AD79-2318CF78F3D5" Level="4" />
+    <EventProvider Id="OfficeAI_EP_Word" Name="DAF0B914-9C1C-450A-81B2-FEA7244F6FFA" Level="4" Stack="true" />
+    <EventProvider Id="OfficeAI_EP_Word2" Name="BB00E856-A12F-4AB7-B2C8-4E80CAEA5B07" Level="4" />
+    <EventProvider Id="OfficeAI_EP_Extensibility" Name="1972DB93-8AB1-47A6-8FF5-F37744FDB721" Level="4" Stack="true" />
+
+    <!--
+        Optional Windows ML / ONNX Runtime providers.
+
+        These GUIDs cover Microsoft's current Windows ML capture profile,
+        ONNX Runtime telemetry, and the WinML providers documented by ONNX
+        Runtime for applications using different Windows ML generations.
+    -->
+    <EventProvider Id="OfficeAI_EP_WindowsMLRuntime" Name="1491D42B-0927-55B9-A765-10EC4BB1980F" NonPagedMemory="true" Level="5" />
+    <EventProvider Id="OfficeAI_EP_ONNXTelemetry" Name="3A26B1FF-7484-7484-7484-15261F42614D" NonPagedMemory="true" Level="5" />
+    <EventProvider Id="OfficeAI_EP_ONNXLogging" Name="929DD115-1ECB-4CB5-B060-EBD4983C421D" Level="5">
+      <CaptureStateOnSave>
+        <Keyword Value="0x1" />
+      </CaptureStateOnSave>
+    </EventProvider>
+    <EventProvider Id="OfficeAI_EP_LegacyWinML" Name="C8517E09-BEA2-5BB6-BEF3-50B4C91C431E" Level="5" />
+    <EventProvider Id="OfficeAI_EP_DocumentedWinML" Name="D766D9FF-112C-4DAC-9247-241CF99D123F" Level="5" />
+    <EventProvider Id="OfficeAI_EP_DocumentedWindowsAI" Name="BCAD6AEE-C08D-4F66-828C-4C43461A033D" Level="5" />
+
+    <Profile Name="OfficeAI-Light"
+             Description="Office markers, sampled CPU, scheduling, hard faults, and selective file/disk I/O stacks"
+             DetailLevel="Light"
+             LoggingMode="File"
+             Id="OfficeAI-Light.Light.File">
+      <Collectors Operation="Add">
+        <SystemCollectorId Value="OfficeAI_SC_512MB">
+          <SystemProviderId Value="OfficeAI_SP_Core" />
+        </SystemCollectorId>
+
+        <EventCollectorId Value="OfficeAI_EC_16MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="OfficeAI_EP_ImageLoad" />
+            <EventProviderId Value="OfficeAI_EP_KernelProcess" />
+            <EventProviderId Value="OfficeAI_EP_AppLifecycle" />
+            <EventProviderId Value="OfficeAI_EP_DesktopAppx" />
+            <EventProviderId Value="OfficeAI_EP_Win32k" />
+            <EventProviderId Value="OfficeAI_EP_CodeMarkers" />
+            <EventProviderId Value="OfficeAI_EP_Common" />
+            <EventProviderId Value="OfficeAI_EP_Measurements" />
+            <EventProviderId Value="OfficeAI_EP_SessionId" />
+            <EventProviderId Value="OfficeAI_EP_Correlation" />
+            <EventProviderId Value="OfficeAI_EP_Excel" />
+            <EventProviderId Value="OfficeAI_EP_PowerPoint" />
+            <EventProviderId Value="OfficeAI_EP_OneNote" />
+            <EventProviderId Value="OfficeAI_EP_Word" />
+            <EventProviderId Value="OfficeAI_EP_Word2" />
+            <EventProviderId Value="OfficeAI_EP_Extensibility" />
+          </EventProviders>
+        </EventCollectorId>
+      </Collectors>
+    </Profile>
+
+    <Profile Name="OfficeAI-Light"
+             Description="Circular-memory Office markers, sampled CPU, scheduling, hard faults, and selective file/disk I/O stacks"
+             DetailLevel="Light"
+             LoggingMode="Memory"
+             Base="OfficeAI-Light.Light.File"
+             Id="OfficeAI-Light.Light.Memory" />
+
+    <Profile Name="OfficeAI-ML"
+             Description="OfficeAI-Light plus Windows ML and ONNX Runtime semantic events"
+             DetailLevel="Light"
+             LoggingMode="File"
+             Base="OfficeAI-Light.Light.File"
+             Id="OfficeAI-ML.Light.File">
+      <Collectors Operation="Add">
+        <EventCollectorId Value="OfficeAI_EC_16MB">
+          <EventProviders Operation="Add">
+            <EventProviderId Value="OfficeAI_EP_WindowsMLRuntime" />
+            <EventProviderId Value="OfficeAI_EP_ONNXTelemetry" />
+            <EventProviderId Value="OfficeAI_EP_ONNXLogging" />
+            <EventProviderId Value="OfficeAI_EP_LegacyWinML" />
+            <EventProviderId Value="OfficeAI_EP_DocumentedWinML" />
+            <EventProviderId Value="OfficeAI_EP_DocumentedWindowsAI" />
+          </EventProviders>
+        </EventCollectorId>
+      </Collectors>
+    </Profile>
+
+    <Profile Name="OfficeAI-ML"
+             Description="Circular-memory OfficeAI-Light plus Windows ML and ONNX Runtime semantic events"
+             DetailLevel="Light"
+             LoggingMode="Memory"
+             Base="OfficeAI-ML.Light.File"
+             Id="OfficeAI-ML.Light.Memory" />
+
+  </Profiles>
+
+  <TraceMergeProperties>
+    <TraceMergeProperty Id="OfficeAI_TraceMerge" Name="OfficeAI_TraceMerge">
+      <DeletePreMergedTraceFiles Value="true" />
+      <FileCompression Value="true" />
+      <CustomEvents Operation="Add">
+        <CustomEvent Value="ImageId" />
+        <CustomEvent Value="BuildInfo" />
+        <CustomEvent Value="VolumeMapping" />
+        <CustomEvent Value="EventMetadata" />
+        <CustomEvent Value="PerfTrackMetadata" />
+        <CustomEvent Value="WinSAT" />
+        <CustomEvent Value="NetworkInterface" />
+      </CustomEvents>
+    </TraceMergeProperty>
+  </TraceMergeProperties>
+</WindowsPerformanceRecorder>
