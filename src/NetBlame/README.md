@@ -68,6 +68,16 @@ OR DEBUG:<br/>
 _Launch Chrome or Edge and visit a site._<br/>
 `.\BETA\TraceNetwork.bat Stop`
 
+<br/>
+
+> &#x26A0;&#xFE0F; **Privacy**<br/>
+> The trace records Chromium network log (NetLog) events from every Chrome, Edge, and WebView2 process on the computer, for all users.
+> These events include full URLs, host names, IP addresses, and some HTTP request details.
+> URL query strings are recorded as-is and may contain access tokens or other secrets.
+> Review the trace before sharing it, and share it only with people who need it.
+>
+> The optional GeoLocation column (hidden by default) sends each remote IP address to ip-api.com over unencrypted HTTP.
+
 ## View
 
 * If needed, download the [Windows Performance Analyzer (WPA)](https://apps.microsoft.com/detail/9n0w1b2bxgnz)<br/>

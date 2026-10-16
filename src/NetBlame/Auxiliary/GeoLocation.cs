@@ -18,10 +18,12 @@ namespace NetBlameCustomDataSource
 	- Attribution:  Geolocation data provided by ip-api.com
 	- License:      Free for non-commercial use only
 	- Rate limit:   45 requests per minute (free tier)
+	- Transport:    HTTP only (the free tier does not support HTTPS), so each looked-up IP address is sent unencrypted
 */
 	static class GeoLocation
 	{
-		public static string Attribution => "\nIP GeoLocation powered by ip-api.com – the free, non-commercial API.\nhttps://www.ip-api.com";
+		public static string Attribution => "\nIP GeoLocation powered by ip-api.com – the free, non-commercial API.\nhttps://www.ip-api.com" +
+			"\nPrivacy: Showing this column sends each remote IP address to ip-api.com over unencrypted HTTP.";
 
 		static string strGeoService = "ip-api.com";
 		static string strGetGeoService1 = "http://ip-api.com/json/";

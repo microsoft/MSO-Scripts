@@ -45,9 +45,10 @@ namespace NetBlameCustomDataSource.Chromium
 		public static string MyGetString(in this JsonElement jsonE) => (jsonE.ValueKind == JsonValueKind.String) ? jsonE.GetString() : string.Empty;
 
 		// Convert a number kind to int, else jsonIntDefault=0 (or the given default).
-		public static int MyGetNumber(in this JsonElement jsonE, int iDefault = jsonIntDefault) => (jsonE.ValueKind == JsonValueKind.Number) ? jsonE.GetInt32() : iDefault;
-		public static uint MyGetUNumber(in this JsonElement jsonE, uint iDefault = (uint)jsonIntDefault) => (jsonE.ValueKind == JsonValueKind.Number) ? jsonE.GetUInt32() : iDefault;
-		public static decimal MyGetDecimal(in this JsonElement jsonE, decimal iDefault = (decimal)jsonIntDefault) => (jsonE.ValueKind == JsonValueKind.Number) ? jsonE.GetDecimal() : iDefault;
+		// Use TryGet*: Get* throws when the number is fractional or out of range, and the trace data is untrusted.
+		public static int MyGetNumber(in this JsonElement jsonE, int iDefault = jsonIntDefault) => (jsonE.ValueKind == JsonValueKind.Number && jsonE.TryGetInt32(out int value)) ? value : iDefault;
+		public static uint MyGetUNumber(in this JsonElement jsonE, uint iDefault = (uint)jsonIntDefault) => (jsonE.ValueKind == JsonValueKind.Number && jsonE.TryGetUInt32(out uint value)) ? value : iDefault;
+		public static decimal MyGetDecimal(in this JsonElement jsonE, decimal iDefault = (decimal)jsonIntDefault) => (jsonE.ValueKind == JsonValueKind.Number && jsonE.TryGetDecimal(out decimal value)) ? value : iDefault;
 
 		// Convert an array kind (of String) to string[]
 		// Never returns null. Returns: empty string array or string[jsonE.GetArrayLength()]
@@ -89,6 +90,9 @@ namespace NetBlameCustomDataSource.Chromium
 			foreach (JsonElement je in jsonE.EnumerateArray())
 			{
 				string strKeyVal = je.MyGetString();
+
+				// Non-string or too-short elements: IndexOf(':', 1) below would throw on an empty string.
+				if (strKeyVal.Length < 2) continue;
 
 				// There should be exactly one colon ':' (property name terminator) before the first space, but accept a leading colon like: ":method:"
 
@@ -507,7 +511,7 @@ namespace NetBlameCustomDataSource.Chromium
 					// Only one "data" element!
 					AssertImportant(sDomain == null);
 
-					if (!res.TryGetProperty("domain_name", out JsonElement domain_name) || type.ValueKind != JsonValueKind.String)
+					if (!res.TryGetProperty("domain_name", out JsonElement domain_name) || domain_name.ValueKind != JsonValueKind.String)
 						continue;
 
 					sDomain = domain_name.GetString();
@@ -3609,8 +3613,8 @@ namespace NetBlameCustomDataSource.Chromium
 
 				resolver = new ResolverManager
 				{
-					host = rgje[0].GetString(),
-					anon_key = rgje[1].GetString()
+					host = rgje[0].MyGetString(),
+					anon_key = rgje[1].MyGetString()
 				};
 
 				this.ResolverManagerAttach(resolver, in evt);

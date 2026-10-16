@@ -454,10 +454,12 @@ Param ( # $ViewerParams 'parameter splat'
 
 $Result = ProcessTraceCommand $Command @TraceParams -Loop:$Loop -Boot:$Boot -CLR:$CLR -JS:$JS
 
+$PrivacyNote = "Privacy: This trace records full URLs (including query strings, which can contain access tokens), host names, and IP addresses`nfor all Chrome, Edge, and WebView2 network activity on this computer, for all users. Review the trace before sharing it.`n"
+
 switch ($Result)
 {
-Started   { Write-Msg "ETW Network tracing has begun.`nExercise the application, then run: $(GetScriptCommand) Stop [-WPA]`n" }
-Collected { WriteTraceCollected $TraceParams.InstanceName } # $WPA switch
+Started   { Write-Msg "ETW Network tracing has begun.`nExercise the application, then run: $(GetScriptCommand) Stop [-WPA]`n"; Write-Warn $PrivacyNote }
+Collected { WriteTraceCollected $TraceParams.InstanceName; Write-Warn $PrivacyNote } # $WPA switch
 View      { $WPA = $True }
 Success   { $WPA = $False }
 Error     { exit 1 }
