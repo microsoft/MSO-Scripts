@@ -461,7 +461,7 @@ switch ($Result)
 Started   { Write-Msg "ETW Network tracing has begun.`nExercise the application, then run: $(GetScriptCommand) Stop [-WPA]`n"; Write-Warn $PrivacyNote }
 Collected { WriteTraceCollected $TraceParams.InstanceName; Write-Warn $PrivacyNote } # $WPA switch
 View      { $WPA = $True }
-Success   { $WPA = $False }
+Success   { if ($Boot -and $Command -eq "Start") { Write-Warn; Write-Warn $PrivacyNote }; $WPA = $False }
 Error     { exit 1 }
 }
 

@@ -73,7 +73,7 @@ namespace NetBlameCustomDataSource.Chromium
 
 			string[] rgstr = new string[jsonE.GetArrayLength()];
 			for (int isz = 0; isz < jsonE.GetArrayLength(); ++isz)
-				rgstr[isz] = jsonE[isz].TryGetProperty(strProp, out JsonElement jsonT) ? jsonT.MyGetString() : string.Empty;
+				rgstr[isz] = (jsonE[isz].ValueKind == JsonValueKind.Object && jsonE[isz].TryGetProperty(strProp, out JsonElement jsonT)) ? jsonT.MyGetString() : string.Empty;
 
 			return rgstr;
 		}
@@ -477,7 +477,7 @@ namespace NetBlameCustomDataSource.Chromium
 
 			using (jd)
 			{
-				if (!jd.RootElement.TryGetProperty("results", out JsonElement results) || results.ValueKind != JsonValueKind.Array || results.GetArrayLength() == 0)
+				if (jd.RootElement.ValueKind != JsonValueKind.Object || !jd.RootElement.TryGetProperty("results", out JsonElement results) || results.ValueKind != JsonValueKind.Array || results.GetArrayLength() == 0)
 					return null;
 
 				bool[] rgAlias = new bool[results.GetArrayLength()];
@@ -490,7 +490,7 @@ namespace NetBlameCustomDataSource.Chromium
 				{
 					++iRes;
 
-					if (!res.TryGetProperty("type", out JsonElement type) || type.ValueKind != JsonValueKind.String)
+					if (res.ValueKind != JsonValueKind.Object || !res.TryGetProperty("type", out JsonElement type) || type.ValueKind != JsonValueKind.String)
 						continue;
 
 					switch (type.GetString())
@@ -529,7 +529,7 @@ namespace NetBlameCustomDataSource.Chromium
 					rgEndPoints = new string[endpoints.GetArrayLength()];
 					foreach (var endpoint in endpoints.EnumerateArray())
 					{
-						if (!endpoint.TryGetProperty("address", out JsonElement address) || address.ValueKind != JsonValueKind.String)
+						if (endpoint.ValueKind != JsonValueKind.Object || !endpoint.TryGetProperty("address", out JsonElement address) || address.ValueKind != JsonValueKind.String)
 							continue;
 
 						if (string.IsNullOrWhiteSpace(address.GetString()))
@@ -2541,6 +2541,9 @@ namespace NetBlameCustomDataSource.Chromium
 
 		public void SetReqSrcDep(Request req, int srcdep)
 		{
+			// 0 is Chromium's invalid source id (and the default for a missing/malformed one): never use it as a key.
+			if (srcdep == jsonIntDefault) return;
+
 			this.reqFromSrcDep[srcdep] = req;
 #if DEBUG
 			req?.AddSrcDep(srcdep);
@@ -2795,7 +2798,8 @@ namespace NetBlameCustomDataSource.Chromium
 		void SocketAttachSrcDep(Socket sock, int srcdep, in IGenericEvent evt)
 		{
 			ThreadLocal tl = EnsureThreadLocal(in evt);
-			tl.sockFromSrcDep[srcdep] = sock;
+			if (srcdep != jsonIntDefault)
+				tl.sockFromSrcDep[srcdep] = sock;
 		}
 
 		void SocketAttachUID_SrcDep(Socket sock, int srcdep, in IGenericEvent evt)
@@ -3245,7 +3249,8 @@ namespace NetBlameCustomDataSource.Chromium
 			AssertCritical(srcdep != jsonIntDefault);
 			AssertImportant(session.srcdep == 0 || session.srcdep == srcdep);
 			session.srcdep = srcdep;
-			tl.sessionFromSrcDep[srcdep] = session;
+			if (srcdep != jsonIntDefault)
+				tl.sessionFromSrcDep[srcdep] = session;
 			tl.SetRecent(session, evt.TaskName);
 		}
 
@@ -3253,7 +3258,8 @@ namespace NetBlameCustomDataSource.Chromium
 		{
 			ThreadLocal tl = EnsureThreadLocal(in evt);
 			AssertCritical(srcdep != jsonIntDefault);
-			tl.sessionFromSrcDep[srcdep] = session;
+			if (srcdep != jsonIntDefault)
+				tl.sessionFromSrcDep[srcdep] = session;
 		}
 
 		void SessionAddSrcDep(Session session, in IGenericEvent evt) => SessionAddSrcDep(session, evt.GetSourceId(), in evt);
@@ -3270,7 +3276,8 @@ namespace NetBlameCustomDataSource.Chromium
 			AssertCritical(session.pid == evt.ProcessId && session.tid == evt.ThreadId);
 			AssertCritical(srcdep != jsonIntDefault);
 #endif // DEBUG
-			tl.sessionFromSrcDep[srcdep] = session;
+			if (srcdep != jsonIntDefault)
+				tl.sessionFromSrcDep[srcdep] = session;
 			tl.sessionFromUID[uid] = session;
 			tl.SetRecent(session, evt.TaskName);
 		}
@@ -3316,7 +3323,7 @@ namespace NetBlameCustomDataSource.Chromium
 			ThreadLocal tl = EnsureThreadLocal(in evt);
 			UIDVal uid = evt.GetUID();
 			ResolverManager manager = tl.managerFromUID[uid];
-			if (manager != null)
+			if (manager != null && srcdep != jsonIntDefault)
 				tl.managerFromSrcDep[srcdep] = manager;
 
 			return manager;
@@ -6091,8 +6098,11 @@ namespace NetBlameCustomDataSource.Chromium
 				// opcode >= 8 are control frames
 				if (rgje[0].MyGetUNumber() >= 8) break;
 
-				cb = (uint)rgje[1].MyGetDecimal();
-				if (cb == 0) break;
+				// payload_length is a uint64 logged as a JSON number; a decimal-to-uint cast throws outside [0, uint.MaxValue].
+				decimal cbPayload = rgje[1].MyGetDecimal();
+				if (cbPayload < 1 || cbPayload > uint.MaxValue) break;
+
+				cb = (uint)cbPayload;
 
 				if (evt.TaskName.Equals("WEBSOCKET_SENT_FRAME_HEADER"))
 				{
