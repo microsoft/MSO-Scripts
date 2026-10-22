@@ -571,7 +571,7 @@ Param (
 
 	$XPerfCmdEnv = "$(ReplaceEnv $XPerfPath) -tle -tti -i `"$(ReplaceEnv $ETL)`" -symbols verbose -a symcache -build"
 
-	# The trace path is untrusted: never put it in a command line that CMD, START, or RunAs would parse.
+	# Avoid using the trace path directly in the command line so that CMD, START, or RunAs cannot misinterpret it while parsing.
 	# Run XPerf from a PowerShell script passed via -EncodedCommand, which embeds each path as Base64.
 
 	$Title = "Download Symbols"
