@@ -563,33 +563,39 @@ Param (
 		return $False
 	}
 
-	$File = split-path -leaf -path $ETL
+	if ($XPerfPath -is [System.Management.Automation.CommandInfo]) { $XPerfPath = $XPerfPath.Path } # From Get-Command
 
 	if (!$Env:_NT_SYMBOL_PATH -or !$Env:_NT_SYMCACHE_PATH) { Write-Dbg '_NT_SYMBOL/SYMCACHE_PATH is not set. Caller runs: SetupSymbolPaths $False' }
 
-	# Build the CMD commands to be run: CMD /c "<commands>"
 	# https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#deeper
 
-	$XPerfCmd = "`"$XPerfPath`" -tle -tti -i `"$ETL`" -symbols verbose -a symcache -build"
-	$XPerfCmdEnv = "$(ReplaceEnv $XPerfPath) -tle -tti -i $(ReplaceEnv $ETL) -symbols verbose -a symcache -build"
+	$XPerfCmdEnv = "$(ReplaceEnv $XPerfPath) -tle -tti -i `"$(ReplaceEnv $ETL)`" -symbols verbose -a symcache -build"
 
-	$OutFilter = <# $XPerfCmd #> '2>&1 | findstr /r /c:"[0-9] bytes -"'
-	$XPerfFiltered = "$XPerfCmd $OutFilter"
-	$XPerfFilterEnv = "$XPerfCmdEnv $OutFilter"
-
-	$CmdHeader = "echo Downloading symbols for: $File & echo Symbol Path: %_NT_SYMBOL_PATH% & echo:" 
-
-	$CmdNoTitle = "$CmdHeader & $XPerfFiltered" 
+	# Avoid using the trace path directly in the command line so that CMD, START, or RunAs cannot misinterpret it while parsing.
+	# Run XPerf from a PowerShell script passed via -EncodedCommand, which embeds each path as Base64.
 
 	$Title = "Download Symbols"
 
-	$CmdCmd = "`"title $Title & $CmdNoTitle`""
+	$ToBase64 = { [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes([string]$Args[0])) }
 
-	# LaunchAsStandardUser starts the process using RunAs, which always launches a non-minimized window.
-	# Launch a new window (minimized and titled), and close the one from RunAs (after a brief flash).
-	$RunAsCmd = "start `"$Title`" /min /belownormal cmd /c `"$CmdNoTitle`""
+	$Script = @'
+$Host.UI.RawUI.WindowTitle = '{TITLE}'
+$XPerf = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('{XPERF}'))
+$ETL = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('{ETL}'))
+Write-Host "Downloading symbols for: $([System.IO.Path]::GetFileName($ETL))"
+Write-Host "Symbol Path: $Env:_NT_SYMBOL_PATH"
+Write-Host
+& $XPerf -tle -tti -i $ETL -symbols verbose -a symcache -build 2>&1 | ForEach-Object { "$_" } | Where-Object { $_ -match '[0-9] bytes -' }
+'@
+	$Script = $Script.Replace('{TITLE}', $Title).Replace('{XPERF}', (& $ToBase64 $XPerfPath)).Replace('{ETL}', (& $ToBase64 $ETL))
 
-	WriteCmdVerbose $XPerfFilterEnv
+	$PowerShellExe = "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+
+	# Launch a new window (minimized, titled, and below normal priority).
+	# LaunchAsStandardUser starts the process using RunAs, which always launches a non-minimized window. Close it (after a brief flash).
+	$StartCmd = "start `"$Title`" /min /belownormal `"$PowerShellExe`" -NoLogo -NoProfile -EncodedCommand $(& $ToBase64 $Script)"
+
+	WriteCmdVerbose $XPerfCmdEnv
 
 	$ErrResult = $True
 	[DateTime]$PreStartTime = Get-Date
@@ -599,15 +605,15 @@ Param (
 	if ((CheckAdminPrivilege) -and (CheckFileUserPrivilege $XPerfPath $ETL))
 	{
 		# XPerf and the .ETL are acccessible as Standard User.
-		$CmdArgs = GetArgs /c $RunAsCmd
+		$CmdArgs = GetArgs /c $StartCmd
 		$ErrResult = LaunchAsStandardUser 'cmd' @CmdArgs
 		if ($ErrResult) { Write-Status "XPerf as Standard User: $ErrResult" }
 	}
 
 	if ($ErrResult)
 	{
-		# Launches a minimized CMD window.
-		$CmdArgs = GetArgs /c $CmdCmd
+		# Launches a minimized CMD window, which starts the minimized PowerShell window.
+		$CmdArgs = GetArgs /c $StartCmd
 		$Process = LaunchAsCurrentUser 'cmd' @CmdArgs
 		if ($Process)
 		{
@@ -639,7 +645,7 @@ Param (
 		Write-Err
 	}
 
-	Write-Err "To retry, you can run:`n$script:ScriptRootPath\BETA\GetSymbols.bat $(ReplaceEnv $ETL)"
+	Write-Err "To retry, you can run:`n$script:ScriptRootPath\BETA\GetSymbols.bat `"$(ReplaceEnv $ETL)`""
 
 	return $False
 } # BackgroundResolveSymbols
