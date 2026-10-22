@@ -571,15 +571,6 @@ Param (
 
 	$XPerfCmdEnv = "$(ReplaceEnv $XPerfPath) -tle -tti -i `"$(ReplaceEnv $ETL)`" -symbols verbose -a symcache -build"
 
-	# XPerf.bat, XPerf.cmd, etc. would pass the trace path through CMD, which interprets some characters in file names.
-	if (!$XPerfPath.EndsWith('.exe', [StringComparison]::OrdinalIgnoreCase) -and ($ETL -match '[&|<>^%!()]'))
-	{
-		Write-Info "Not downloading symbols in the background using: $(ReplaceEnv $XPerfPath)"
-		Write-Info "The trace path contains one of these characters: & | < > ^ % ! ( )"
-		Write-Info "To download symbols, rename the trace or run XPerf.exe:`n$XPerfCmdEnv"
-		return $False
-	}
-
 	# The trace path is untrusted: never put it in a command line that CMD, START, or RunAs would parse.
 	# Run XPerf from a PowerShell script passed via -EncodedCommand, which embeds each path as Base64.
 
