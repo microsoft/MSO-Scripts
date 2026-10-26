@@ -569,7 +569,7 @@ Param (
 
 	# https://github.com/microsoft/MSO-Scripts/wiki/Advanced-Symbols#deeper
 
-	$XPerfCmdEnv = "$(ReplaceEnv $XPerfPath) -tle -tti -i `"$(ReplaceEnv $ETL)`" -symbols verbose -a symcache -build"
+	$XPerfCmdEnv = "$(ReplaceEnv $XPerfPath) -tle -tti -i $(ReplaceEnv $ETL) -symbols verbose -a symcache -build"
 
 	# Avoid using the trace path directly in the command line so that CMD, START, or RunAs cannot misinterpret it while parsing.
 	# Run XPerf from a PowerShell script passed via -EncodedCommand, which embeds each path as Base64.
@@ -582,14 +582,16 @@ Param (
 $Host.UI.RawUI.WindowTitle = '{TITLE}'
 $XPerf = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('{XPERF}'))
 $ETL = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('{ETL}'))
-Write-Host "Downloading symbols for: $([System.IO.Path]::GetFileName($ETL))"
-Write-Host "Symbol Path: $Env:_NT_SYMBOL_PATH"
-Write-Host
+"Downloading symbols for: $([System.IO.Path]::GetFileName($ETL))"
+"Symbol Path: $Env:_NT_SYMBOL_PATH"
+""
 & $XPerf -tle -tti -i $ETL -symbols verbose -a symcache -build 2>&1 | ForEach-Object { "$_" } | Where-Object { $_ -match '[0-9] bytes -' }
 '@
 	$Script = $Script.Replace('{TITLE}', $Title).Replace('{XPERF}', (& $ToBase64 $XPerfPath)).Replace('{ETL}', (& $ToBase64 $ETL))
 
-	$PowerShellExe = "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+	# Use the current PowerShell, unless it's a host without -EncodedCommand (such as the ISE).
+	$PowerShellExe = (Get-Process -Id $PID).Path
+	if ($PowerShellExe -notmatch '\\(powershell|pwsh)\.exe$') { $PowerShellExe = "$Env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" }
 
 	# Launch a new window (minimized, titled, and below normal priority).
 	# LaunchAsStandardUser starts the process using RunAs, which always launches a non-minimized window. Close it (after a brief flash).
@@ -645,7 +647,7 @@ Write-Host
 		Write-Err
 	}
 
-	Write-Err "To retry, you can run:`n$script:ScriptRootPath\BETA\GetSymbols.bat `"$(ReplaceEnv $ETL)`""
+	Write-Err "To retry, you can run:`n$script:ScriptRootPath\BETA\GetSymbols.bat $(ReplaceEnv $ETL)"
 
 	return $False
 } # BackgroundResolveSymbols
